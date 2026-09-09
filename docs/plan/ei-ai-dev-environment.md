@@ -207,16 +207,18 @@ Rồi `wsl --shutdown` để áp dụng. Con số 18 GB để lại ~13 GB cho W
 
 | Bước | Trạng thái | Ngày | Ghi chú |
 | --- | --- | --- | --- |
-| **B0** — commit + push | 🟡 **Làm dở** | 09-09 | `git init` xong, file đã stage. **Còn thiếu commit và remote** |
-| **B1** — C: ≥45 GB trống | ✅ **Xong** | 09-09 | Xoá 30 image (47,1 → 26,7 GB) và 48 volume (25,7 → 0,9 GB). C: còn 50,3 GB |
+| **B0a** — `git init` + commit | ✅ **Xong** | 09-09 | Commit `fbbadca "Init commit"`, 8 file (4 trong `docs/`) |
+| **B0b** — gắn remote | ✅ **Xong** | 09-09 | `origin` → `https://github.com/nguyenchiemhao/Ei-AI.git`. Repo trên GitHub còn rỗng |
+| **B0c** — push | 🔴 **Chưa** | | Nhánh cục bộ là `master`; cân nhắc đổi sang `main` trước khi push |
+| **B1** — C: ≥45 GB trống | ✅ **Xong** | 09-09 | Xoá 30 image và 48 volume. C: còn 50 GB |
+| **B1b** — `docker builder prune -a` | ✅ **Xong** | 09-09 | Build cache về **0 B**. Docker giờ chỉ chiếm ~5,7 GB bên trong vhdx |
 | **B2** — `.wslconfig` | ⬜ Chưa | | |
 | **B3** — cài Ubuntu, chuyển repo | ⬜ Chưa | | |
 | **B4** — Dev Containers + Remote-WSL | ⬜ Chưa | | |
 
-**Việc phát sinh trong lúc dọn (09-09):**
+**Ghi chú từ đợt dọn 09-09:**
 
-- Build cache còn **28,4 GB** chưa dọn — chạy `docker builder prune -a` khi Docker Desktop bật lại. Đây là miếng lớn nhất còn lại và không có rủi ro gì.
-- vhdx **chưa nén**, vẫn 73,2 GB. Không bắt buộc nén: sau khi dọn build cache thì bên trong vhdx trống ~45 GB, đủ cho toàn bộ image và volume của Ei-AI mà file không phình thêm. C: chỉ cần chỗ cho distro Ubuntu + repo (~8–10 GB) và đang còn 50,3 GB.
+- vhdx **chưa nén**, vẫn 73,2 GB. **Không cần nén.** Sau khi dọn xong, Docker chỉ còn chiếm **~5,7 GB** bên trong vhdx (image 4,58 + container 0,17 + volume 0,94 + cache 0) — tức **trống ~67 GB bên trong**. Toàn bộ image và volume của Ei-AI (25–35 GB) nằm gọn trong đó mà file không phình thêm. C: chỉ cần chỗ cho distro Ubuntu + repo (~8–10 GB) và đang còn 50 GB. Nếu sau này cần lấy lại chỗ cho việc khác thì dùng `diskpart compact vdisk`, **không** dùng sparse VHD (WSL chặn vì rủi ro hỏng dữ liệu).
 - Mất `e-erp_eerp_mysql_data` và `eerp-dev_db-data`. Mã nguồn e-erp không ảnh hưởng (bind-mount). Dựng lại bằng migration/seeder của Laravel nếu cần.
 
 ---

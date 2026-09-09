@@ -87,6 +87,28 @@ Ba giả định của bản thiết kế đã được xác nhận lại, và c
 
 > **R-01 vẫn là rủi ro mở.** Test trên corpus proxy **không đóng** được rủi ro này — nó chỉ hạ mức từ "hoàn toàn mù" xuống "có một ước lượng". Rủi ro chỉ đóng khi có tài liệu thật của khách. Cần một mốc cụ thể: **tài liệu thật phải có trước tuần 8**, nếu không thì Phần 2 kết thúc mà chưa ai biết OCR có đạt hay không.
 
+### Cái gì bắt đầu được ngay, cái gì đang chờ
+
+Điều quan trọng nhất về lịch: **toàn bộ Phần 1 không cần Anthropic API key.**
+
+Phần 1 làm workspace, phân quyền, upload, chunk, embed và hybrid search. Embedding chạy bằng BGE-M3 trên GPU cục bộ. **Phần 1 không sinh một dòng văn bản nào** — đó là kỷ luật đã chốt ở mục 1.1, không phải giới hạn kỹ thuật. Nên không có chỗ nào cần tới model generation.
+
+Điều đó kéo dài hơn Phần 1: mốc 2A (parser + OCR) và 2B (reranker) cũng chạy hoàn toàn cục bộ.
+
+| Giai đoạn | Tuần | Cần API key? | Trạng thái |
+| --- | --- | --- | --- |
+| Toàn bộ Phần 1 | 1–3 | Không | **Bắt đầu được ngay** |
+| Mốc 2A — parser, OCR, version, purge | 4–6 | Không | **Bắt đầu được ngay** |
+| Mốc 2B — reranker, hạn chế cấp tài liệu | 7–9 | Không | **Bắt đầu được ngay** |
+| Mốc 2C — verified answering | 9–12 | **Có** | Chờ API key, hoặc chạy `dev-local` |
+| Mốc 2D — eval harness | 10–13 | **Có** | Chờ API key |
+| Phần 3 | 14–19 | Không, nhưng cần tool catalogue ERP | Chờ tới tuần 12 |
+| Phần 4 | 20–23 | Không, nhưng cần phần cứng pilot | Chờ tới tuần 14 |
+
+**Tức là khoảng 9 tuần công việc đầu tiên không bị chặn bởi bất kỳ thứ gì đang chờ.** API key chỉ thành đường găng từ tuần 9. Nếu tới lúc đó vẫn chưa có, `dev-local` (Qwen3-4B trên CPU) vẫn cho phép đi tiếp — chậm và chất lượng thấp hơn, nhưng không dừng.
+
+**Việc chạy song song, không cần môi trường dev:** dựng corpus proxy (văn bản luật bản scan, bảng báo cáo, bộ `.md` mẫu) và bắt đầu soạn cấu trúc bộ golden set cùng khách hàng pilot.
+
 ---
 
 # PHẦN 1 — NỀN TẢNG
