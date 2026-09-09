@@ -205,19 +205,28 @@ Every row was verified by running the command in the last column, not by recolle
 
 | Step | Status | Date | Verified by | Result |
 | --- | --- | --- | --- | --- |
-| **B0a** — `git init` + commit | ✅ **Done** | 09-09 | `git log --oneline -1` | `6621b3c`, clean tree, `core.autocrlf=input` |
+| **B0a** — `git init` + commit | ✅ **Done** | 09-09 | `git log --oneline -1` | Clean tree, `core.autocrlf=input` |
 | **B0b** — attach remote | ✅ **Done** | 09-09 | `git remote -v` | `origin` → `github.com/nguyenchiemhao/Ei-AI.git` |
-| **B0c** — first push | ✅ **Done** | 09-09 | `git ls-remote origin` | `refs/heads/main` exists at `517d585` |
-| **B0d** — remote up to date | 🟡 **Behind** | | `git rev-list --count origin/main..HEAD` | **4 commits not yet pushed.** See step 1 of the runbook |
+| **B0c** — first push | ✅ **Done** | 09-09 | `git ls-remote origin` | `refs/heads/main` present |
+| **B0d** — remote up to date | ✅ **Done** | 09-09 | `git rev-list --count origin/main..HEAD` | **`0`** — `517d585..c26dc12` pushed, 6 commits |
 | **B1** — free ≥45 GB on `C:` | ✅ **Done** | 09-09 | `Get-PSDrive C` | 50 GB free. Images 47.1 → 4.6 GB, volumes 25.7 → 0.9 GB, build cache → 0 B |
 | **B2** — `.wslconfig` applied | ✅ **Done** | 09-09 | `wsl -d Ubuntu -e free -h` | **17.6 GB total** — the 18 GB cap is in force |
 | **B3a** — Ubuntu installed | ✅ **Done** | 09-09 | `wsl --list --verbose` | `Ubuntu`, `Running`, `VERSION 2`. User `howie`, home `/home/howie` |
 | **B3b** — Ubuntu tooling | ✅ **Done** | 09-09 | `git --version`, `curl --version` in Ubuntu | git 2.53.0, curl 8.18.0 — both already present |
 | **B3c** — Docker reachable from Ubuntu | ✅ **Done** | 09-09 | `docker ps` in Ubuntu | Lists `marlin-dev`, `eerp-dev`. WSL integration already enabled |
-| **B3d** — repository at `~/ei-ai` | 🔴 **Not done** | | `test -d ~/ei-ai` | Absent. Source is still at `D:\Data\Ei-AI` |
-| **B4** — Dev Containers + WSL extensions | 🔴 **Not done** | | `code --list-extensions` | Two extensions, then open `~/ei-ai` |
+| **B3d** — git identity in Ubuntu | ✅ **Done** | 09-09 | `git config --global --list` in Ubuntu | `user.name`, `user.email`, `core.autocrlf=input` all set |
+| **B3e** — repository at `~/ei-ai` | ✅ **Done** | 09-09 | `git log --oneline` in `~/ei-ai` | HEAD `c26dc12`, 13 files, matches the Windows copy exactly |
+| **B3f** — **source is on ext4** | ✅ **Done** | 09-09 | `df -T ~/ei-ai \| tail -1` | **`/dev/sdd ext4`** — not `9p`, not `drvfs`. **ADR-13's condition holds** |
+| **B3g** — case sensitivity | ✅ **Done** | 09-09 | `touch Foo.tmp && ls foo.tmp` | Fails as required — production-like, so import-casing bugs surface locally |
+| **B3h** — clean tree after clone | ✅ **Done** | 09-09 | `git status --short` in `~/ei-ai` | Empty — no line-ending churn |
+| **B5** — GPU passthrough from Ubuntu | ✅ **Done** | 09-09 | `docker run --gpus all … nvidia-smi` in Ubuntu | **RTX 3050 Ti, 4096 MiB, driver 581.95.** Test image removed afterwards |
+| **B4a** — VS Code extensions | 🔴 **Manual** | | `code --list-extensions` | `code` CLI is not on PATH — install from the Extensions panel |
+| **B4b** — open in Remote-WSL | 🔴 **Manual** | | Window indicator | GUI action |
+| **B6** — retire the Windows copy | 🔴 **Manual, do last** | | `Test-Path D:\Data\Ei-AI` | **Renaming it breaks any Claude Code session rooted there.** Restart at `~/ei-ai` first |
 
-**Three steps turned out to be already complete** — Ubuntu, its tooling, and Docker WSL integration. What remains is the repository move and the VS Code side, plus pushing four pending commits.
+**Everything mechanically checkable is now green.** The three remaining steps need a GUI or would break the running session, so they stay manual — see section 9.1 steps 4, 5 and 7.
+
+Three steps turned out to have been already complete before the runbook was written: Ubuntu, its tooling, and Docker WSL integration. That is why every row above carries the command that proved it rather than a claim.
 
 ---
 

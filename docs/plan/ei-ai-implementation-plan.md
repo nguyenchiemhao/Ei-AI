@@ -132,13 +132,14 @@ Two decisions carry over from before the design rewrite. They concern how the te
 
 | Step | Status | Notes |
 | --- | --- | --- |
-| B0a–B0c · git init, remote, first push | ✅ Done | Remote at `github.com/nguyenchiemhao/Ei-AI` |
-| B0d · Remote up to date | 🟡 **4 commits behind** | Push before moving the repository |
-| B1 · Free ≥45 GB on C: | ✅ Done | 50 GB free. Images 47.1 → 4.6 GB, volumes 25.7 → 0.9 GB, cache → 0 B |
-| B2 · `.wslconfig` applied | ✅ Done | Verified: WSL reports 17.6 GB, the 18 GB cap is active |
-| B3a–B3c · Ubuntu, tooling, Docker integration | ✅ Done | User `howie`; git 2.53, curl 8.18 present; `docker ps` works from Ubuntu |
-| B3d · Repository at `~/ei-ai` | 🔴 Not done | Clone, ~5 minutes |
-| B4 · Dev Containers + WSL extensions | 🔴 Not done | Two extensions, then open the folder |
+| B0 · git init, remote, push | ✅ Done | Remote current at `c26dc12` |
+| B1 · Free ≥45 GB on C: | ✅ Done | 50 GB free |
+| B2 · `.wslconfig` applied | ✅ Done | WSL reports 17.6 GB — the 18 GB cap is active |
+| B3 · Ubuntu, tooling, Docker, git identity | ✅ Done | User `howie`; git 2.53, curl 8.18; `docker ps` works from Ubuntu |
+| B3f · **Source cloned to `~/ei-ai` on ext4** | ✅ Done | `df -T` reports `ext4` — ADR-13's condition holds. Case sensitivity confirmed |
+| B5 · GPU passthrough from Ubuntu | ✅ Done | RTX 3050 Ti, 4096 MiB, driver 581.95 |
+| B4 · VS Code extensions + Remote-WSL | 🔴 Manual | GUI steps — see environment doc §9.1 steps 4–5 |
+| B6 · Retire the Windows copy | 🔴 Manual, last | Restart Claude Code at `~/ei-ai` first |
 
 ---
 
