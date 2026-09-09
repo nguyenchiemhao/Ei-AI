@@ -1,155 +1,150 @@
-# Ei-AI — Môi trường phát triển trên máy demo
+# Ei-AI — Development Environment
 
-> Operational companion to the [Implementation Plan](./ei-ai-implementation-plan.md). Records the two development-environment decisions and the setup detail behind them. **Survives the 2026-09-09 design rewrite unchanged** — these decisions are about how the team works, not about what the product does. ADRs renumbered 07→12 and 08→13 to fit the single global ADR sequence in the design document.
+> Operational companion to the [Implementation Plan](./ei-ai-implementation-plan.md). Records the two environment decisions and the setup detail behind them.
 >
-> *Written in Vietnamese; the plan itself is in English. Ask if you want this translated for consistency.*
+> **These decisions survive the 2026-09-09 design rewrite unchanged** — they concern how the team works, not what the product does. Their ADRs were renumbered 07→12 and 08→13 to fit the single global ADR sequence in the [design document](../design/ei-ai-agentic-knowledge-assistant.md).
 
-**Trạng thái:** đã chốt · 2026-09-08
-
----
-
-## 1. ADR-12 — Phát triển trên máy demo với profile `dev-hybrid`
-
-**Bối cảnh.** Thiết kế giả định một server có GPU 48 GB, chạy Qwen3-32B AWQ cục bộ. Máy thực tế là laptop với RTX 3050 Ti 4 GB VRAM. 4 GB đủ cho embedding và rerank, không đủ cho generation ở bất kỳ kích thước model có ý nghĩa nào. Đồng thời chưa có tài liệu thật của khách, nên corpus dev là văn bản luật công khai và file `.md` mẫu — không có dữ liệu cần bảo mật.
-
-**Quyết định.** Phát triển Phần 1 và Phần 2 trên máy demo với profile `dev-hybrid`: embedding và rerank chạy cục bộ trên GPU, generation gọi Anthropic API qua `ModelProviderPort`. Profile `dev-local` (generation bằng Qwen3-4B trên CPU) tồn tại song song và được chạy ở mỗi cổng nghiệm thu để chứng minh đường local không mục.
-
-**Hệ quả.**
-
-| Loại | Nội dung |
+| Field | Value |
 | --- | --- |
-| **Tốt** | Không bị phần cứng cản khi xây logic answering, verifier và citation — phần khó nhất của sản phẩm. `ModelProviderPort` được dùng thật ngay từ tuần 1, nên nó là một seam đã được kiểm chứng chứ không phải một abstraction lý thuyết |
-| **Tốt** | Retrieval — nơi chất lượng câu trả lời thực sự được quyết định — chạy cục bộ đúng như production. Không có sự khác biệt nào ở đây giữa dev và prod |
-| **Xấu** | Có nguy cơ tinh chỉnh prompt cho một model mạnh rồi ngã ở model yếu hơn. Bù bằng ba biện pháp ở mục 7 |
-| **Xấu** | Không đo được NFR-01 (first token ≤3s p95 với model cục bộ) cho tới khi có phần cứng thật. Số liệu latency của Phần 1–2 **không dùng để kết luận gì về production** |
-| **Trung tính** | Đường ra ngoài mạng tồn tại từ tuần 1, trước khi Squid được dựng ở tuần 18. Phải chuyển dev sang đi qua Squid ở mốc 3D, nằm trong cổng nghiệm thu Phần 3 |
-
-**Điều kiện huỷ quyết định.** Khi có phần cứng thật (mốc: trước tuần 14), profile `prod` thành mặc định cho mọi việc đo lường. `dev-hybrid` vẫn giữ cho vòng lặp phát triển hằng ngày vì nó nhanh hơn.
+| Version | 2.0 (English) |
+| Date | 2026-09-09 |
+| Status | Decisions locked · setup partly executed |
 
 ---
 
-## 2. ADR-13 — Chạy toàn bộ hệ thống trong Docker
+## 1. ADR-12 — Develop on the demo machine with the `dev-hybrid` profile
 
-**Bối cảnh.** Máy demo có Node v14.21.3 (EOL từ 4/2023), không có pnpm, Python 3.11 thay vì 3.12. Cài toolchain lên host nghĩa là mỗi máy dev phải tự đúng phiên bản, và sự lệch pha giữa các máy là một nguồn lỗi kinh điển. Đồng thời sản phẩm được bàn giao cho khách dưới dạng một stack Docker Compose, nên chạy dev trên cùng stack đó có giá trị riêng.
+**Context.** The design assumes a server with a 48 GB GPU running a ~32B model locally. The actual machine is a laptop with an RTX 3050 Ti and **4 GB of VRAM**. That is enough for embedding and reranking, and not enough for generation at any useful model size. At the same time there are no real customer documents yet, so the development corpus is public legal texts and sample `.md` files — nothing confidential.
 
-**Quyết định.** **Có — chạy toàn bộ hệ thống trong Docker, dưới dạng Dev Container.** Host chỉ cần Docker Desktop, VS Code và Git. Không cài Node, pnpm hay Python lên Windows.
+**Decision.** Develop Phases 1 and 2 on the demo machine using the `dev-hybrid` profile: embedding and reranking run locally on the GPU, generation goes to the Anthropic API through `ModelProviderPort`. A `dev-local` profile (generation via Qwen3-4B on CPU) exists alongside it and runs at every phase gate to prove the local path has not rotted.
 
-Nhưng quyết định này đi kèm **một điều kiện bắt buộc: mã nguồn phải nằm trên filesystem Linux, không phải trên ổ D: của Windows.** Không có điều kiện đó thì quyết định này biến vòng lặp phát triển thành một cực hình, và lợi ích về phiên bản không bù nổi.
+**Consequences.**
 
-### 2.1 Vì sao điều kiện đó là bắt buộc
+| | |
+| --- | --- |
+| **Good** | No hardware ceiling while building the answering, verifier and citation logic — the hardest part of the product. `ModelProviderPort` is exercised for real from week 1, so it is a proven seam rather than a theoretical abstraction |
+| **Good** | Retrieval — where answer quality is actually decided — runs locally exactly as it will in production. There is no dev/prod difference here at all |
+| **Bad** | Risk of tuning prompts for a strong model and then falling over on a weaker one. Mitigated by the three controls in section 7 |
+| **Bad** | NFR-01 and NFR-02 cannot be measured against a local model until real hardware exists. **Latency figures from Phases 1–2 prove nothing about production** |
+| **Neutral** | An outbound network path exists from week 1, before Squid is built. This is why the plan moves Squid into Phase 1 |
 
-Docker Desktop trên Windows chạy container trong một máy ảo WSL2. Khi bind-mount một thư mục Windows (`D:\Data\Ei-AI`) vào container, mọi lần đọc ghi file phải đi qua lớp cầu 9p/drvfs giữa Windows và Linux. Lớp cầu đó chậm hơn filesystem native nhiều lần — và ba việc nặng file nhất của dự án này lại đúng là ba việc làm suốt ngày:
+**When this decision expires.** Once real hardware exists (milestone: before week 16), `prod` becomes the profile of record for all measurement. `dev-hybrid` stays for the daily loop because it is faster.
 
-| Việc | Số file liên quan | Hệ quả khi qua lớp cầu |
+---
+
+## 2. ADR-13 — Run the entire system in Docker
+
+**Context.** The demo machine has Node v14.21.3 (end-of-life since April 2023), no pnpm, and Python 3.11 rather than 3.12. Installing the toolchain on the host means every developer machine has to get the versions right independently, and drift between machines is a classic source of bugs. Separately, the product ships to customers as a Docker Compose stack, so developing on that same stack has value of its own.
+
+**Decision.** **Yes — run everything in Docker, as a Dev Container.** The host needs only Docker Desktop, VS Code and Git. No Node, pnpm or Python installed on Windows.
+
+This carries **one mandatory condition: the source must live on a Linux filesystem, not on the Windows `D:` drive.** Without it, this decision turns the inner development loop into a slog and the version-consistency benefit does not cover the cost.
+
+### 2.1 Why that condition is mandatory
+
+Docker Desktop on Windows runs containers inside a WSL2 virtual machine. Bind-mounting a Windows directory into a container routes every file read and write through the 9p/drvfs bridge between Windows and Linux. That bridge is several times slower than a native filesystem — and the three most file-heavy operations in this project are the three done all day long:
+
+| Operation | Files involved | Effect across the bridge |
 | --- | --- | --- |
-| `pnpm install` | hàng chục nghìn file nhỏ trong `node_modules` | Chậm nhiều lần |
-| Vite HMR khi sửa một component | vài file, nhưng phải theo dõi cả cây | HMR từ mức chục millisecond lên mức giây |
-| `tsc --watch` / `nest start --watch` | cả project | Mỗi lần lưu file là một lần chờ |
+| `pnpm install` | tens of thousands of small files in `node_modules` | Several times slower |
+| Vite HMR on a component edit | few files, but the whole tree is watched | HMR goes from tens of milliseconds to seconds |
+| `tsc --watch` / `nest start --watch` | the whole project | Every save becomes a wait |
 
-Tệ hơn: sự kiện inotify **không truyền tin cậy** qua lớp cầu này, nên watcher phải chuyển sang chế độ polling (`usePolling: true`). Polling nghĩa là quét lại cây file theo chu kỳ — ăn CPU liên tục và vẫn trễ.
+Worse: **inotify events do not propagate reliably** across the bridge, so watchers fall back to polling — rescanning the tree on a timer, burning CPU continuously and still lagging.
 
-Đặt mã nguồn trên filesystem Linux thì cả ba vấn đề biến mất cùng lúc: tốc độ native ext4, inotify hoạt động đúng.
+Putting the source on a Linux filesystem removes all three problems at once: native ext4 speed, and inotify works correctly.
 
-### 2.2 Ba chỗ có thể đặt mã nguồn
+### 2.2 Where the source lives — decided
 
-Máy hiện tại **chỉ có distro `docker-desktop`, chưa có Ubuntu WSL2 nào** — nên phương án A cần thêm một bước cài đặt.
+The machine has **only the `docker-desktop` distro; no Ubuntu is installed**, so option A needs one extra setup step.
 
-| | Nơi đặt mã nguồn | Tốc độ | Cần làm gì | Đánh giá |
-| --- | --- | --- | --- | --- |
-| **A** | Trong distro Ubuntu WSL2 | Native | `wsl --install -d Ubuntu`, rồi clone repo vào `~/ei-ai`. Mở bằng VS Code Remote-WSL | **✅ ĐÃ CHỌN.** Nhanh, git vẫn dùng bình thường, thư mục vẫn truy cập được từ Windows qua `\\wsl$\Ubuntu\home\...` |
-| **B** | Trong một Docker named volume | Native | VS Code Dev Containers → "Clone Repository in Container Volume" | Không chọn. Nhanh và không cần Ubuntu, nhưng mã nguồn nằm trong vhdx — cộng áp lực lên ổ C: đang chật, và sao lưu/thao tác git ngoài container bất tiện |
-| **C** | Giữ nguyên `D:\Data\Ei-AI`, bind-mount vào container | **Chậm** | Không cần làm gì | Không chọn. Chạy được, nhưng vòng lặp phát triển chậm đủ để làm mòn tinh thần đội |
+| | Location | Speed | Assessment |
+| --- | --- | --- | --- |
+| **A** | Inside an Ubuntu WSL2 distro at `~/ei-ai`, opened via VS Code Remote-WSL | Native | **✅ CHOSEN** (2026-09-08). Git works normally, the folder is still reachable from Windows via `\\wsl$\Ubuntu\home\...`. One-off cost ~15 minutes |
+| B | Inside a Docker named volume (Dev Containers "Clone Repository in Container Volume") | Native | Not chosen. Fast and needs no Ubuntu, but the source lives inside the vhdx — adding pressure to an already tight `C:` — and git operations outside the container are awkward |
+| C | Keep `D:\Data\Ei-AI`, bind-mount into containers | **Slow** | Not chosen. It works, but the loop is slow enough to wear the team down |
 
-> **✅ Quyết định: phương án A** — mã nguồn nằm trong distro Ubuntu WSL2 tại `~/ei-ai`. Chốt ngày 2026-09-08.
->
-> **Tiến độ thực thi:** xem mục 4.4. Chưa cài Ubuntu, chưa chuyển repo.
+**Note for a possible retreat to C.** Keep `node_modules` in a named volume rather than bind-mounted. The hottest path then avoids the bridge entirely — `pnpm install` recovers, only watching stays slow. The Compose configuration in section 5 already does this, so no change would be needed.
 
-Chi phí: một lần cài Ubuntu WSL2 khoảng 15 phút, cộng chuyển repo. Đổi lại một vòng lặp phát triển nhanh trong suốt 23 tuần.
+### 2.3 Consequences of ADR-13
 
-**Ghi chú cho trường hợp phải quay lại C** (nếu vì lý do nào đó không dùng được WSL2): để `node_modules` trong một named volume thay vì bind-mount. Đường nóng nhất khi đó không đi qua lớp cầu nữa — `pnpm install` nhanh lại, chỉ còn watch là chậm. Cấu hình ở mục 5 vốn đã làm đúng như vậy, nên không cần sửa gì.
-
-### 2.3 Hệ quả của ADR-13
-
-| Loại | Nội dung |
+| | |
 | --- | --- |
-| **Tốt** | **Phiên bản được đảm bảo bằng image, không bằng lời nhắc.** Node 22.13, pnpm 10, Python 3.12, Postgres 17.2, pgvector 0.8 — tất cả ghim trong Dockerfile. Máy mới vào dự án chỉ cần Docker và VS Code |
-| **Tốt** | **Đội dev chạy đúng stack mà khách sẽ nhận.** Đường cài đặt được diễn tập hằng ngày thay vì chỉ ở Phần 4. Điều này trực tiếp hạ rủi ro của tiêu chí nghiệm thu "một người ngoài đội build cài được hệ thống chỉ bằng tài liệu" |
-| **Tốt** | Không phải nâng Node trên host, không phải xử lý xung đột phiên bản với dự án khác trên cùng máy |
-| **Xấu** | **Cần một lần thiết lập nghiêm túc** — Dev Container, path mapping cho debugger, cấu hình WSL2. Khoảng 2–3 ngày công ở tuần 1, và phải làm cho đúng |
-| **Xấu** | Thêm dependency `pnpm add` thì phải rebuild image hoặc `exec` vào container. Vòng lặp dài hơn so với chạy trên host |
-| **Xấu** | Ăn RAM nhiều hơn. Cần giới hạn WSL2 tường minh, xem mục 4.3 |
-| **Trung tính** | IDE phải chạy *trong* container (Dev Containers) để TypeScript language server thấy `node_modules`. Nếu không, editor mất autocomplete và báo lỗi type sai — đây là cái bẫy phổ biến nhất của cách làm này |
+| **Good** | **Versions are guaranteed by the image, not by a reminder.** Node 22.13, pnpm 10, Python 3.12, Postgres 17.2, pgvector 0.8 are all pinned in Dockerfiles. A new machine needs only Docker and VS Code |
+| **Good** | **The team runs the same stack the customer receives.** The installation path is rehearsed daily instead of only in Phase 4, which directly de-risks NFR-17 ("someone outside the build team installs it from documentation in under 4 hours") |
+| **Good** | No need to upgrade Node on the host, no version conflicts with the other projects on this machine |
+| **Bad** | **Needs real setup work** — Dev Container, debugger path mapping, WSL2 configuration. Roughly 2–3 days in week 1, and it has to be done properly |
+| **Bad** | Adding a dependency means rebuilding the image or `exec`-ing into the container. A longer loop than running on the host |
+| **Bad** | Uses more RAM. WSL2 must be capped explicitly — see section 4.3 |
+| **Neutral** | The IDE must run *inside* the container (Dev Containers) so the TypeScript language server can see `node_modules`. Missing this is the single most common trap with this approach |
 
-**Điều không thay đổi.** Production và CI **đã** hoàn toàn dockerized từ đầu trong kế hoạch — điều đó chưa bao giờ là câu hỏi. Bảo đảm phiên bản cho *thứ được bàn giao* đến từ image, bất kể lập trình viên chạy cục bộ thế nào. ADR-13 chỉ quyết định **vòng lặp phát triển bên trong**. Lập luận của bạn về tính nhất quán phiên bản *giữa các máy trong đội* vẫn đúng và là lý do chính để chọn.
+**What does not change.** Production and CI were fully dockerised from the start; that was never in question. Version guarantees for *what ships* come from the images regardless of how developers run things locally. ADR-13 decides only the **inner development loop** — and the argument that carried it is version consistency *across the team's machines*.
 
 ---
 
-## 3. Kiểm kê máy demo
+## 3. Demo machine inventory
 
-Số liệu thật, đo ngày 2026-09-08.
+Measured 2026-09-08 and 2026-09-09.
 
-| Hạng mục | Thực tế | Đánh giá |
+| Item | Actual | Assessment |
 | --- | --- | --- |
-| CPU | Intel i7-12700H · 14 cores / 20 threads | Đủ tốt. Chạy được Qwen3-4B trên CPU cho profile `dev-local` |
-| RAM | 31,7 GB | Đủ, nhưng phải giới hạn WSL2 tường minh |
-| GPU compute | NVIDIA RTX 3050 Ti Laptop · **4 GB VRAM** · driver 581.95 · compute 8.6 | Đủ cho embedding + rerank. Không đủ cho generation |
-| GPU hiển thị | Intel Iris Xe | **Tin tốt:** màn hình do iGPU lo, nên gần như trọn 4 GB của 3050 Ti dành cho compute |
-| Docker | 29.4.3 · Compose v5.1.3 · backend WSL2 | Sẵn sàng |
-| **NVIDIA container runtime** | **Đã đăng ký** (`nvidia-container-runtime`) | **Ẩn số lớn nhất đã được giải quyết** — GPU passthrough vào container đã hoạt động |
-| **WSL distro** | **Chỉ có `docker-desktop`** | **Chưa có Ubuntu.** Cần cài nếu chọn phương án A ở mục 2.2 |
-| **`.wslconfig`** | **Không có** | WSL2 sẽ tự lấy tới 50% RAM ≈ 16 GB. Cần cấu hình tường minh |
-| Node.js trên host | v14.21.3 | **Không còn quan trọng** nếu theo ADR-13 |
-| pnpm trên host | Chưa có | **Không cần** nếu theo ADR-13 |
-| Python trên host | 3.11.15 | **Không cần** — parser chạy trong container |
-| Git | 2.50.1 | Được |
-| **Ổ vật lý** | **Samsung PM991a NVMe 512 GB — chỉ MỘT ổ, Disk 0** | **C: và D: là hai phân vùng của cùng một đĩa.** Chuyển dữ liệu qua lại không nhanh hơn và không tạo thêm dung lượng |
-| Phân vùng C: | **50,3 GB trống** / 358,2 GB *(sau dọn dẹp 09-09)* | Docker vhdx ở đây, 73,2 GB — chưa nén, nên chỗ trống bên trong chưa trả về Windows |
-| Phân vùng D: | 90,4 GB trống / 117,2 GB | Phân vùng nhỏ hơn. Không cần dùng đến |
-| WSL | 2.7.3 — hỗ trợ `--location` khi cài distro | Đặt được distro sang D: nếu muốn, nhưng không cần |
-| Sparse VHD | **Bị WSL chặn** — cảnh báo hỏng dữ liệu | Muốn nén vhdx thì dùng `diskpart compact vdisk`, **không** dùng `--set-sparse --allow-unsafe` |
+| CPU | Intel i7-12700H · 14 cores / 20 threads | Adequate. Can run Qwen3-4B on CPU for `dev-local` |
+| RAM | 31.7 GB | Adequate, but WSL2 must be capped explicitly |
+| GPU (compute) | NVIDIA RTX 3050 Ti Laptop · **4 GB VRAM** · driver 581.95 · compute 8.6 | Enough for embedding + rerank. Not enough for generation |
+| GPU (display) | Intel Iris Xe | **Good news:** the iGPU drives the display, so nearly all 4 GB of the 3050 Ti is available for compute |
+| Docker | 29.4.3 · Compose v5.1.3 · WSL2 backend | Ready |
+| **NVIDIA container runtime** | **`nvidia-container-runtime` registered** | **The biggest unknown, already solved** — GPU passthrough into containers works |
+| **WSL distro** | **Only `docker-desktop`** | **No Ubuntu yet.** Needed for option A |
+| **`.wslconfig`** | **Written, not yet applied** | WSL2 would otherwise take up to 50% of RAM (~16 GB) and be slow to release it |
+| WSL version | 2.7.3 | Supports `--location` when installing a distro |
+| Node on host | v14.21.3 | **No longer relevant** under ADR-13 — the toolchain lives in the image |
+| pnpm / Python on host | absent / 3.11.15 | **Not needed** under ADR-13 |
+| Git | 2.50.1 | Fine |
+| **Physical disk** | **Samsung PM991a NVMe 512 GB — a single disk, Disk 0** | **`C:` and `D:` are two partitions of the same drive.** Moving data between them is neither faster nor space-creating |
+| Partition `C:` | **50.0 GB free** / 358.2 GB | Docker's vhdx lives here at 73.2 GB, of which only ~5.7 GB is in use after cleanup |
+| Partition `D:` | 90.4 GB free / 117.2 GB | The smaller partition. Not needed |
+| Sparse VHD | **Blocked by WSL** — data-corruption warning | To shrink the vhdx use `diskpart compact vdisk`, **never** `--set-sparse --allow-unsafe` |
 
-> **Lưu ý về máy dùng chung.** Máy này còn chạy hai dự án khác: `marlin-dev` và `eerp-dev` (Laravel, bind-mount từ `D:\Data\ERP-Team\EERP`), cùng bốn volume của chúng — `marlin_marlin_node_modules`, `e-erp_eerp_vendor`, `e-erp_eerp_storage_framework`, `e-erp_eerp_bootstrap_cache`.
+> **This machine is shared with other projects.** `marlin-dev` and `eerp-dev` (Laravel, bind-mounted from `D:\Data\ERP-Team\EERP`) are running, together with four of their volumes: `marlin_marlin_node_modules`, `e-erp_eerp_vendor`, `e-erp_eerp_storage_framework`, `e-erp_eerp_bootstrap_cache`.
 >
-> Mọi thao tác dọn dẹp Docker phải **nhắm đích cụ thể**, không dùng lệnh quét toàn bộ — đặc biệt **không bao giờ** `docker volume prune`. Bài học đã trả giá: đợt dọn ngày 09-09 bằng Docker Desktop đã xoá mất `e-erp_eerp_mysql_data` và `eerp-dev_db-data` vì chúng không gắn container đang chạy nên bị tính là "unused".
+> Every Docker cleanup operation must **target specific objects**. Never use a sweeping command, and in particular **never `docker volume prune`**. A lesson already paid for: the 2026-09-09 cleanup via Docker Desktop destroyed `e-erp_eerp_mysql_data` and `eerp-dev_db-data`, because neither was attached to a running container and both therefore counted as "unused". The e-erp source code was unaffected (it is bind-mounted); the dev database has to be rebuilt from Laravel migrations and seeders.
 
 ---
 
-## 4. Chuẩn bị môi trường — việc của tuần 1
+## 4. Environment preparation
 
-Theo ADR-13, danh sách này ngắn hơn trước: không còn việc nâng Node hay cài pnpm trên host.
+Under ADR-13 this list is shorter than it would otherwise be: no Node upgrade, no pnpm install on the host.
 
-**Tiến độ:** B1 xong, B0 làm dở, B2–B4 chưa bắt đầu. Chi tiết ở mục 4.4.
+### 4.1 Disk requirement
 
-### 4.1 Yêu cầu dung lượng
+Ei-AI needs roughly **35–45 GB** on `C:`:
 
-Ei-AI cần khoảng **35–45 GB** trên ổ C:
-
-| Thành phần | Dung lượng |
+| Component | Size |
 | --- | --- |
-| Image Infinity nền CUDA | ~6–8 GB |
-| Weights model (BGE-M3 + reranker + Qwen3-4B GGUF) | ~7 GB |
-| Postgres + dữ liệu, Redis, các volume `node_modules`, build cache | ~12–20 GB |
-| Distro Ubuntu WSL2 + repo | ~8–10 GB |
+| Infinity image on a CUDA base | ~6–8 GB |
+| Model weights (BGE-M3 + reranker + Qwen3-4B GGUF) | ~7 GB |
+| Postgres and its data, Redis, `node_modules` volumes, build cache | ~12–20 GB |
+| Ubuntu WSL2 distro + repository | ~8–10 GB |
 
-Máy này chỉ có **một ổ vật lý** (Samsung PM991a NVMe 512 GB); C: và D: là hai phân vùng của nó. Vì thế chuyển dữ liệu giữa hai ổ không nhanh hơn và không tạo thêm dung lượng — **cứ để mọi thứ ở vị trí mặc định trên C:**.
+Because `C:` and `D:` are partitions of one physical NVMe, moving data between them is neither faster nor space-creating — **leave everything in its default location on `C:`**.
 
-> **Điều kiện tiên quyết:** C: phải còn **≥45 GB trống** trước khi dựng stack. Kiểm tra bằng `Get-PSDrive C`. Việc dọn dẹp để đạt ngưỡng này là housekeeping một lần, không thuộc phạm vi kế hoạch này.
+**Current state after the 2026-09-09 cleanup:** Docker occupies ~5.7 GB inside a 73.2 GB vhdx, so roughly **67 GB is free inside the vhdx** and available for Ei-AI's images and volumes without the file growing at all. `C:` itself has 50 GB free, which covers the Ubuntu distro and the repository. **No vhdx compaction is required.**
 
-### 4.2 Cài Ubuntu WSL2 và chuyển repo — bước B3
+### 4.2 Install Ubuntu WSL2 and move the repository — step B3
 
-> **Phải xong B0 trước.** `git init` đã chạy và file đã được stage, nhưng **chưa có commit nào và chưa có remote**. Chuyển một thư mục chưa được commit sang chỗ khác là lúc dễ mất dữ liệu nhất. Hãy commit và push **trước khi** đụng vào bất cứ thứ gì khác.
+> **Finish B0c first.** The repository has commits and a remote, but **nothing has been pushed yet**. Moving a directory whose only copy is local is the easiest way to lose work. Push before touching anything else.
 >
-> Đây cũng là câu trả lời cho "code nằm trong vhdx của WSL thì có an toàn không": an toàn vì nó có remote, không phải vì nó nằm ở ổ nào.
+> This is also the honest answer to "is code safe inside a WSL vhdx?" — it is safe because it has a remote, not because of which drive holds it.
 
-**Distro Ubuntu nằm ở đâu.** Mặc định WSL cài vào `C:\Users\<user>\AppData\Local\Packages\CanonicalGroupLimited...\LocalState\ext4.vhdx`. Vì C: và D: là hai phân vùng của cùng một ổ vật lý (mục 3), chỗ này **không ảnh hưởng tốc độ**, và C: còn 50,3 GB nên đủ chỗ. Nên: **cứ để mặc định.**
+**Where the distro lives.** WSL installs to `C:\Users\<user>\AppData\Local\Packages\CanonicalGroupLimited...\LocalState\ext4.vhdx` by default. Since `C:` and `D:` are partitions of one disk (section 3), this has **no effect on speed**, and `C:` has room. So: **leave the default.**
 
-Nếu vẫn muốn đặt distro sang D: — WSL trên máy này là 2.7.3 nên hỗ trợ `--location`:
+If you want the distro on `D:` anyway, WSL 2.7.3 supports `--location`:
 
 ```powershell
 wsl --install -d Ubuntu --location D:\wsl\Ubuntu
 ```
 
-Với distro đã cài rồi thì dùng export/import:
+For an existing distro, export and re-import:
 
 ```powershell
 wsl --export Ubuntu D:\wsl\ubuntu-backup.tar
@@ -157,80 +152,73 @@ wsl --unregister Ubuntu
 wsl --import Ubuntu D:\wsl\Ubuntu D:\wsl\ubuntu-backup.tar
 ```
 
-**Cài và chuyển repo:**
+**Install and move:**
 
 ```bash
-# Trên Windows (PowerShell)
+# On Windows (PowerShell)
 wsl --install -d Ubuntu
-# Khởi động lại nếu được yêu cầu, rồi đặt user/password cho Ubuntu
+# Reboot if prompted, then set the Ubuntu username and password
 
-# Trong Ubuntu
+# Inside Ubuntu
 sudo apt update && sudo apt install -y git
 git config --global user.email "howie@cal-se.com"
-git config --global core.autocrlf input      # tránh lộn xộn CRLF/LF khi qua lại Windows
+git config --global core.autocrlf input      # avoids CRLF/LF churn across the boundary
 
-# Nếu repo đã lên remote:
-git clone <repo-url> ~/ei-ai
-
-# Nếu chưa có remote, chuyển từ D: sang (chạy trong Ubuntu):
-cp -r /mnt/d/Data/Ei-AI ~/ei-ai
-cd ~/ei-ai && git init && git add -A && git commit -m "chore: initial import from D:"
-
-cd ~/ei-ai && code .        # VS Code mở ở chế độ Remote-WSL
+git clone https://github.com/nguyenchiemhao/Ei-AI.git ~/ei-ai
+cd ~/ei-ai && code .        # opens VS Code in Remote-WSL mode
 ```
 
-Thư mục vẫn truy cập được từ Windows Explorer qua `\\wsl$\Ubuntu\home\<user>\ei-ai` nếu cần — nhưng **đừng sửa file qua đường đó khi đang chạy container**, vì đó chính là lớp cầu chậm mà ADR-13 tránh.
+The folder stays reachable from Windows Explorer at `\\wsl$\Ubuntu\home\<user>\ei-ai` — but **do not edit files through that path while containers are running**, because that is exactly the slow bridge ADR-13 exists to avoid.
 
-**Về `docs/` hiện ở `D:\Data\Ei-AI\docs`:** chuyển cả repo vào WSL2, không tách. Tài liệu và code nên đi cùng nhau trong version control, và `docs/` là file text nên tốc độ không phải vấn đề. Sau khi chuyển, `D:\Data\Ei-AI` nên xoá hoặc đổi tên thành `Ei-AI.moved` để không ai sửa nhầm vào bản cũ.
+Once `git log` inside `~/ei-ai` shows the full history, rename the old directory rather than deleting it:
 
-> **Chưa làm bước này.** Ba tài liệu plan hiện vẫn nằm ở `D:\Data\Ei-AI\docs\plan\`.
+```powershell
+Rename-Item "D:\Data\Ei-AI" "Ei-AI.moved"
+```
 
-### 4.3 Giới hạn RAM cho WSL2
+Keep it for a few days. And note that **this Claude Code session is rooted at `d:\Data\Ei-AI`** — after the move, restart it at `~/ei-ai` inside WSL.
 
-Không có `.wslconfig` thì WSL2 tự lấy tới 50% RAM (≈16 GB) và không trả lại nhanh. Với Infinity + Postgres + Node + Vite cùng chạy, cộng Windows và IDE, laptop sẽ thrash.
+### 4.3 Cap WSL2 memory — step B2
 
-Tạo `C:\Users\<user>\.wslconfig`:
+Without a `.wslconfig`, WSL2 takes up to 50% of RAM (~16 GB) and is slow to release it. With Infinity, Postgres, Node and Vite all running in containers, plus Windows, the IDE and a browser, the machine will thrash.
+
+`C:\Users\<user>\.wslconfig`:
 
 ```ini
 [wsl2]
 memory=18GB
 processors=12
 swap=4GB
-# Cho phép vhdx co lại khi xoá dữ liệu
-sparseVhd=true
 
 [experimental]
+# Return RAM to Windows gradually when WSL is not using it
 autoMemoryReclaim=gradual
 ```
 
-Rồi `wsl --shutdown` để áp dụng. Con số 18 GB để lại ~13 GB cho Windows, IDE và browser — điều chỉnh sau khi đo thực tế.
+Then `wsl --shutdown` to apply. 18 GB leaves ~13 GB for Windows, the IDE and a browser — adjust once measured.
 
-### 4.4 Nhật ký thực thi
+**Deliberately omitted: `sparseVhd=true`.** That is the same feature WSL refuses on existing distros because of a data-corruption risk (section 3). If the vhdx ever needs shrinking, use `diskpart compact vdisk` instead.
 
-| Bước | Trạng thái | Ngày | Ghi chú |
+### 4.4 Execution log
+
+| Step | Status | Date | Notes |
 | --- | --- | --- | --- |
-| **B0a** — `git init` + commit | ✅ **Xong** | 09-09 | Commit `fbbadca "Init commit"`, 8 file (4 trong `docs/`) |
-| **B0b** — gắn remote | ✅ **Xong** | 09-09 | `origin` → `https://github.com/nguyenchiemhao/Ei-AI.git`. Repo trên GitHub còn rỗng |
-| **B0c** — push | 🔴 **Chưa** | | Nhánh cục bộ là `master`; cân nhắc đổi sang `main` trước khi push |
-| **B1** — C: ≥45 GB trống | ✅ **Xong** | 09-09 | Xoá 30 image và 48 volume. C: còn 50 GB |
-| **B1b** — `docker builder prune -a` | ✅ **Xong** | 09-09 | Build cache về **0 B**. Docker giờ chỉ chiếm ~5,7 GB bên trong vhdx |
-| **B2** — `.wslconfig` | ⬜ Chưa | | |
-| **B3** — cài Ubuntu, chuyển repo | ⬜ Chưa | | |
-| **B4** — Dev Containers + Remote-WSL | ⬜ Chưa | | |
-
-**Ghi chú từ đợt dọn 09-09:**
-
-- vhdx **chưa nén**, vẫn 73,2 GB. **Không cần nén.** Sau khi dọn xong, Docker chỉ còn chiếm **~5,7 GB** bên trong vhdx (image 4,58 + container 0,17 + volume 0,94 + cache 0) — tức **trống ~67 GB bên trong**. Toàn bộ image và volume của Ei-AI (25–35 GB) nằm gọn trong đó mà file không phình thêm. C: chỉ cần chỗ cho distro Ubuntu + repo (~8–10 GB) và đang còn 50 GB. Nếu sau này cần lấy lại chỗ cho việc khác thì dùng `diskpart compact vdisk`, **không** dùng sparse VHD (WSL chặn vì rủi ro hỏng dữ liệu).
-- Mất `e-erp_eerp_mysql_data` và `eerp-dev_db-data`. Mã nguồn e-erp không ảnh hưởng (bind-mount). Dựng lại bằng migration/seeder của Laravel nếu cần.
+| **B0a** — `git init` + commit | ✅ **Done** | 09-09 | Commits on `main`; `core.autocrlf=input` set |
+| **B0b** — attach remote | ✅ **Done** | 09-09 | `origin` → `github.com/nguyenchiemhao/Ei-AI` |
+| **B0c** — first push | 🔴 **Not done** | | **Blocked on one answer: is the repository public or private?** The content includes the full system design, effort estimates and pilot-customer information |
+| **B1** — free ≥45 GB on `C:` | ✅ **Done** | 09-09 | Images 47.1 → 4.6 GB (32 → 2), volumes 25.7 → 0.9 GB (52 → 4), build cache 28.4 → 0 GB. `C:` at 50 GB free |
+| **B2** — `.wslconfig` | 🟡 **Written, not applied** | 09-09 | Needs one `wsl --shutdown` |
+| **B3** — install Ubuntu, move repository | 🔴 **Not done** | | ~15 minutes. Do B0c first |
+| **B4** — Dev Containers + Remote-WSL | 🔴 **Not done** | | Two VS Code extensions, then open `~/ei-ai` |
 
 ---
 
-## 5. Compose stack cho `dev-hybrid`
+## 5. Compose stack for `dev-hybrid`
 
-Bảy service. GPU chỉ cấp cho một service duy nhất là `infinity`.
+Seven services. Only `infinity` is given the GPU.
 
 ```yaml
-# infra/compose/docker-compose.yml (rút gọn — chỉ phần cốt lõi)
+# infra/compose/docker-compose.yml (abridged — core services only)
 services:
   postgres:
     image: pgvector/pgvector:pg17
@@ -251,7 +239,7 @@ services:
     ports: ['6379:6379']
 
   infinity:
-    image: michaelf34/infinity:0.0.76          # ghim lại đúng patch khi dựng
+    image: michaelf34/infinity:0.0.76          # pin the exact patch at setup time
     command: >
       v2
       --model-id BAAI/bge-m3
@@ -261,7 +249,7 @@ services:
     environment:
       HF_HOME: /models
     volumes:
-      - models:/models                          # cache weights, tránh tải lại mỗi lần
+      - models:/models                          # cache weights, avoid re-downloading
     ports: ['7997:7997']
     deploy:
       resources:
@@ -271,24 +259,35 @@ services:
               count: 1
               capabilities: [gpu]
 
+  squid:
+    image: ubuntu/squid:6.6-24.04_beta          # Phase 1 — the only route out
+    volumes:
+      - ../squid/squid.conf:/etc/squid/squid.conf:ro
+      - squidlogs:/var/log/squid
+    ports: ['3128:3128']
+
   api:
     build: { context: ../.., dockerfile: apps/api/Dockerfile, target: dev }
     command: pnpm --filter api start:dev
     env_file: ../../.env
     volumes:
-      - ../..:/workspace                        # mã nguồn
-      - api_node_modules:/workspace/node_modules        # KHÔNG bind-mount node_modules
+      - ../..:/workspace                        # source
+      - api_node_modules:/workspace/node_modules        # NOT bind-mounted
       - api_pkg_modules:/workspace/apps/api/node_modules
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_started }
     ports:
       - '3000:3000'
-      - '9229:9229'                             # Node inspector cho debugger
+      - '9229:9229'                             # Node inspector for the debugger
+    # Phase 1 onward: no default route. All egress goes through squid.
+    environment:
+      HTTP_PROXY: http://squid:3128
+      HTTPS_PROXY: http://squid:3128
 
   ingest-worker:
     build: { context: ../.., dockerfile: apps/api/Dockerfile, target: dev }
-    command: pnpm --filter api start:worker     # cùng image, khác entrypoint
+    command: pnpm --filter api start:worker     # same image, different entrypoint
     env_file: ../../.env
     volumes:
       - ../..:/workspace
@@ -314,29 +313,93 @@ services:
       - web_pkg_modules:/workspace/apps/web/node_modules
     ports: ['5173:5173']
 
+  # Profile `dev-local` only. Not started by default.
+  llamacpp:
+    profiles: ['dev-local']
+    image: ghcr.io/ggml-org/llama.cpp:server
+    command: >
+      -m /models/qwen3-4b-instruct-q4_k_m.gguf
+      --host 0.0.0.0 --port 8080
+      --ctx-size 8192
+      --threads 12
+      --jinja
+    volumes:
+      - models:/models                          # GGUF must be downloaded here first
+    ports: ['8080:8080']
+
 volumes:
   pgdata:
   models:
+  squidlogs:
   api_node_modules:
   api_pkg_modules:
   web_node_modules:
   web_pkg_modules:
 ```
 
-**Ba chi tiết dễ bỏ sót, và cả ba đều gây đau nếu bỏ:**
+**Two Compose profiles, and what each is for:**
 
-1. **`node_modules` phải là named volume, không bind-mount.** Nếu để nó theo bind-mount, container sẽ ghi hàng chục nghìn file qua lớp cầu filesystem. Đây là nguyên nhân số một của "Docker chậm quá" trên Windows.
-2. **Cổng 9229 phải mở** để VS Code attach debugger vào Node trong container. Kèm cấu hình `remoteRoot: /workspace` trong `launch.json`.
-3. **Nếu mã nguồn ở ổ D: (phương án C mục 2.2)**, phải bật polling cho watcher, nếu không HMR sẽ đơn giản là không chạy:
+| Command | Services started | Profile |
+| --- | --- | --- |
+| `docker compose up` | postgres, redis, infinity, squid, api, ingest-worker, parser, web | `dev-hybrid` (default) |
+| `docker compose --profile dev-local up` | the above **plus** llamacpp | `dev-local` |
+| `docker compose -f docker-compose.yml -f compose.gpu.yml up` | the above **plus** vllm | `prod` — fails on the laptop, correctly |
+
+The GGUF for `dev-local` has to be fetched once into the `models` volume:
+
+```bash
+docker compose run --rm --entrypoint sh infinity -c \
+  'wget -O /models/qwen3-4b-instruct-q4_k_m.gguf \
+   https://huggingface.co/Qwen/Qwen3-4B-Instruct-GGUF/resolve/main/Qwen3-4B-Instruct-Q4_K_M.gguf'
+```
+
+**A detail that matters for the agentic loop:** `dev-local` must produce **schema-valid tool actions**, not just fluent prose. llama.cpp does this with grammar-constrained decoding (GBNF) plus `--jinja` for the tool-call template. `ModelProviderPort`'s `chooseAction()` contract is therefore satisfied locally by passing a grammar derived from the tool's `input_schema` — the same contract Anthropic satisfies with structured outputs. Neither adapter leaks its mechanism upward.
+
+### 5.1 Squid configuration
+
+The point of Squid in Phase 1 is that **the allowlist starts empty**, which makes FR-45 testable on day one.
+
+```conf
+# infra/squid/squid.conf
+http_port 3128
+
+# Allowlist is a separate file the API regenerates whenever allowlist_entries changes.
+# It ships EMPTY. An empty allowlist means nothing gets out — that is the default posture,
+# not a misconfiguration.
+include /etc/squid/allowlist.conf
+
+# Default deny. Must be the last rule.
+http_access deny all
+
+# Every request logged with destination and byte counts — feeds egress reconciliation (FR-46).
+access_log /var/log/squid/access.log squid
+logformat squid %ts.%03tu %6tr %>a %Ru %ssl::>sni %<st %>st
+```
+
+```conf
+# infra/squid/allowlist.conf — generated, starts empty.
+# After an Administrator adds api.anthropic.com, the API writes:
+#
+#   acl allowed_dst dstdomain api.anthropic.com
+#   http_access allow allowed_dst
+```
+
+For `dev-hybrid` to reach the Anthropic API, `api.anthropic.com` must be seeded into `allowlist_entries` — deliberately, so that even the development environment exercises the allowlist path rather than bypassing it.
+
+**Three details that are easy to miss, and all three hurt if missed:**
+
+1. **`node_modules` must be a named volume, never bind-mounted.** Leave it bind-mounted and the container writes tens of thousands of files across the filesystem bridge. This is the number-one cause of "Docker is so slow" on Windows.
+2. **Port 9229 must be exposed** so VS Code can attach a debugger to Node inside the container, with `remoteRoot: /workspace` in `launch.json`.
+3. **If the source ever sits on `D:` (option C)**, polling must be enabled or HMR simply will not fire:
    ```bash
    CHOKIDAR_USEPOLLING=true
    WATCHPACK_POLLING=true
    ```
-   Nếu mã nguồn ở WSL2 hoặc trong volume thì **không** đặt hai biến này — polling chỉ làm chậm vô ích.
+   With the source in WSL2 or a volume, **do not** set these — polling then only wastes CPU.
 
-**Profile GPU tách riêng** (`compose.gpu.yml`) chỉ dùng khi có phần cứng thật — nó thêm `vllm` và đổi `MODEL_PROVIDER` sang `local`. Trên laptop, profile này không khởi động được và **đó là hành vi đúng**, không phải lỗi.
+**The GPU profile** (`compose.gpu.yml`) is used only with real hardware; it adds `vllm` and switches `MODEL_PROFILE` to `prod`. On the laptop it cannot start, and **that is correct behaviour, not a bug**.
 
-### 5.1 Dev Container
+### 5.2 Dev Container
 
 ```jsonc
 // .devcontainer/devcontainer.json
@@ -363,38 +426,45 @@ volumes:
 }
 ```
 
-`typescript.tsdk` trỏ vào `node_modules` trong container là điều kiện để IDE có autocomplete và báo lỗi type đúng. Thiếu dòng này là cái bẫy phổ biến nhất của cách làm này.
+Pointing `typescript.tsdk` at the in-container `node_modules` is what gives the IDE working autocomplete and correct type errors. Omitting that line is the most common trap with this approach.
 
 ---
 
-## 6. Ngân sách 4 GB VRAM
+## 6. The 4 GB VRAM budget
 
-| Thành phần | VRAM | Ghi chú |
+| Component | VRAM | Notes |
 | --- | --- | --- |
-| BGE-M3 weights (fp16) | ~1,15 GB | 568M tham số |
-| BGE-reranker-v2-m3 weights (fp16) | ~1,15 GB | 568M tham số |
-| Activation + batch buffer | ~0,5–0,8 GB | Phụ thuộc batch size |
-| CUDA context overhead | ~0,3 GB | |
-| **Tổng** | **~3,1–3,4 GB** | Vừa trong 4 GB, nhưng **chật** |
+| BGE-M3 weights (fp16) | ~1.15 GB | 568M parameters |
+| BGE-reranker-v2-m3 weights (fp16) | ~1.15 GB | 568M parameters |
+| Activation + batch buffer | ~0.5–0.8 GB | Depends on batch size |
+| CUDA context overhead | ~0.3 GB | |
+| **Total** | **~3.1–3.4 GB** | Fits within 4 GB, but **tight** |
 
-**Ba việc phải làm để không tràn:**
+**Three things keep it from overflowing:**
 
-1. Đặt batch size thấp: `--batch-size 8` cho Infinity. Với corpus dev nhỏ thì throughput không phải vấn đề.
-2. Nếu vẫn tràn: nạp reranker ở int8 thay vì fp16 (giảm còn ~0,6 GB), hoặc đẩy reranker sang CPU — corpus dev nhỏ nên chấp nhận được.
-3. **Không chạy game, Stable Diffusion hay công cụ AI nào khác dùng GPU cùng lúc.** 4 GB không chia được.
+1. Keep the batch size low: `--batch-size 8` for Infinity. Throughput is not a concern on a small development corpus.
+2. If it still overflows: load the reranker at int8 (~0.6 GB), or move it to CPU — acceptable at development corpus size.
+3. **Do not run games, Stable Diffusion or any other GPU tool at the same time.** 4 GB does not divide.
+
+The first measurement of week 1 is the real number: `nvidia-smi --query-gpu=memory.used --format=csv` with both models loaded. Record it.
 
 ---
 
-## 7. Biến môi trường
+## 7. Environment variables
 
 ```bash
-# .env.example — commit file này, không commit .env
+# .env.example — commit this file, never commit .env
 
-# --- Database & queue (tên service, không phải localhost, vì chạy trong Docker) ---
+# --- Database & queue (service names, not localhost — everything runs in Docker) ---
 DATABASE_URL=postgresql://postgres:changeme@postgres:5432/eiai
 REDIS_URL=redis://redis:6379
 
-# --- Retrieval (luôn cục bộ, mọi profile) ---
+# --- Egress (Phase 1 onward: the only route out) ---
+HTTP_PROXY=http://squid:3128
+HTTPS_PROXY=http://squid:3128
+NO_PROXY=postgres,redis,infinity,parser,localhost,127.0.0.1
+
+# --- Retrieval (always local, every profile) ---
 EMBEDDING_BASE_URL=http://infinity:7997
 EMBEDDING_MODEL=BAAI/bge-m3
 RERANK_MODEL=BAAI/bge-reranker-v2-m3
@@ -402,104 +472,238 @@ RETRIEVAL_CANDIDATE_LIMIT=60
 RETRIEVAL_KEEP_TOP=8
 RETRIEVAL_RELEVANCE_FLOOR=0.35
 
+# --- Agent loop ---
+AGENT_BUDGET_MS=120000
+AGENT_BUDGET_STEPS=12
+AGENT_LOOP_DETECT_THRESHOLD=3
+AGENT_INVALID_ACTION_RETRIES=2
+
 # --- Generation ---
 # dev-hybrid | dev-local | prod
 MODEL_PROFILE=dev-hybrid
 
-# dev-hybrid: Anthropic qua ModelProviderPort
-ANTHROPIC_API_KEY=              # KHÔNG commit
-GENERATION_MODEL=claude-haiku-4-5-20251001
-VERIFIER_MODEL=claude-haiku-4-5-20251001
-CEILING_MODEL=claude-sonnet-5   # chỉ dùng khi đo trần chất lượng
+# dev-hybrid: Anthropic via ModelProviderPort
+ANTHROPIC_API_KEY=              # NEVER commit
+GENERATION_MODEL=claude-haiku-4-5
+VERIFIER_MODEL=claude-haiku-4-5
+CEILING_MODEL=claude-sonnet-5   # only for ceiling measurement
 
-# dev-local: llama.cpp, cũng là một service trong compose
+# dev-local: llama.cpp, also a Compose service
 LOCAL_GENERATION_BASE_URL=http://llamacpp:8080
 LOCAL_GENERATION_MODEL=qwen3-4b-instruct-q4_k_m
 
+# --- Approval ---
+APPROVAL_EXPIRY_MS=900000
+
 # --- Auth ---
-JWT_SECRET=                     # sinh bằng: openssl rand -base64 48
+JWT_SECRET=                     # generate with: openssl rand -base64 48
 ACCESS_TOKEN_TTL=15m
 REFRESH_TOKEN_TTL=8h
 
-# --- Feature flags (mục 1.4 của plan chính) ---
-FEATURE_ASK_ANSWER=coming_soon
+# --- Internal tools (always available, cannot be disabled) ---
+# The three internal tools of Phase 2. They need no network and no configuration,
+# which is what makes the `document-only` operating mode possible (ADR-10).
+TOOL_SEARCH_DOCUMENTS_ENABLED=true
+TOOL_READ_DOCUMENT_PAGE_ENABLED=true
+TOOL_LIST_WORKSPACE_DOCUMENTS_ENABLED=true
+
+# --- Optional tools (off by default — ADR-10) ---
+# web_search additionally requires an allowlist_entries row for the search provider.
+TOOL_WEB_SEARCH_ENABLED=false
+# MCP tools are discovered, never configured here. Zero registered servers is a
+# supported configuration, not a degraded one (FR-75).
+
+# --- Feature flags ---
+FEATURE_AGENT_LOOP=coming_soon
+FEATURE_VERIFIED_ANSWERS=coming_soon
 FEATURE_APPROVALS=coming_soon
 FEATURE_CONNECTORS=coming_soon
 ```
 
-### Vì sao chọn `claude-haiku-4-5` làm mặc định cho dev, không phải Sonnet hay Opus
+**Operating mode is derived, never configured.** There is no `OPERATING_MODE` variable. The Tool registry computes the mode at the start of every turn from which tools are actually enabled and reachable, so it always reflects reality rather than an operator's intention. With the values above the mode is `document-only`, which is the default install and the default CI scenario.
 
-Đây là điểm ngược trực giác nhưng quan trọng.
+### 7.1 Why `claude-haiku-4-5` is the development default rather than Sonnet or Opus
 
-Đích production là Qwen3-32B chạy cục bộ. Nếu dev bằng model mạnh nhất, ta sẽ viết prompt dựa trên năng lực mà model production không có, và cú đổi ở Phần 4 thành một vách đá. Chọn model ở tầng năng lực gần với một model 32B cục bộ hơn khiến cú đổi đó thành một bậc thang.
+This is counter-intuitive and important.
 
-`claude-sonnet-5` giữ vai trò **đo trần**: chạy golden set bằng nó mỗi khi cần biết "kém là do prompt hay do model". Nếu Sonnet cũng sai ở cùng chỗ thì lỗi nằm ở retrieval hoặc ở prompt, không phải ở kích thước model — và đó là thông tin đáng giá hơn nhiều so với một điểm số cao.
+The production target is a locally hosted ~32B model. Developing against the strongest available model means writing prompts that lean on capability production will not have, turning the Phase 4 swap into a cliff. Choosing a capability tier closer to a local 32B model makes that swap a step instead.
 
-Ta không đoán khoảng cách giữa các model. **Eval harness đo nó**, từ tuần 10, trên cả ba lựa chọn.
+`claude-sonnet-5` has one job: **ceiling measurement**. Run the golden set against it whenever you need to know whether a weak result is the prompt or the model. If Sonnet fails in the same place, the fault is in retrieval or in the prompt — and that is far more useful information than a high score.
 
-### Ba biện pháp khoá rủi ro "dev mạnh, prod yếu"
+We do not guess the gap between models. **The eval harness measures it**, from week 10, across all three options.
 
-1. **Mỗi cổng nghiệm thu chạy golden set trên cả `dev-hybrid` và `dev-local`.** Chênh lệch điểm là một chỉ số được theo dõi liên tục, không phải một bất ngờ ở tuần 20.
-2. **Không viết prompt phụ thuộc tính năng riêng của provider.** Verifier trả JSON theo schema ta tự định nghĩa. Không dùng citation API riêng của bên nào — nếu dùng, `ModelProviderPort` sẽ rò rỉ chi tiết provider vào tầng nghiệp vụ và cú đổi sẽ đau.
-3. **Latency của Phần 1–2 không dùng để kết luận về production.** Ghi rõ trong mọi báo cáo eval là số nào đo trên profile nào.
+### 7.2 Three mandatory controls on the "strong in dev, weak in prod" risk
+
+1. **Every phase gate runs the golden set on both `dev-hybrid` and `dev-local`.** The gap between them is a continuously tracked metric, not a week-20 surprise.
+2. **No prompt may depend on a provider-specific feature.** The verifier returns JSON against a schema we define. Using one provider's citation API would leak provider detail into the business layer and make the swap painful.
+3. **Phase 1–2 latency figures are never used to draw conclusions about production.** Every eval report states which profile produced which number.
 
 ---
 
-## 8. Kỳ vọng hiệu năng — và điều không được kết luận từ nó
+## 8. Performance expectations — and what must not be concluded from them
 
-| Chỉ số | Trên máy demo (`dev-hybrid`) | Trên phần cứng thật (`prod`) |
+| Metric | On the demo machine (`dev-hybrid`) | On real hardware (`prod`) |
 | --- | --- | --- |
-| Embedding throughput | Đo ở tuần 1. Ước lượng 40–80 chunk/giây với batch 8 | Cao hơn nhiều, GPU lớn hơn và batch lớn hơn |
-| Rerank 60 candidate | ~200–400 ms | ~50–100 ms |
-| First token | Phụ thuộc mạng và API, không phụ thuộc máy | **Đây là số duy nhất có ý nghĩa cho NFR-01, và chỉ đo được trên `prod`** |
-| Ingest 400 trang PDF | Chậm — parser và OCR ăn CPU, mà CPU cũng đang chạy mọi thứ khác | Nhanh hơn, và song song hoá được |
+| Embedding throughput | Measure in week 1. Estimate 40–80 chunks/second at batch 8 | Considerably higher — bigger GPU, bigger batches |
+| Rerank of 60 candidates | ~200–400 ms | ~50–100 ms |
+| First agent step visible | Dominated by network and API, not by this machine | **The only number that means anything for NFR-01, and only measurable on `prod`** |
+| Complete turn | Depends on step count and API latency | The real NFR-02 measurement |
+| Ingest a 400-page PDF | Slow — the parser and OCR are CPU-bound, and the CPU is also running everything else | Faster, and parallelisable |
 
-**Không được dùng số liệu máy demo để:** kết luận NFR-01 đạt hay không đạt; hứa với khách về thời gian ingest; chọn kích thước GPU cho bản pilot. Ba việc đó chỉ làm được sau khi có phần cứng thật, **mốc trước tuần 14**.
-
----
-
-## 9. Checklist ngày 1
-
-**Chuẩn bị môi trường** — tiến độ ở mục 4.4
-
-- [ ] **B0** · Commit và push lên remote **trước khi chuyển bất cứ thứ gì** (mục 4.2) — `git init` đã xong, còn thiếu commit
-- [x] **B1** · Đảm bảo C: còn ≥45 GB trống (mục 4.1) — xong 09-09, còn 50,3 GB
-- [ ] **B1b** · `docker builder prune -a` — 28,4 GB còn sót, không rủi ro
-- [ ] **B2** · Tạo `.wslconfig` giới hạn RAM (mục 4.3), rồi `wsl --shutdown`
-- [ ] **B3** · `wsl --install -d Ubuntu` (để vị trí mặc định), chuyển repo vào `~/ei-ai` (mục 4.2)
-- [ ] **B4** · Cài VS Code extension **Dev Containers** và **Remote-WSL**, mở `~/ei-ai`
-- [ ] Xác nhận GPU vào được container: `docker run --rm --gpus all nvidia/cuda:12.6.0-base-ubuntu24.04 nvidia-smi`
-
-**Dựng stack**
-
-- [ ] Mở repo trong Dev Container → `pnpm install` chạy tự động qua `postCreateCommand`
-- [ ] `docker compose up postgres redis infinity` → cả ba healthy
-- [ ] Gọi thử `POST http://localhost:7997/embeddings` → trả về vector 1024 chiều
-- [ ] Gọi thử `POST http://localhost:7997/rerank` → trả về điểm
-- [ ] **Đo VRAM thực tế đang dùng:** `nvidia-smi --query-gpu=memory.used --format=csv` khi cả hai model đã nạp. Ghi lại con số
-- [ ] Xác nhận HMR hoạt động: sửa một file component → thấy đổi trên browser dưới 1 giây
-- [ ] Xác nhận debugger attach được vào cổng 9229 và dừng ở breakpoint
-- [ ] Xác nhận IDE có autocomplete và báo lỗi type đúng (kiểm tra `typescript.tsdk`)
-
-**Corpus và đo lường**
-
-- [ ] Dựng corpus proxy: 30–50 văn bản luật PDF scan, 10–20 bảng báo cáo, bộ `.md` mẫu
-- [ ] Chạy Docling + Tesseract trên corpus proxy ngoài luồng, ghi lại độ chính xác so với bản chép tay
-- [ ] Ghi lại throughput embedding thực tế
-
-**Báo cáo cuối tuần 1**
-
-- [ ] VRAM thực dùng, throughput embedding, độ chính xác OCR trên proxy, và thời gian HMR — bốn con số này quyết định có cần đổi gì trong kế hoạch hay không
+**Do not use demo-machine figures to:** conclude whether NFR-01 or NFR-02 is met; promise ingest times to a customer; or size the GPU for the pilot. All three become possible only once real hardware exists — **milestone: before week 16**.
 
 ---
 
-## 10. Còn mở
+## 9. Verification
 
-| # | Việc | Trạng thái | Cần trước |
+Every check below is a command with an expected result. A check that cannot be run is not a check — if you cannot produce the expected output, the environment is not ready, regardless of how it looks.
+
+### 9.1 Prerequisites — run in order
+
+| # | Command | Expected |
+| --- | --- | --- |
+| **B0c** | `git push -u origin main` | Push succeeds. **Blocked until the repository visibility question is answered** |
+| **B1** | `Get-PSDrive C` | ✅ Already done — ≥45 GB free (measured 50 GB on 09-09) |
+| **B2** | `wsl --shutdown` then `wsl --list --verbose` | All distros `Stopped`; on next start the `.wslconfig` limits apply |
+| **B3** | `wsl --install -d Ubuntu` | Ubuntu appears in `wsl --list --verbose` as `Running`, `VERSION 2` |
+| **B3** | In Ubuntu: `git clone … ~/ei-ai && cd ~/ei-ai && git log --oneline` | Full commit history present |
+| **B3** | `df -T ~/ei-ai \| tail -1` | Filesystem type is `ext4`, **not** `9p` or `drvfs`. This is the check that ADR-13's condition actually holds |
+| **B4** | `code ~/ei-ai` | VS Code opens; bottom-left shows `WSL: Ubuntu` |
+| — | `docker run --rm --gpus all nvidia/cuda:12.6.0-base-ubuntu24.04 nvidia-smi` | The RTX 3050 Ti is listed with 4096 MiB |
+
+### 9.2 Stack brings itself up
+
+```bash
+cd ~/ei-ai
+docker compose up -d postgres redis infinity squid
+docker compose ps
+```
+
+| Check | Expected |
+| --- | --- |
+| `docker compose ps` | All four services `running`; postgres shows `healthy` |
+| `docker compose exec postgres psql -U postgres -d eiai -c "\dx"` | Extensions `vector` and `unaccent` both listed |
+| `docker compose exec postgres psql -U postgres -d eiai -c "\dt"` | Every table from the migrations, including `agent_steps`, `tools`, `allowlist_entries`, `write_snapshots` |
+
+### 9.3 Retrieval services answer
+
+```bash
+# Embedding — expect a 1024-dimension vector
+curl -s http://localhost:7997/embeddings \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"BAAI/bge-m3","input":["hợp đồng nhà cung cấp hết hạn"]}' \
+  | jq '.data[0].embedding | length'
+
+# Rerank — expect descending scores, contract first
+curl -s http://localhost:7997/rerank \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"BAAI/bge-reranker-v2-m3",
+       "query":"hợp đồng hết hạn khi nào",
+       "documents":["Hợp đồng này có thời hạn đến 31/12/2026","Quy trình nghỉ phép hàng năm"]}' \
+  | jq '.results[].relevance_score'
+```
+
+| Check | Expected |
+| --- | --- |
+| Embedding dimension | `1024` |
+| Rerank ordering | The contract sentence scores higher than the leave-policy sentence |
+| **Real VRAM in use** | `nvidia-smi --query-gpu=memory.used --format=csv` with both models loaded. **Record the number** — the budget in section 6 predicts 3.1–3.4 GB of 4096 MiB |
+
+### 9.4 Egress default-deny actually denies
+
+This is the single most important check of Phase 1, because it proves FR-45 at the network layer rather than in application code.
+
+```bash
+# From inside the api container, with an EMPTY allowlist
+docker compose exec api sh -c 'curl -s -o /dev/null -w "%{http_code}\n" https://api.anthropic.com/v1/messages'
+
+# Then read the proxy log
+docker compose exec squid tail -5 /var/log/squid/access.log
+```
+
+| Check | Expected |
+| --- | --- |
+| Request from `api` | **Fails** — Squid returns `403`, not a connection to Anthropic |
+| Squid access log | A `TCP_DENIED` line naming `api.anthropic.com` |
+| After seeding `api.anthropic.com` into `allowlist_entries` and regenerating | Same request succeeds; the log shows an allowed entry with byte counts |
+
+**If the first request succeeds against an empty allowlist, the environment is wrong** — the `api` container still has a default route, and the product's core promise is not being enforced.
+
+### 9.5 The development loop is actually fast
+
+These are the checks that decide whether ADR-13's condition was met, and they are the reason option A was chosen over option C.
+
+| Check | Command / action | Expected |
+| --- | --- | --- |
+| **HMR latency** | Edit a string in a React component, watch the browser | **Under 1 second.** Over 3 seconds means the source is not on ext4 — re-check 9.1's `df -T` |
+| No polling needed | `docker compose exec web env \| grep -i polling` | **Empty.** If `CHOKIDAR_USEPOLLING` is set, the source is on the Windows side |
+| Debugger attaches | VS Code attach to `localhost:9229`, set a breakpoint in a controller, hit the endpoint | Execution stops at the breakpoint with correct source mapping |
+| IDE type checking | Hover a typed symbol; introduce a deliberate type error | Autocomplete works and the error appears inline. If not, check `typescript.tsdk` in `devcontainer.json` |
+| Case sensitivity | `touch Foo.ts` then `ls foo.ts` | **Fails** — ext4 is case-sensitive like production, so import-casing bugs surface locally rather than in CI |
+
+### 9.6 `document-only` operating mode
+
+The default install must be a working product with no MCP server and no web search. This is a Phase 2 gate criterion (plan §5.5) but the check belongs here because it is an environment property.
+
+```bash
+# Confirm zero MCP servers and no web search
+docker compose exec postgres psql -U postgres -d eiai \
+  -c "SELECT count(*) FROM mcp_servers;"
+docker compose exec postgres psql -U postgres -d eiai \
+  -c "SELECT name, enabled, classification FROM tools ORDER BY name;"
+```
+
+| Check | Expected |
+| --- | --- |
+| `mcp_servers` count | `0` — and nothing is broken because of it |
+| `tools` | Exactly three rows, all `read`, all `enabled`: `list_workspace_documents`, `read_document_page`, `search_documents` |
+| `GET /me` | Reports operating mode `document-only` |
+| Health endpoint | MCP indicator reads `not_configured`, **not** `unreachable`. No alert fires, no email is sent (FR-78) |
+| All 19 screens | Open without error; unbuilt ones show a "Coming soon" panel |
+
+### 9.7 `dev-local` profile starts and produces valid actions
+
+Run at every phase gate, not only once.
+
+```bash
+docker compose --profile dev-local up -d llamacpp
+curl -s http://localhost:8080/health
+```
+
+| Check | Expected |
+| --- | --- |
+| `llamacpp` health | `{"status":"ok"}` |
+| A schema-constrained completion | Returns JSON that validates against a tool's `input_schema`. **This is the check that matters** — fluent prose from a 4B model is not the point; a schema-valid action is |
+| Golden set on `dev-local` vs `dev-hybrid` | Both scores recorded. **The gap is the tracked metric**, per section 7.2 |
+
+### 9.8 Corpus and week-1 measurements
+
+- [ ] Build the proxy corpus: 30–50 scanned legal PDFs (Vietnamese diacritics, stamps, multi-column), 10–20 report documents with real tabular layout, a set of `.md` files
+- [ ] Run Docling + Tesseract over it out-of-band; record accuracy against a hand-transcribed reference
+- [ ] Record actual embedding throughput in chunks/second
+
+### 9.9 End-of-week-1 report
+
+Five numbers. **They decide whether anything in the plan has to change.**
+
+| # | Number | Where it came from | What it changes |
 | --- | --- | --- | --- |
-| — | ~~Chốt nơi đặt mã nguồn~~ | **Đã chốt: phương án A** (Ubuntu WSL2, `~/ei-ai`) · 2026-09-08 | — |
-| 1 | **Thực thi các bước chuẩn bị** ở mục 9 | B1 xong · B0 làm dở · B2–B4 chưa | **Tuần 1** |
-| 2 | Anthropic API key cho môi trường dev | Chưa có | **Tuần 1** |
-| 3 | Tài liệu thật của khách để đóng R-01 | Chưa có | **Tuần 8** |
-| 4 | Tool catalogue thật của ERP MCP server | Chưa có | Tuần 12 |
-| 5 | Chốt phần cứng pilot — GPU 48 GB (Qwen3-32B) hay 24 GB (Mistral Small 24B) | Chưa chốt | **Tuần 14** |
+| 1 | Real VRAM in use with both models loaded | 9.3 | If over ~3.6 GB, drop the reranker to int8 or move it to CPU |
+| 2 | Embedding throughput, chunks/second | 9.8 | Sets the realistic ingest time for the proxy corpus |
+| 3 | OCR accuracy on the proxy corpus | 9.8 | **Below 90% triggers the R-01 fallback** — commercial OCR, or a narrower v1 format list |
+| 4 | HMR latency | 9.5 | Over 3 seconds means the source is on the wrong filesystem |
+| 5 | Empty-allowlist denial confirmed | 9.4 | If it does not deny, Phase 1 cannot close |
+
+---
+
+## 10. Still open
+
+| # | Item | Status | Needed by |
+| --- | --- | --- | --- |
+| — | ~~Where the source lives~~ | **Decided: option A** (Ubuntu WSL2, `~/ei-ai`) · 2026-09-08 | — |
+| 1 | **Is the GitHub repository public or private?** | Blocking B0c | **Now** |
+| 2 | **Anthropic API key** for the development environment | Not available | **Week 1** |
+| 3 | Execute B2, B3, B4 | Not started | **Week 1** |
+| 4 | Real customer documents to close R-01 | Not available | **Week 8** |
+| 5 | Real ERP MCP tool catalogue | Not available | Week 10 |
+| 6 | Hardware tier and budget for the pilot | Not decided | **Week 16** |
