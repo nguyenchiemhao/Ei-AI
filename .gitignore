@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+.next/
+*.tsbuildinfo
+
+# Môi trường — KHÔNG BAO GIỜ commit secret
+.env
+.env.*
+!.env.example
+
+# Python (parser worker)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Model weights & dữ liệu cục bộ
+models/
+*.gguf
+*.safetensors
+storage/
+uploads/
+
+# Log & cache
+*.log
+npm-debug.log*
+.cache/
+coverage/
+.eslintcache
+
+# IDE
+.vscode/*
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
