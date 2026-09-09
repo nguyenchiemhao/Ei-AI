@@ -201,15 +201,23 @@ Then `wsl --shutdown` to apply. 18 GB leaves ~13 GB for Windows, the IDE and a b
 
 ### 4.4 Execution log
 
-| Step | Status | Date | Notes |
-| --- | --- | --- | --- |
-| **B0a** — `git init` + commit | ✅ **Done** | 09-09 | Commits on `main`; `core.autocrlf=input` set |
-| **B0b** — attach remote | ✅ **Done** | 09-09 | `origin` → `github.com/nguyenchiemhao/Ei-AI` |
-| **B0c** — first push | 🔴 **Not done** | | **Blocked on one answer: is the repository public or private?** The content includes the full system design, effort estimates and pilot-customer information |
-| **B1** — free ≥45 GB on `C:` | ✅ **Done** | 09-09 | Images 47.1 → 4.6 GB (32 → 2), volumes 25.7 → 0.9 GB (52 → 4), build cache 28.4 → 0 GB. `C:` at 50 GB free |
-| **B2** — `.wslconfig` | 🟡 **Written, not applied** | 09-09 | Needs one `wsl --shutdown` |
-| **B3** — install Ubuntu, move repository | 🔴 **Not done** | | ~15 minutes. Do B0c first |
-| **B4** — Dev Containers + Remote-WSL | 🔴 **Not done** | | Two VS Code extensions, then open `~/ei-ai` |
+Every row was verified by running the command in the last column, not by recollection. Re-run them if in doubt.
+
+| Step | Status | Date | Verified by | Result |
+| --- | --- | --- | --- | --- |
+| **B0a** — `git init` + commit | ✅ **Done** | 09-09 | `git log --oneline -1` | `6621b3c`, clean tree, `core.autocrlf=input` |
+| **B0b** — attach remote | ✅ **Done** | 09-09 | `git remote -v` | `origin` → `github.com/nguyenchiemhao/Ei-AI.git` |
+| **B0c** — first push | ✅ **Done** | 09-09 | `git ls-remote origin` | `refs/heads/main` exists at `517d585` |
+| **B0d** — remote up to date | 🟡 **Behind** | | `git rev-list --count origin/main..HEAD` | **4 commits not yet pushed.** See step 1 of the runbook |
+| **B1** — free ≥45 GB on `C:` | ✅ **Done** | 09-09 | `Get-PSDrive C` | 50 GB free. Images 47.1 → 4.6 GB, volumes 25.7 → 0.9 GB, build cache → 0 B |
+| **B2** — `.wslconfig` applied | ✅ **Done** | 09-09 | `wsl -d Ubuntu -e free -h` | **17.6 GB total** — the 18 GB cap is in force |
+| **B3a** — Ubuntu installed | ✅ **Done** | 09-09 | `wsl --list --verbose` | `Ubuntu`, `Running`, `VERSION 2`. User `howie`, home `/home/howie` |
+| **B3b** — Ubuntu tooling | ✅ **Done** | 09-09 | `git --version`, `curl --version` in Ubuntu | git 2.53.0, curl 8.18.0 — both already present |
+| **B3c** — Docker reachable from Ubuntu | ✅ **Done** | 09-09 | `docker ps` in Ubuntu | Lists `marlin-dev`, `eerp-dev`. WSL integration already enabled |
+| **B3d** — repository at `~/ei-ai` | 🔴 **Not done** | | `test -d ~/ei-ai` | Absent. Source is still at `D:\Data\Ei-AI` |
+| **B4** — Dev Containers + WSL extensions | 🔴 **Not done** | | `code --list-extensions` | Two extensions, then open `~/ei-ai` |
+
+**Three steps turned out to be already complete** — Ubuntu, its tooling, and Docker WSL integration. What remains is the repository move and the VS Code side, plus pushing four pending commits.
 
 ---
 
@@ -558,18 +566,153 @@ We do not guess the gap between models. **The eval harness measures it**, from w
 
 Every check below is a command with an expected result. A check that cannot be run is not a check — if you cannot produce the expected output, the environment is not ready, regardless of how it looks.
 
-### 9.1 Prerequisites — run in order
+### 9.1 Setup runbook — the remaining steps
 
-| # | Command | Expected |
+Steps B1, B2, B3a, B3b and B3c are already verified complete (section 4.4). What follows is the work left, in the order it must happen. **Each step has a verification that must pass before moving on.** If a verification fails, stop there — the rollback column says how to get back.
+
+Estimated total: **35–45 minutes.**
+
+---
+
+#### Step 1 — Push the four pending commits
+
+The remote is 4 commits behind. Do this **before** moving the repository: a move is only safe when the remote is current.
+
+```bash
+# In Git Bash at D:\Data\Ei-AI
+git rev-list --count origin/main..HEAD    # expect: 4
+git push origin main
+```
+
+| | |
+| --- | --- |
+| **Verify** | `git rev-list --count origin/main..HEAD` returns **`0`** |
+| **Also verify** | `git ls-remote origin refs/heads/main` matches `git rev-parse HEAD` |
+| **If it fails** | Authentication is the usual cause. Use a Personal Access Token as the password, or install `gh` and run `gh auth login` |
+| **Rollback** | Not applicable — pushing adds, it does not destroy |
+
+> **One decision to make here, once.** The repository holds the full system design, effort estimates, hardware budgets and pilot-customer references. If it is public, all of that is world-readable. Check at `github.com/nguyenchiemhao/Ei-AI/settings` → Danger Zone. **Private is the safer default**; make it public only if publishing is intended.
+
+---
+
+#### Step 2 — Set the git identity inside Ubuntu
+
+Ubuntu's git is a fresh install with no identity, so commits made there would be attributed to nobody.
+
+```bash
+wsl -d Ubuntu
+
+git config --global user.name "Howie"
+git config --global user.email "howie@cal-se.com"
+git config --global core.autocrlf input     # keeps LF, avoids CRLF churn
+git config --global init.defaultBranch main
+```
+
+| | |
+| --- | --- |
+| **Verify** | `git config --global --list \| grep -E 'user\.\|autocrlf'` shows all three values |
+| **Why `core.autocrlf input`** | Windows git may have committed CRLF. `input` means Ubuntu commits LF and never rewrites on checkout — matching what the containers expect |
+| **Rollback** | `git config --global --unset user.name` etc. Harmless either way |
+
+---
+
+#### Step 3 — Clone the repository into Ubuntu
+
+Clone rather than copy. A clone gets correct line endings, carries no Windows artefacts, and proves the remote works.
+
+```bash
+# Inside Ubuntu
+cd ~
+git clone https://github.com/nguyenchiemhao/Ei-AI.git ei-ai
+cd ~/ei-ai
+```
+
+| | |
+| --- | --- |
+| **Verify — history** | `git log --oneline \| head -5` shows the same commits as the Windows copy |
+| **Verify — filesystem** | `df -T ~/ei-ai \| tail -1` reports **`ext4`** — **not** `9p` or `drvfs`. **This is the single check that proves ADR-13's condition holds.** If it says `9p`, the clone landed under `/mnt/` and the whole point is lost |
+| **Verify — case sensitivity** | `touch Foo.tmp && ls foo.tmp` **fails**, then `rm Foo.tmp`. Confirms production-like behaviour, so import-casing bugs surface locally |
+| **Verify — nothing dirty** | `git status --short` is empty. A dirty tree straight after cloning means a line-ending problem |
+| **If the clone is refused** | Private repository needs authentication — a PAT as the password, or `gh auth login` |
+| **Rollback** | `rm -rf ~/ei-ai` and start again. Nothing is lost; the source of truth is the remote |
+
+---
+
+#### Step 4 — Install the two VS Code extensions
+
+On Windows, not inside Ubuntu.
+
+| Extension | ID | What it does |
 | --- | --- | --- |
-| **B0c** | `git push -u origin main` | Push succeeds. **Blocked until the repository visibility question is answered** |
-| **B1** | `Get-PSDrive C` | ✅ Already done — ≥45 GB free (measured 50 GB on 09-09) |
-| **B2** | `wsl --shutdown` then `wsl --list --verbose` | All distros `Stopped`; on next start the `.wslconfig` limits apply |
-| **B3** | `wsl --install -d Ubuntu` | Ubuntu appears in `wsl --list --verbose` as `Running`, `VERSION 2` |
-| **B3** | In Ubuntu: `git clone … ~/ei-ai && cd ~/ei-ai && git log --oneline` | Full commit history present |
-| **B3** | `df -T ~/ei-ai \| tail -1` | Filesystem type is `ext4`, **not** `9p` or `drvfs`. This is the check that ADR-13's condition actually holds |
-| **B4** | `code ~/ei-ai` | VS Code opens; bottom-left shows `WSL: Ubuntu` |
-| — | `docker run --rm --gpus all nvidia/cuda:12.6.0-base-ubuntu24.04 nvidia-smi` | The RTX 3050 Ti is listed with 4096 MiB |
+| **WSL** | `ms-vscode-remote.remote-wsl` | Runs the VS Code server inside Ubuntu so the editor works on ext4 files at native speed |
+| **Dev Containers** | `ms-vscode-remote.remote-containers` | Runs the editor inside the container so the TypeScript server can see `node_modules` |
+
+| | |
+| --- | --- |
+| **Verify** | `code --list-extensions \| grep remote-` lists both |
+| **If `code` is not on PATH** | Install from the VS Code Extensions panel by searching the IDs above |
+| **Rollback** | Uninstall from the same panel. No side effects |
+
+---
+
+#### Step 5 — Open the repository in Remote-WSL
+
+```bash
+# Inside Ubuntu
+cd ~/ei-ai && code .
+```
+
+| | |
+| --- | --- |
+| **Verify — mode** | Bottom-left of the VS Code window reads **`WSL: Ubuntu`**. If it reads anything else, the window is running on Windows and editing through the slow bridge |
+| **Verify — path** | An integrated terminal in that window reports `pwd` as `/home/howie/ei-ai`, not a `/mnt/d/...` path |
+| **Verify — Docker** | In that terminal, `docker ps` lists the running containers. Already confirmed working, this just re-checks it from the new window |
+| **Rollback** | Close the window. Nothing was changed |
+
+---
+
+#### Step 6 — Confirm GPU passthrough from the new environment
+
+Already verified once from Windows; re-check from Ubuntu because that is where the stack will run.
+
+```bash
+# Inside Ubuntu
+docker run --rm --gpus all nvidia/cuda:12.6.0-base-ubuntu24.04 nvidia-smi
+```
+
+| | |
+| --- | --- |
+| **Verify** | The RTX 3050 Ti is listed with **4096 MiB** and driver 581.95 |
+| **If it fails** | Docker Desktop → Settings → Resources → WSL Integration → ensure `Ubuntu` is enabled → Apply & Restart |
+| **Note** | This pulls a ~200 MB image. Remove it afterwards with `docker rmi nvidia/cuda:12.6.0-base-ubuntu24.04` if disk is tight |
+
+---
+
+#### Step 7 — Retire the Windows copy
+
+Only after every verification above has passed.
+
+```powershell
+# On Windows
+Rename-Item "D:\Data\Ei-AI" "Ei-AI.moved"
+```
+
+| | |
+| --- | --- |
+| **Verify** | `D:\Data\Ei-AI` no longer exists; `D:\Data\Ei-AI.moved` does |
+| **Why rename rather than delete** | Keeps a local copy for a few days at no cost. Delete once the WSL2 setup has been used for real work |
+| **Also** | **Restart Claude Code at `~/ei-ai` inside WSL.** This session is rooted at `d:\Data\Ei-AI` and will be pointing at the retired copy |
+| **Rollback** | Rename it back. The Ubuntu clone is independent, so nothing breaks either way |
+
+---
+
+#### What cannot be verified yet
+
+**Step 8 — the Dev Container itself — is not runnable today.** It needs `.devcontainer/devcontainer.json`, a `package.json` and the Compose stack, none of which exist before the Phase 1 skeleton.
+
+So B4 completes as "extensions installed, Remote-WSL working". The remaining Dev Container checks — `pnpm install` via `postCreateCommand`, `typescript.tsdk` resolving, the debugger attaching on port 9229, HMR under one second — become verifiable in **Phase 1 week 1**, and they are listed in sections 9.2 through 9.5.
+
+**The one check worth running the moment the skeleton exists** is HMR latency (section 9.5), because it is the measurement that confirms whether all of this was worth doing. Anything under one second means yes.
 
 ### 9.2 Stack brings itself up
 
@@ -701,9 +844,9 @@ Five numbers. **They decide whether anything in the plan has to change.**
 | # | Item | Status | Needed by |
 | --- | --- | --- | --- |
 | — | ~~Where the source lives~~ | **Decided: option A** (Ubuntu WSL2, `~/ei-ai`) · 2026-09-08 | — |
-| 1 | **Is the GitHub repository public or private?** | Blocking B0c | **Now** |
+| 1 | **Is the GitHub repository public or private?** | Pushed already — decide before the next push | **Now** — see runbook step 1 |
 | 2 | **Anthropic API key** for the development environment | Not available | **Week 1** |
-| 3 | Execute B2, B3, B4 | Not started | **Week 1** |
+| 3 | Runbook steps 1–7 (§9.1) | ~40 minutes of work left | **Week 1** |
 | 4 | Real customer documents to close R-01 | Not available | **Week 8** |
 | 5 | Real ERP MCP tool catalogue | Not available | Week 10 |
 | 6 | Hardware tier and budget for the pilot | Not decided | **Week 16** |

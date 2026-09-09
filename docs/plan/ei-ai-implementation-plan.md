@@ -14,7 +14,7 @@
 
 **Companion documents**
 
-- [Development environment](./ei-ai-dev-environment.md) — ADR-12, ADR-13, demo machine inventory, Compose stack, setup steps *(in Vietnamese)*
+- [Development environment](./ei-ai-dev-environment.md) — ADR-12, ADR-13, machine inventory, Compose stack, and the **setup runbook with per-step verification** (§9.1)
 - [System design](../design/ei-ai-agentic-knowledge-assistant.md) — the authority on requirements, architecture and ADRs *(in Vietnamese)*
 
 ---
@@ -132,13 +132,13 @@ Two decisions carry over from before the design rewrite. They concern how the te
 
 | Step | Status | Notes |
 | --- | --- | --- |
-| B0a · `git init` + commit | ✅ Done | Repository initialised, commits on `main` |
-| B0b · Remote attached | ✅ Done | `github.com/nguyenchiemhao/Ei-AI` |
-| B0c · First push | 🔴 Not done | Waiting on confirmation of repository visibility |
-| B1 · Free ≥45 GB on C: | ✅ Done | Images 47.1 → 4.6 GB, volumes 25.7 → 0.9 GB, build cache → 0 B |
-| B2 · `.wslconfig` | 🟡 Written, not applied | Needs one `wsl --shutdown` |
-| B3 · Install Ubuntu, move repo | 🔴 Not done | ~15 minutes |
-| B4 · Dev Containers + Remote-WSL | 🔴 Not done | |
+| B0a–B0c · git init, remote, first push | ✅ Done | Remote at `github.com/nguyenchiemhao/Ei-AI` |
+| B0d · Remote up to date | 🟡 **4 commits behind** | Push before moving the repository |
+| B1 · Free ≥45 GB on C: | ✅ Done | 50 GB free. Images 47.1 → 4.6 GB, volumes 25.7 → 0.9 GB, cache → 0 B |
+| B2 · `.wslconfig` applied | ✅ Done | Verified: WSL reports 17.6 GB, the 18 GB cap is active |
+| B3a–B3c · Ubuntu, tooling, Docker integration | ✅ Done | User `howie`; git 2.53, curl 8.18 present; `docker ps` works from Ubuntu |
+| B3d · Repository at `~/ei-ai` | 🔴 Not done | Clone, ~5 minutes |
+| B4 · Dev Containers + WSL extensions | 🔴 Not done | Two extensions, then open the folder |
 
 ---
 
