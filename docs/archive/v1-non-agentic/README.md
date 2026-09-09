@@ -38,4 +38,4 @@ Ghi lại ở đây vì chúng ra đời từ việc đối chiếu hướng age
 
 ## Ghi chú lịch sử
 
-Các quyết định môi trường dev (ADR-07, ADR-08) trong `ei-ai-dev-environment.md` **vẫn còn hiệu lực** và cần chuyển sang bộ tài liệu mới: profile `dev-hybrid`, chạy toàn bộ trong Docker, mã nguồn trong Ubuntu WSL2, kiểm kê máy demo.
+Các quyết định môi trường dev **đã được chuyển ra khỏi thư mục này** sang [`docs/plan/ei-ai-dev-environment.md`](../../plan/ei-ai-dev-environment.md) vì chúng vẫn còn hiệu lực — ADR đánh số lại 07→12 và 08→13 để khớp dãy ADR toàn cục của thiết kế mới.

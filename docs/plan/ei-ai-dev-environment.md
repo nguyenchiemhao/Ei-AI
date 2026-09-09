@@ -1,12 +1,14 @@
 # Ei-AI — Môi trường phát triển trên máy demo
 
-> Tài liệu con của [Kế hoạch triển khai 4 phần](./ei-ai-implementation-plan.md). Ghi lại hai quyết định về môi trường dev và cách dựng nó cụ thể trên máy hiện có.
+> Operational companion to the [Implementation Plan](./ei-ai-implementation-plan.md). Records the two development-environment decisions and the setup detail behind them. **Survives the 2026-09-09 design rewrite unchanged** — these decisions are about how the team works, not about what the product does. ADRs renumbered 07→12 and 08→13 to fit the single global ADR sequence in the design document.
+>
+> *Written in Vietnamese; the plan itself is in English. Ask if you want this translated for consistency.*
 
 **Trạng thái:** đã chốt · 2026-09-08
 
 ---
 
-## 1. ADR-07 — Phát triển trên máy demo với profile `dev-hybrid`
+## 1. ADR-12 — Phát triển trên máy demo với profile `dev-hybrid`
 
 **Bối cảnh.** Thiết kế giả định một server có GPU 48 GB, chạy Qwen3-32B AWQ cục bộ. Máy thực tế là laptop với RTX 3050 Ti 4 GB VRAM. 4 GB đủ cho embedding và rerank, không đủ cho generation ở bất kỳ kích thước model có ý nghĩa nào. Đồng thời chưa có tài liệu thật của khách, nên corpus dev là văn bản luật công khai và file `.md` mẫu — không có dữ liệu cần bảo mật.
 
@@ -26,7 +28,7 @@
 
 ---
 
-## 2. ADR-08 — Chạy toàn bộ hệ thống trong Docker
+## 2. ADR-13 — Chạy toàn bộ hệ thống trong Docker
 
 **Bối cảnh.** Máy demo có Node v14.21.3 (EOL từ 4/2023), không có pnpm, Python 3.11 thay vì 3.12. Cài toolchain lên host nghĩa là mỗi máy dev phải tự đúng phiên bản, và sự lệch pha giữa các máy là một nguồn lỗi kinh điển. Đồng thời sản phẩm được bàn giao cho khách dưới dạng một stack Docker Compose, nên chạy dev trên cùng stack đó có giá trị riêng.
 
@@ -66,7 +68,7 @@ Chi phí: một lần cài Ubuntu WSL2 khoảng 15 phút, cộng chuyển repo. 
 
 **Ghi chú cho trường hợp phải quay lại C** (nếu vì lý do nào đó không dùng được WSL2): để `node_modules` trong một named volume thay vì bind-mount. Đường nóng nhất khi đó không đi qua lớp cầu nữa — `pnpm install` nhanh lại, chỉ còn watch là chậm. Cấu hình ở mục 5 vốn đã làm đúng như vậy, nên không cần sửa gì.
 
-### 2.3 Hệ quả của ADR-08
+### 2.3 Hệ quả của ADR-13
 
 | Loại | Nội dung |
 | --- | --- |
@@ -78,7 +80,7 @@ Chi phí: một lần cài Ubuntu WSL2 khoảng 15 phút, cộng chuyển repo. 
 | **Xấu** | Ăn RAM nhiều hơn. Cần giới hạn WSL2 tường minh, xem mục 4.3 |
 | **Trung tính** | IDE phải chạy *trong* container (Dev Containers) để TypeScript language server thấy `node_modules`. Nếu không, editor mất autocomplete và báo lỗi type sai — đây là cái bẫy phổ biến nhất của cách làm này |
 
-**Điều không thay đổi.** Production và CI **đã** hoàn toàn dockerized từ đầu trong kế hoạch — điều đó chưa bao giờ là câu hỏi. Bảo đảm phiên bản cho *thứ được bàn giao* đến từ image, bất kể lập trình viên chạy cục bộ thế nào. ADR-08 chỉ quyết định **vòng lặp phát triển bên trong**. Lập luận của bạn về tính nhất quán phiên bản *giữa các máy trong đội* vẫn đúng và là lý do chính để chọn.
+**Điều không thay đổi.** Production và CI **đã** hoàn toàn dockerized từ đầu trong kế hoạch — điều đó chưa bao giờ là câu hỏi. Bảo đảm phiên bản cho *thứ được bàn giao* đến từ image, bất kể lập trình viên chạy cục bộ thế nào. ADR-13 chỉ quyết định **vòng lặp phát triển bên trong**. Lập luận của bạn về tính nhất quán phiên bản *giữa các máy trong đội* vẫn đúng và là lý do chính để chọn.
 
 ---
 
@@ -96,8 +98,8 @@ Số liệu thật, đo ngày 2026-09-08.
 | **NVIDIA container runtime** | **Đã đăng ký** (`nvidia-container-runtime`) | **Ẩn số lớn nhất đã được giải quyết** — GPU passthrough vào container đã hoạt động |
 | **WSL distro** | **Chỉ có `docker-desktop`** | **Chưa có Ubuntu.** Cần cài nếu chọn phương án A ở mục 2.2 |
 | **`.wslconfig`** | **Không có** | WSL2 sẽ tự lấy tới 50% RAM ≈ 16 GB. Cần cấu hình tường minh |
-| Node.js trên host | v14.21.3 | **Không còn quan trọng** nếu theo ADR-08 |
-| pnpm trên host | Chưa có | **Không cần** nếu theo ADR-08 |
+| Node.js trên host | v14.21.3 | **Không còn quan trọng** nếu theo ADR-13 |
+| pnpm trên host | Chưa có | **Không cần** nếu theo ADR-13 |
 | Python trên host | 3.11.15 | **Không cần** — parser chạy trong container |
 | Git | 2.50.1 | Được |
 | **Ổ vật lý** | **Samsung PM991a NVMe 512 GB — chỉ MỘT ổ, Disk 0** | **C: và D: là hai phân vùng của cùng một đĩa.** Chuyển dữ liệu qua lại không nhanh hơn và không tạo thêm dung lượng |
@@ -114,7 +116,7 @@ Số liệu thật, đo ngày 2026-09-08.
 
 ## 4. Chuẩn bị môi trường — việc của tuần 1
 
-Theo ADR-08, danh sách này ngắn hơn trước: không còn việc nâng Node hay cài pnpm trên host.
+Theo ADR-13, danh sách này ngắn hơn trước: không còn việc nâng Node hay cài pnpm trên host.
 
 **Tiến độ:** B1 xong, B0 làm dở, B2–B4 chưa bắt đầu. Chi tiết ở mục 4.4.
 
@@ -177,7 +179,7 @@ cd ~/ei-ai && git init && git add -A && git commit -m "chore: initial import fro
 cd ~/ei-ai && code .        # VS Code mở ở chế độ Remote-WSL
 ```
 
-Thư mục vẫn truy cập được từ Windows Explorer qua `\\wsl$\Ubuntu\home\<user>\ei-ai` nếu cần — nhưng **đừng sửa file qua đường đó khi đang chạy container**, vì đó chính là lớp cầu chậm mà ADR-08 tránh.
+Thư mục vẫn truy cập được từ Windows Explorer qua `\\wsl$\Ubuntu\home\<user>\ei-ai` nếu cần — nhưng **đừng sửa file qua đường đó khi đang chạy container**, vì đó chính là lớp cầu chậm mà ADR-13 tránh.
 
 **Về `docs/` hiện ở `D:\Data\Ei-AI\docs`:** chuyển cả repo vào WSL2, không tách. Tài liệu và code nên đi cùng nhau trong version control, và `docs/` là file text nên tốc độ không phải vấn đề. Sau khi chuyển, `D:\Data\Ei-AI` nên xoá hoặc đổi tên thành `Ei-AI.moved` để không ai sửa nhầm vào bản cũ.
 
