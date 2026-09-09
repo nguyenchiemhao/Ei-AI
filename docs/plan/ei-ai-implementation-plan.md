@@ -2,11 +2,12 @@
 
 > Tài liệu này chuyển [thiết kế hệ thống](../design/ei-ai-self-hosted-knowledge-assistant.md) (63 FR, 7 module) thành lộ trình thi công chia 4 phần. Mỗi phần có một mốc chạy được, một danh sách FR đóng lại, và một tiêu chí nghiệm thu rõ ràng.
 
-**Trạng thái:** v0.2 — đã cập nhật sau vòng review 1
+**Trạng thái:** v0.8 — môi trường dev đã chốt, đang chuẩn bị Phần 1
 **Tổng effort:** 100 person-weeks / 23 tuần lịch (theo mục 13.2 của thiết kế)
 **Đội:** 4–5 người
 **Tài liệu con:**
 - [Môi trường phát triển](./ei-ai-dev-environment.md) — ADR-07 và ADR-08, kiểm kê máy demo, compose stack, 4 bước chuẩn bị tuần 1
+- [Cấu trúc mã nguồn](./ei-ai-source-structure.md) — cây thư mục, ranh giới module, quy ước code
 - [Plan tích hợp MCP](./ei-ai-mcp-integration-plan.md) — chi tiết Phần 3
 
 **Phân bổ 63 chức năng:** Phần 1 · 13 · Phần 2 · 22 · Phần 3 · 23 · Phần 4 · 5. Bốn FR (04, 05, 11, 12) đã chuyển từ Phần 2 sang Phần 1 cùng đường ống Markdown; tổng effort không đổi.
