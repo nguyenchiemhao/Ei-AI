@@ -602,7 +602,9 @@ git push origin main
 | **If it fails** | Authentication is the usual cause. Use a Personal Access Token as the password, or install `gh` and run `gh auth login` |
 | **Rollback** | Not applicable — pushing adds, it does not destroy |
 
-> **One decision to make here, once.** The repository holds the full system design, effort estimates, hardware budgets and pilot-customer references. If it is public, all of that is world-readable. Check at `github.com/nguyenchiemhao/Ei-AI/settings` → Danger Zone. **Private is the safer default**; make it public only if publishing is intended.
+> **Decided on 2026-09-10: the repository stays public.** This is a personal research project, so the design, the estimates and the hardware figures are published deliberately.
+>
+> **What follows from that decision:** nothing that is not intended for publication may enter the repository. That means the WP-4.1 proxy corpus, the ~200 real customer documents of Q-01, and any real customer name stay outside the working tree — and the directory each of them lands in gets a `.gitignore` entry in the same commit that creates it.
 
 ---
 
@@ -855,7 +857,7 @@ Five numbers. **They decide whether anything in the plan has to change.**
 | # | Item | Status | Needed by |
 | --- | --- | --- | --- |
 | — | ~~Where the source lives~~ | **Decided: option A** (Ubuntu WSL2, `~/ei-ai`) · 2026-09-08 | — |
-| 1 | **Is the GitHub repository public or private?** | Pushed already — decide before the next push | **Now** — see runbook step 1 |
+| — | ~~Is the GitHub repository public or private?~~ | **Decided: public** — personal research project · 2026-09-10 | — |
 | 2 | **Anthropic API key** for the development environment | Not available | **Week 1** |
 | 3 | Runbook steps 1–7 (§9.1) | ~40 minutes of work left | **Week 1** |
 | 4 | Real customer documents to close R-01 | Not available | **Week 8** |

@@ -177,15 +177,15 @@ DevOps is also short by 4.5 pd under every option — either raise them above ha
 
 ## 7. Entry conditions and the numbers that come out
 
-**Before day 1** — two of these are not true today:
+**Before day 1** — live status is in the [progress tracker](./ei-ai-progress.md) §2.1:
 
 | # | Condition | State on 2026-09-10 |
 | --- | --- | --- |
 | E-1 | Source on ext4 in WSL2, repo clean and pushed | ✅ |
 | E-2 | GPU visible from Ubuntu (RTX 3050 Ti, 4096 MiB) | ✅ |
 | E-3 | WSL memory capped at 18 GB | ✅ |
-| **E-4** | **Docker usable from Ubuntu** | ❌ WSL integration is off — 10 minutes to fix |
-| **E-5** | **Repository visibility decided** | ❌ **the repo is public today** |
+| E-4 | Docker usable from Ubuntu | ✅ `docker ps` works from Ubuntu — Docker 29.4.3, Compose v5.1.3 |
+| E-5 | Repository visibility decided | ✅ **public**, decided 2026-09-10 — personal research project |
 | E-6 | Second backend available from day 1 | ❌ open — see §6 |
 
 **After day 15** — five numbers, each of which can change the plan:
@@ -217,7 +217,7 @@ The full checklist with a proving command per line is §10 of the detail documen
 
 | # | Question | Why it blocks |
 | --- | --- | --- |
-| **D-1** | **Public or private repository?** | It is public today, and holds the design, effort estimates, hardware budgets and pilot-customer references. Every commit until this is answered widens the exposure |
+| ~~D-1~~ | ~~Public or private repository?~~ | **Decided 2026-09-10: public.** A personal research project, published deliberately. The standing constraint that follows is in [dev env §9.1](./ei-ai-dev-environment.md) step 1 — no corpus and no real customer document enters the tree |
 | **D-2** | **Capacity — option A, B or C?** | It decides whether the day-15 gate is honest or aspirational |
 | D-3 | Do you accept the G5 list as the pre-agreed cut? | If not, name what replaces it — the point is that the decision exists before week 3, not that it is mine |
 | D-4 | Who commits 2 hours per week from week 4 for the golden set? | Not a Phase 1 blocker, but the ask has to be made **in week 3** to be honoured in week 4 |

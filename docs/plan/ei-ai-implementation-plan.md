@@ -18,6 +18,7 @@
 - [Phase 1 · Overview](./ei-ai-phase-1-overview.md) — week 1–3 work grouped by priority, with the cut decided in advance
 - [Phase 1 · Detail](./ei-ai-phase-1-detail.md) — 20 work packages, a day-level schedule, and a gate where every item is proved by a command
 - [Phase 1 · Tasks](./ei-ai-phase-1-tasks.md) — 149 tasks with hours, dependencies and an acceptance test each
+- [Progress tracker](./ei-ai-progress.md) — **the single place status is recorded**, for every phase
 - [System design](../design/ei-ai-agentic-knowledge-assistant.md) — the authority on requirements, architecture and ADRs *(in Vietnamese)*
 
 ---
@@ -480,11 +481,11 @@ What decides between them is not prose quality but **multi-turn tool-calling rel
 
 | # | Question | By week |
 | --- | --- | --- |
-| 1 | **Is the GitHub repository public or private?** The content includes the full system design, effort estimates and pilot-customer information. Needed before the first push | **Now** |
+| — | ~~Is the GitHub repository public or private?~~ | **Decided: public** — personal research project · 2026-09-10 |
 | 2 | Who provides the Anthropic API key, and when? | 1 |
 | 3 | Who at the pilot company commits 2 hours per week from week 4 for the golden set? | 3 |
 | 4 | When can we borrow ~200 real documents, including scans? | 8 |
 | 5 | Who obtains the ERP tool catalogue, and does the MCP server declare `readOnlyHint`? | 10 |
 | 6 | Hardware budget range — under $6,500, around $9,000–14,000, or above $28,000? | 16 |
 
-Questions 1 and 2 are the only ones blocking work that could otherwise start today.
+Question 1 is now decided, which leaves question 2 as the only one blocking work that could otherwise start today — and even that is first needed in week 7, since Phase 1 makes no generation call.
