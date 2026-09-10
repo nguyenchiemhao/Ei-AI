@@ -14,7 +14,9 @@ docs: execute dev environment runbook, log verified results
 
 Types in use: `docs`, `feat`, `fix`, `chore`, `refactor`, `test`.
 
-A body is the exception. Add one only when a decision needs a "why" the diff cannot carry, and keep it to two or three lines. Findings, summaries, rationale and lists belong in the documents themselves — a commit message is not a place to re-explain work that is already written down. Keep the `Co-Authored-By` trailer.
+A body is the exception. Add one only when a decision needs a "why" the diff cannot carry, and keep it to two or three lines. Findings, summaries, rationale and lists belong in the documents themselves — a commit message is not a place to re-explain work that is already written down.
+
+**No attribution trailer.** A commit carries no `Co-Authored-By` line and no co-author of any kind — the author is whoever ran the commit. `.claude/settings.json` sets `attribution.commit` to an empty string so the trailer is not generated; never add one by hand.
 
 ## Code
 
