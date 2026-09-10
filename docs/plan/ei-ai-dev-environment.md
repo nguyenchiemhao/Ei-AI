@@ -2,6 +2,8 @@
 
 > Operational companion to the [Implementation Plan](./ei-ai-implementation-plan.md). Records the two environment decisions and the setup detail behind them.
 >
+> **The Compose stack in §5 and the Squid config in §5.1 carry five defects found during Phase 1 planning (C-1 … C-5).** They are listed with their fixes in [Phase 1 · Detail](./ei-ai-phase-1-detail.md) §1.2 and are work items in WP-1.1 and WP-2.2 — read that section before copying anything out of §5.
+>
 > **These decisions survive the 2026-09-09 design rewrite unchanged** — they concern how the team works, not what the product does. Their ADRs were renumbered 07→12 and 08→13 to fit the single global ADR sequence in the [design document](../design/ei-ai-agentic-knowledge-assistant.md).
 
 | Field | Value |

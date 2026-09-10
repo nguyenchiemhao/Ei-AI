@@ -15,6 +15,9 @@
 **Companion documents**
 
 - [Development environment](./ei-ai-dev-environment.md) — ADR-12, ADR-13, machine inventory, Compose stack, and the **setup runbook with per-step verification** (§9.1)
+- [Phase 1 · Overview](./ei-ai-phase-1-overview.md) — week 1–3 work grouped by priority, with the cut decided in advance
+- [Phase 1 · Detail](./ei-ai-phase-1-detail.md) — 20 work packages, a day-level schedule, and a gate where every item is proved by a command
+- [Phase 1 · Tasks](./ei-ai-phase-1-tasks.md) — 149 tasks with hours, dependencies and an acceptance test each
 - [System design](../design/ei-ai-agentic-knowledge-assistant.md) — the authority on requirements, architecture and ADRs *(in Vietnamese)*
 
 ---
@@ -132,7 +135,7 @@ Two decisions carry over from before the design rewrite. They concern how the te
 
 | Step | Status | Notes |
 | --- | --- | --- |
-| B0 · git init, remote, push | ✅ Done | Remote current at `c26dc12` |
+| B0 · git init, remote, push | ✅ Done | Pushed through `11de8fd`; check with `git rev-list --count origin/main..HEAD` |
 | B1 · Free ≥45 GB on C: | ✅ Done | 50 GB free |
 | B2 · `.wslconfig` applied | ✅ Done | WSL reports 17.6 GB — the 18 GB cap is active |
 | B3 · Ubuntu, tooling, Docker, git identity | ✅ Done | User `howie`; git 2.53, curl 8.18; `docker ps` works from Ubuntu |
@@ -146,6 +149,8 @@ Two decisions carry over from before the design rewrite. They concern how the te
 ## 4. Phase 1 — Foundation
 
 **Weeks 1–3 · 15 pw · Goal: it runs, it searches, it does not answer**
+
+> Broken down in three layers: [Phase 1 · Overview](./ei-ai-phase-1-overview.md) groups the work by priority and records the capacity gap between this 15 pw / 3-week budget and the staffing in §9.1; [Phase 1 · Detail](./ei-ai-phase-1-detail.md) opens each group into work packages with a proving command each, and [Phase 1 · Tasks](./ei-ai-phase-1-tasks.md) opens those into 149 individual tasks.
 
 ### 4.1 What ships
 
