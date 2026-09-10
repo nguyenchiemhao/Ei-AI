@@ -404,6 +404,8 @@ ei-ai/
 
 Assumes the second backend is available from day 1 (overview §6). Lanes run in parallel; a package appears on the day its lane starts it.
 
+> **This layout is optimistic and is kept as a shape, not a commitment.** Running the 149 tasks through their dependency graph puts this staffing at day 32, not day 15 — see [overview §6](./ei-ai-phase-1-overview.md) for what each staffing option actually costs, and [tasks §2](./ei-ai-phase-1-tasks.md) for the order that does not depend on staffing.
+
 | Day | Lead | Backend 2 | Frontend | ML | DevOps |
 | --- | --- | --- | --- | --- | --- |
 | 1 | WP-1.1 tree, pnpm workspace | `shared-types`, error codes, `problem+json` | Vite, Tailwind, shadcn | WP-4.1 corpus | WP-1.1 Dockerfiles |

@@ -43,21 +43,243 @@
 
 ### 1.1 Startable on day 1, with nothing blocking them
 
-`T-1.1-01` · `T-1.1-05` · `T-3.6-01` · `T-4.1-01` — one per lane except B2, whose first tasks (`T-1.2-09`, and the `common/` infrastructure inside WP-3.1) need the workspace from `T-1.1-01`, about half a day in.
+Twenty tasks sit in wave 1 (§2): the whole of WP-1.1 except the two that follow the workspace root, CI stages 1, 2 and 5, the Squid service and its empty allowlist, the web app's providers, and the entire first half of the measurement lane.
 
-### 1.2 The critical path
+`T-1.1-01` · `T-1.1-02` · `T-1.1-05` … `T-1.1-12` · `T-1.3-02` · `T-1.3-03` · `T-1.3-05` · `T-2.2-02` · `T-2.2-03` · `T-3.6-02` · `T-4.1-01` … `T-4.1-04`
+
+That is 95 hours of work available before anything is blocked — 5.8 days of it DevOps and 4.5 days of it ML, which is why those two lanes should be loaded first and why the backend has only one day of unblocked work on day 1.
+
+### 1.2 The critical path — 66 hours, 8.2 days
+
+Computed over the dependency graph, not estimated:
 
 ```
-T-1.1-01 → T-1.1-03 → T-1.2-01 → T-1.2-04 → T-2.1-01 → T-3.3-07 → T-3.4-06 → T-3.4-10 → T-2.3-02 → T-2.3-08
-  workspace   Nest app   extensions  chunks table  immutable   versions    chunker    embeddings   permitted   predicate
-                                                   _unaccent                                        CTE         test
+T-1.1-01 → T-1.1-03 → T-1.2-01 → T-1.2-03 → T-1.2-10 → T-3.1-02 → T-3.1-03
+ workspace   Nest app   extensions  workspaces  kysely      users +      login
+                                    tables      types       Argon2id
+  → T-3.1-04 → T-3.2-01 → T-3.2-02 → T-3.2-04 → T-3.2-05 → T-3.2-06 → T-3.2-07
+    access      matrix as   RolesGuard  workspace   77-case    guards on   negative
+    token       data                    guard       matrix     routes      tests
 ```
 
-Ten tasks, about 47 hours of work, spread across three weeks by their dependencies. **`T-2.1-01` is the one people underestimate:** `chunks` cannot be created at all until `immutable_unaccent()` exists (defect S-1), so a fix that looks like a footnote sits on the critical path of every retrieval task downstream.
+**The spine of Phase 1 is identity and authorisation, not retrieval.** That is worth knowing before staffing: the longest chain runs schema → generated types → auth → roles → matrix → wiring, and it is one person's chain — a second backend developer cannot shorten it, only work beside it.
+
+**It also means the three-week boundary is not a sequencing problem.** 8.2 days of chain inside a 15-day window leaves room; what does not fit is the *volume* — see the schedule simulation in [overview §6](./ei-ai-phase-1-overview.md#6-capacity--the-one-thing-to-settle-before-day-1).
 
 ---
 
-## 2. G1 · Foundation that blocks everything
+## 2. Execution order
+
+**The package tables in §3–§7 are ordered by priority group, which is not the order the work can be done in** — ten tasks in those tables appear before something they depend on. This section is the order to pull tickets in.
+
+Rank is by **dependency wave**: a task's wave is one more than the deepest wave among its dependencies, so every task in wave *n* can start as soon as wave *n−1* is finished, and tasks inside a wave are independent of each other. Waves are a property of the graph, not of the staffing — the ranking stays valid whatever is decided about headcount. **A wave is not a day.** Wave 12 holds 70 hours of work; how many calendar days that takes depends on how many people are in each lane.
+
+| Wave | Tasks | Hours | BE | FE | ML | DO |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | 20 | 95 | 1.0 d | 0.6 d | 4.5 d | 5.8 d |
+| 2 | 13 | 71 | 2.0 d | 1.6 d | 2.8 d | 2.5 d |
+| 3 | 12 | 60 | 3.5 d | 0.8 d | 1.2 d | 2.0 d |
+| 4 | 16 | 63 | 5.4 d | 0.5 d | 1.5 d | 0.5 d |
+| 5 | 12 | 49 | 4.6 d | 1.0 d | — | 0.5 d |
+| 6 | 9 | 40 | 5.0 d | — | — | — |
+| 7 | 6 | 31 | 3.9 d | — | — | — |
+| 8 | 9 | 44 | 4.8 d | 0.8 d | — | — |
+| 9 | 12 | 50 | 6.2 d | — | — | — |
+| 10 | 9 | 35 | 4.4 d | — | — | — |
+| 11 | 8 | 38 | 4.0 d | 0.8 d | — | — |
+| 12 | 14 | 70 | 5.5 d | 3.2 d | — | — |
+| 13 | 8 | 39 | 1.9 d | 2.2 d | — | 0.8 d |
+| 14 | 1 | 3 | 0.4 d | — | — | — |
+
+Read the shape rather than the rows: **ML and DevOps front-load and finish early** (both are done by wave 5, ML by wave 4), while **backend load grows through the middle waves and peaks at wave 9**. The lane that is idle in week 1 is the one that has 6 days of work in a single wave later — which is the argument for moving DevOps to full time in week 1 and adding backend capacity from week 2 rather than spreading everyone evenly.
+
+The graph lives in [`tools/task-order.py`](./tools/task-order.py), which reads the task tables below for ids, lanes and hours — run it after changing any task and paste its `--table` output back into this section, so the order cannot drift from the tasks it orders.
+
+`T-1.3-06` is split here into `T-1.3-06a` (script, backend) and `T-1.3-06b` (CI wiring, DevOps). `T-2.5-07` is a 0-hour checklist item folded into `T-2.5-01` and is not ranked.
+
+| # | Wave | ID | Lane | h | Task | Blocked by |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | 1 | T-1.1-01 | L | 4 | pnpm 10 workspace root: package.json, pnpm-workspace.yaml,… | — |
+| 2 | 1 | T-1.1-02 | L | 4 | packages/tsconfig and packages/eslint-config + Prettier co… | — |
+| 3 | 1 | T-1.1-05 | DO | 5 | apps/api/Dockerfile multi-stage dev/prod, Node 22.13 + pnp… | — |
+| 4 | 1 | T-1.1-06 | DO | 3 | apps/web/Dockerfile with a dev target running Vite bound t… | — |
+| 5 | 1 | T-1.1-07 | DO | 3 | apps/parser/Dockerfile — Python 3.12, Docling and Tesserac… | — |
+| 6 | 1 | T-1.1-08 | DO | 4 | Compose: postgres 17.2 + pgvector 0.8.0 and redis 7.4, bot… | — |
+| 7 | 1 | T-1.1-09 | DO | 4 | Compose: infinity 0.0.76 with the GPU reservation and the… | — |
+| 8 | 1 | T-1.1-10 | DO | 5 | Compose: two networks — backend (internal: true) for api,… | — |
+| 9 | 1 | T-1.1-11 | DO | 4 | Compose: uploads volume (rw in api/worker, ro in parser) a… | — |
+| 10 | 1 | T-1.1-12 | DO | 4 | .devcontainer/devcontainer.json with in-container typescri… | — |
+| 11 | 1 | T-1.3-02 | DO | 2 | Stage 1 — ESLint + Prettier across the workspace | — |
+| 12 | 1 | T-1.3-03 | DO | 2 | Stage 2 — tsc --noEmit in every package | — |
+| 13 | 1 | T-1.3-05 | DO | 4 | Stage 5 — build api, web and parser images | — |
+| 14 | 1 | T-2.2-02 | DO | 4 | Squid service on a pinned stable tag, joined to both netwo… | — |
+| 15 | 1 | T-2.2-03 | DO | 2 | allowlist.conf ships empty, with a README stating that emp… | — |
+| 16 | 1 | T-3.6-02 | FE | 5 | providers.tsx — TanStack Query, Zustand auth store, theme | — |
+| 17 | 1 | T-4.1-01 | ML | 10 | Collect 30–50 scanned legal PDFs — Vietnamese diacritics,… | — |
+| 18 | 1 | T-4.1-02 | ML | 6 | Collect 10–20 report documents with real tabular layout, p… | — |
+| 19 | 1 | T-4.1-03 | ML | 12 | Hand-transcribe ~20 reference pages spread across the docu… | — |
+| 20 | 1 | T-4.1-04 | ML | 8 | Docling + Tesseract spike harness — a standalone script, d… | — |
+| 21 | 2 | T-1.1-03 | L | 4 | apps/api NestJS 11 scaffold: main.ts, app.module.ts, worke… | T-1.1-01 |
+| 22 | 2 | T-1.3-01 | DO | 4 | .github/workflows/ci.yml skeleton — the nine stages declar… | T-1.1-02 |
+| 23 | 2 | T-2.2-01 | DO | 5 | squid.conf — custom log format name (C-3), include /etc/sq… | T-1.1-10 |
+| 24 | 2 | T-3.4-05 | L | 6 | D-5 decision — measure the XLM-RoBERTa tokenizer against a… | T-1.1-09 |
+| 25 | 2 | T-3.4-09 | L | 6 | InfinityClient — /embeddings at batch 8, timeout, retry an… | T-1.1-09 |
+| 26 | 2 | T-3.6-01 | FE | 5 | Vite 6 + React 19 + TypeScript + Tailwind 4 + shadcn/ui in… | T-1.1-06 |
+| 27 | 2 | T-3.6-03 | FE | 8 | apiClient.ts — problem+json parsing, transparent refresh o… | T-3.6-02 |
+| 28 | 2 | T-4.1-05 | ML | 8 | OCR run 1 over the whole corpus, with failure triage | T-4.1-04 |
+| 29 | 2 | T-4.1-08 | ML | 4 | GPU — VRAM in use with BGE-M3 and the reranker both loaded | T-1.1-09 |
+| 30 | 2 | T-4.1-09 | ML | 6 | GPU — embedding throughput in chunks/second at batch 8 | T-1.1-09 |
+| 31 | 2 | T-4.1-10 | ML | 4 | GPU — rerank latency for 60 candidates | T-1.1-09 |
+| 32 | 2 | T-5.2-03 | DO | 4 | Reload mechanism — squid -k parse then squid -k reconfigure | T-2.2-02 |
+| 33 | 2 | T-5.4-03 | DO | 7 | Stage 9 — Trivy on images, npm audit --audit-level=high, v… | T-1.3-05 |
+| 34 | 3 | T-1.1-04 | L | 4 | config/ — zod schema for every environment variable, fail-… | T-1.1-03 |
+| 35 | 3 | T-1.2-01 | L | 4 | 001_extensions.sql — vector, unaccent, pg_trgm, pgcrypto;… | T-1.1-03, T-1.1-08 |
+| 36 | 3 | T-1.2-09 | B2 | 4 | Migration runner — numbered, forward-only, applied-migrati… | T-1.1-03 |
+| 37 | 3 | T-1.3-04 | L | 4 | Stage 3 — Vitest with a coverage gate of 80% on domain mod… | T-1.3-01 |
+| 38 | 3 | T-2.2-04 | DO | 5 | Network verification script — no default route, service na… | T-2.2-01, T-2.2-02, T-2.2-03 |
+| 39 | 3 | T-2.3-01 | L | 4 | rank-fusion.ts — RRF as a pure function, with unit tests i… | T-1.1-03 |
+| 40 | 3 | T-2.5-01 | DO | 4 | dependency-cruiser installed, baseline config, CI stage 4… | T-1.3-01 |
+| 41 | 3 | T-3.4-06 | L | 8 | Chunker — 200–400 tokens with 15% overlap | T-3.4-05 |
+| 42 | 3 | T-3.6-04 | FE | 6 | router.tsx — all 19 routes declared, including the unbuilt… | T-3.6-01 |
+| 43 | 3 | T-4.1-06 | ML | 10 | Scoring — character-level and field-level accuracy per doc… | T-4.1-03, T-4.1-05 |
+| 44 | 3 | T-5.2-04 | DO | 4 | Rollback on invalid config — keep the previous file, surfa… | T-5.2-03 |
+| 45 | 3 | T-5.4-02 | DO | 3 | Stage 8 — red-team harness with zero cases, printing 0 cas… | T-1.3-01 |
+| 46 | 4 | T-1.2-02 | L | 4 | 002_identity.sql — users, refresh_tokens (family, single-u… | T-1.2-01 |
+| 47 | 4 | T-1.2-03 | L | 4 | 003_workspaces.sql part A — workspaces, workspace_members,… | T-1.2-01 |
+| 48 | 4 | T-1.2-05 | L | 4 | 004_agent.sql — conversations, turns, agent_steps, answers… | T-1.2-01 |
+| 49 | 4 | T-1.2-06 | L | 5 | 005_tools_governance.sql — tools, mcp_servers, pre_authori… | T-1.2-01 |
+| 50 | 4 | T-1.2-07 | L | 3 | 006_audit_egress.sql — audit_events, allowlist_entries, eg… | T-1.2-01 |
+| 51 | 4 | T-1.3-06a | L | 4 | Stage 6 — migration script (empty→head, prev tag→head) | T-1.2-09 |
+| 52 | 4 | T-2.1-01 | L | 3 | S-1 — immutable_unaccent(text) as IMMUTABLE PARALLEL SAFE,… | T-1.2-01 |
+| 53 | 4 | T-2.5-03 | L | 2 | Rule 2 — only governance/execution.gateway.ts may import m… | T-2.5-01 |
+| 54 | 4 | T-2.5-04 | L | 3 | Rule 3 — no cross-module service imports; only through por… | T-2.5-01 |
+| 55 | 4 | T-2.5-05 | DO | 2 | Rule 4 — apps/web imports packages/shared-types only, neve… | T-2.5-01, T-3.6-04 |
+| 56 | 4 | T-2.5-06 | DO | 2 | Rule 5 — a provider SDK may only be imported under adapter… | T-2.5-01 |
+| 57 | 4 | T-3.1-01 | B2 | 5 | common/ — problem-json.filter.ts, zod-validation.pipe.ts,… | T-1.1-04 |
+| 58 | 4 | T-3.4-07 | L | 6 | Chunker — character offsets and heading_path preserved thr… | T-3.4-06 |
+| 59 | 4 | T-3.6-06 | FE | 4 | ComingSoon component — purpose, planned phase, and what it… | T-3.6-04 |
+| 60 | 4 | T-4.1-07 | ML | 6 | Table extraction check on the report documents | T-4.1-06 |
+| 61 | 4 | T-4.1-11 | ML | 6 | docs/ops/week-1-measurements.md — five numbers, each with… | T-4.1-06, T-4.1-10 |
+| 62 | 5 | T-1.2-04 | L | 5 | 003_workspaces.sql part B — document_versions, pages, chun… | T-1.2-03, T-2.1-01 |
+| 63 | 5 | T-1.2-10 | B2 | 4 | kysely-codegen wiring, database/db.ts, transaction.ts help… | T-1.2-03, T-1.2-09 |
+| 64 | 5 | T-1.3-06b | DO | 4 | Stage 6 — CI wiring on Testcontainers Postgres | T-1.3-01, T-1.3-06a |
+| 65 | 5 | T-2.1-02 | L | 2 | S-2 — partial unique index pre_auth_one_active … WHERE rev… | T-1.2-06 |
+| 66 | 5 | T-2.1-03 | L | 2 | S-3 — approval_requests.decided_at, and the corrected part… | T-1.2-06 |
+| 67 | 5 | T-2.1-04 | L | 3 | tools — UNIQUE (id, classification) and tools_no_write_in_… | T-1.2-06 |
+| 68 | 5 | T-2.1-06 | L | 3 | S-5 — reject_mutation() plus triggers on audit_events and… | T-1.2-07 |
+| 69 | 5 | T-2.2-05 | L | 5 | allowlist_entries repository and GET/POST /egress/allowlis… | T-1.2-07, T-3.1-01 |
+| 70 | 5 | T-3.3-01 | L | 6 | Workspaces repository and CRUD, with archive semantics (re… | T-1.2-03, T-3.1-01 |
+| 71 | 5 | T-3.4-08 | L | 3 | Offset round-trip test — slicing the source by the offsets… | T-3.4-07 |
+| 72 | 5 | T-3.5-01 | L | 4 | tools repository and seed of the three internal tools; onl… | T-1.2-06 |
+| 73 | 5 | T-5.5-02 | FE | 8 | Wireframe component and a layout sketch inside each of the… | T-3.6-06 |
+| 74 | 6 | T-1.2-08 | L | 3 | 007_indexes.sql — HNSW on chunks.embedding halfvec_cosine_… | T-1.2-04, T-1.2-05, T-1.2-06, T-1.2-07 |
+| 75 | 6 | T-2.1-05 | L | 3 | S-4 · FR-44 — pre_authorisations.classification + composit… | T-2.1-04 |
+| 76 | 6 | T-2.2-06 | L | 3 | Seed one destination, document the manual reload step, and… | T-2.2-04, T-2.2-05 |
+| 77 | 6 | T-2.4-01 | B2 | 6 | audit.repository.ts — canonical payload serialisation and… | T-1.2-07, T-2.1-06 |
+| 78 | 6 | T-3.1-02 | B2 | 4 | users repository, Argon2id hashing, configurable password… | T-1.2-02, T-1.2-10, T-3.1-01 |
+| 79 | 6 | T-3.3-02 | L | 5 | Membership endpoints — add, remove, change role | T-3.3-01 |
+| 80 | 6 | T-3.3-03 | L | 5 | StoragePort + LocalFsAdapter, sha256 keying under the uplo… | T-1.1-11, T-1.2-04 |
+| 81 | 6 | T-3.4-01 | B2 | 6 | BullMQ setup, queue definitions, worker.main.ts consumer e… | T-1.1-11, T-1.2-10 |
+| 82 | 6 | T-5.2-01 | L | 5 | Generator — allowlist_entries → allowlist.conf, written at… | T-2.2-05 |
+| 83 | 7 | T-2.3-02 | L | 6 | hybrid-search.repository.ts — the permitted CTE: membershi… | T-1.2-04, T-1.2-08 |
+| 84 | 7 | T-2.4-02 | B2 | 6 | audit-transaction.interceptor.ts — opens the transaction b… | T-2.4-01, T-3.1-01 |
+| 85 | 7 | T-3.1-03 | B2 | 4 | POST /auth/login with AUTH_INVALID_CREDENTIALS, timing-saf… | T-3.1-02 |
+| 86 | 7 | T-3.3-04 | L | 6 | Multipart upload endpoint, 200 MB limit → DOC_TOO_LARGE | T-3.3-01, T-3.3-03 |
+| 87 | 7 | T-3.4-02 | B2 | 6 | Job lifecycle — retry with back-off, failure reason persis… | T-3.4-01 |
+| 88 | 7 | T-5.2-02 | L | 3 | Generator tests, including the empty case | T-5.2-01 |
+| 89 | 8 | T-2.3-03 | L | 5 | Dense branch — HNSW over halfvec, candidate limit from con… | T-2.3-02 |
+| 90 | 8 | T-2.3-04 | L | 5 | Lexical branch — GIN + plainto_tsquery('simple', unaccent(… | T-2.3-02 |
+| 91 | 8 | T-2.4-03 | B2 | 4 | auditService.record() and the event-name taxonomy constant… | T-2.4-02 |
+| 92 | 8 | T-2.5-02 | L | 3 | Rule 1 — only retrieval/hybrid-search.repository.ts may qu… | T-2.3-02, T-2.5-01 |
+| 93 | 8 | T-3.1-04 | B2 | 6 | Access token — 15 minutes, issue and verify, JwtAuthGuard | T-3.1-03 |
+| 94 | 8 | T-3.1-08 | B2 | 4 | login_attempts and the rate limit — 10 per account per 15… | T-3.1-03 |
+| 95 | 8 | T-3.3-05 | L | 6 | Content-type sniffing by file signature vs extension → DOC… | T-3.3-04 |
+| 96 | 8 | T-3.3-07 | L | 5 | documents + document_versions creation, dv_content_unique… | T-1.2-04, T-3.3-04 |
+| 97 | 8 | T-3.6-07 | FE | 6 | Login screen, including the lockout message | T-3.1-03, T-3.6-03 |
+| 98 | 9 | T-2.3-05 | L | 5 | Full outer join, fusion, RETRIEVAL_KEEP_TOP, RETRIEVAL_REL… | T-2.3-01, T-2.3-03, T-2.3-04 |
+| 99 | 9 | T-2.4-05 | B2 | 3 | Wire workspace, membership and permission-change events | T-2.4-03, T-3.3-02 |
+| 100 | 9 | T-2.4-08 | B2 | 3 | Immutability and chain-integrity tests | T-2.4-03 |
+| 101 | 9 | T-3.1-05 | B2 | 7 | refresh_tokens — family_id, single use, rotation on every… | T-3.1-04 |
+| 102 | 9 | T-3.1-09 | B2 | 4 | Lockout after 10 consecutive failures → AUTH_ACCOUNT_LOCKE… | T-3.1-08 |
+| 103 | 9 | T-3.1-10 | B2 | 5 | Redis revocation list, checked in the guard — a disabled a… | T-3.1-04 |
+| 104 | 9 | T-3.2-01 | B2 | 5 | The permission matrix as data in shared-types — 5 system r… | T-3.1-04 |
+| 105 | 9 | T-3.2-03 | B2 | 5 | Workspace role resolution from workspace_members — Owner,… | T-1.2-03, T-3.1-04 |
+| 106 | 9 | T-3.3-06 | L | 3 | Format allowlist — the 10 supported formats → DOC_UNSUPPOR… | T-3.3-05 |
+| 107 | 9 | T-3.3-08 | L | 2 | Download endpoint — Content-Disposition: attachment, X-Con… | T-3.3-07 |
+| 108 | 9 | T-3.4-03 | B2 | 4 | Ingestion state machine — uploaded → parsing → parsed → ch… | T-3.3-07, T-3.4-02 |
+| 109 | 9 | T-3.4-04 | L | 4 | Markdown pass-through "parsing" — one pages row, extractio… | T-3.3-07 |
+| 110 | 10 | T-2.3-08 | L | 4 | permission-predicate.spec.ts — asserts the compiled SQL te… | T-2.3-05 |
+| 111 | 10 | T-2.4-04 | B2 | 3 | Wire authentication events — success, failure, lockout | T-2.4-03, T-3.1-09 |
+| 112 | 10 | T-2.4-06 | B2 | 4 | Wire upload and every ingestion state change | T-2.4-03, T-3.4-03 |
+| 113 | 10 | T-3.1-06 | B2 | 4 | POST /auth/refresh with the HttpOnly, SameSite=Strict cook… | T-3.1-05 |
+| 114 | 10 | T-3.2-02 | B2 | 5 | RolesGuard + @Roles() decorator, driven by that table | T-3.2-01 |
+| 115 | 10 | T-3.3-09 | L | 2 | Tests — ELF-in-pdf, oversize, duplicate, unsupported format | T-3.3-05, T-3.3-06, T-3.3-07 |
+| 116 | 10 | T-3.4-10 | L | 4 | Persist embeddings as halfvec, with the completeness check | T-3.4-03, T-3.4-07, T-3.4-09 |
+| 117 | 10 | T-3.5-02 | L | 4 | Role filtering inside the query by min_system_role | T-3.2-01, T-3.5-01 |
+| 118 | 10 | T-5.1-01 | L | 5 | ZIP expansion to 500 files, streamed rather than fully buf… | T-3.3-06 |
+| 119 | 11 | T-2.3-06 | L | 6 | retrieval.service.ts, DTOs and POST /search — response car… | T-2.3-05, T-3.4-10 |
+| 120 | 11 | T-3.1-07 | B2 | 6 | Reuse detection — a used refresh token revokes the whole f… | T-3.1-06 |
+| 121 | 11 | T-3.2-04 | B2 | 5 | WorkspaceRoleGuard + @WorkspaceRole() decorator | T-3.2-02, T-3.2-03 |
+| 122 | 11 | T-3.4-11 | L | 3 | End-to-end — upload a folder, reach indexed, expose ingest… | T-3.4-03, T-3.4-04, T-3.4-10 |
+| 123 | 11 | T-3.5-03 | L | 4 | Operating-mode computation per request from enabled and re… | T-3.5-02 |
+| 124 | 11 | T-3.6-08 | FE | 6 | Auth flow — guarded routes, token storage, 401 → refresh →… | T-3.1-06, T-3.6-07 |
+| 125 | 11 | T-5.1-02 | L | 4 | Path-traversal and nested-archive refusal, entry-count and… | T-5.1-01 |
+| 126 | 11 | T-5.1-03 | L | 4 | Per-file result summary returned to the caller | T-5.1-01 |
+| 127 | 12 | T-2.3-07 | L | 4 | Question embedding through InfinityClient, cached in Redis… | T-1.1-09, T-2.3-06 |
+| 128 | 12 | T-2.3-09 | L | 5 | leakage.spec.ts — B's restricted chunk appears in no resul… | T-2.3-06 |
+| 129 | 12 | T-2.3-11 | L | 2 | Query-plan review of both branches at seeded volume, recor… | T-2.3-06 |
+| 130 | 12 | T-2.4-07 | B2 | 3 | Wire search events with workspace scope — no document cont… | T-2.3-06, T-2.4-03 |
+| 131 | 12 | T-3.1-11 | B2 | 3 | POST /auth/logout — clears the cookie, revokes the family | T-3.1-07 |
+| 132 | 12 | T-3.1-12 | B2 | 4 | Integration tests — the two gate scenarios: replay-revokes… | T-3.1-07, T-3.1-09 |
+| 133 | 12 | T-3.2-05 | B2 | 8 | Matrix test generator — one case per role/action pair, 77… | T-3.2-02, T-3.2-04 |
+| 134 | 12 | T-3.5-04 | L | 4 | GET /me — user, roles, memberships, operatingMode, FEATURE… | T-3.1-04, T-3.5-03 |
+| 135 | 12 | T-3.6-09 | FE | 6 | Workspace list — cards with document count and index status | T-3.3-01, T-3.6-06, T-3.6-08 |
+| 136 | 12 | T-3.6-10 | FE | 6 | Workspace documents table — status, pages, uploader, date,… | T-3.4-11, T-3.6-06, T-3.6-08 |
+| 137 | 12 | T-3.6-11 | FE | 6 | Upload screen — drag and drop, per-file progress, per-file… | T-3.3-06, T-3.6-06, T-3.6-08 |
+| 138 | 12 | T-3.6-12 | FE | 8 | Search screen — query box, workspace scope, results with f… | T-2.3-06, T-3.6-06, T-3.6-08 |
+| 139 | 12 | T-5.1-04 | L | 3 | Tests — traversal, nesting, over-count, mixed valid and in… | T-5.1-02, T-5.1-03 |
+| 140 | 12 | T-5.3-01 | L | 8 | GET /documents/{id} detail — version history, status reaso… | T-3.4-11 |
+| 141 | 13 | T-2.3-10 | L | 2 | Mutation check — remove the permitted join and confirm bot… | T-2.3-08, T-2.3-09 |
+| 142 | 13 | T-3.2-06 | B2 | 6 | Guards applied to every implemented endpoint, with the doc… | T-3.2-05, T-3.3-04, T-3.5-04 |
+| 143 | 13 | T-3.2-08 | B2 | 3 | Deliberate-loosening check — remove one guard, confirm the… | T-3.2-05 |
+| 144 | 13 | T-3.6-05 | FE | 6 | AppShell + Sidebar, badges driven by FEATURE_STATUS | T-3.5-04, T-3.6-04 |
+| 145 | 13 | T-5.3-02 | FE | 8 | Document detail screen — versions, ingestion state and rea… | T-3.6-06, T-5.3-01 |
+| 146 | 13 | T-5.4-01 | DO | 6 | Stage 7 — Testcontainers integration suite (Postgres 17.2… | T-1.3-06b, T-2.3-09, T-3.2-05 |
+| 147 | 13 | T-5.5-01 | B2 | 4 | Contract tests for every 501 route — code, feature, planne… | T-1.1-03, T-3.5-04 |
+| 148 | 13 | T-5.5-03 | FE | 4 | Accessibility pass on the four real screens — keyboard, fo… | T-3.6-12 |
+| 149 | 14 | T-3.2-07 | B2 | 3 | Negative tests — Reader cannot upload, Editor cannot chang… | T-3.2-06 |
+
+### 2.1 The ten tasks that were out of order
+
+Found by comparing the priority-group order in §3–§7 against the dependency graph. Every one of them would otherwise have been discovered the hard way, mid-sprint. Positions are the task's place in the package tables, counting the 148 tasks that carry hours.
+
+| Task | Appears at | Needs | Which appears at |
+| --- | --- | --- | --- |
+| T-1.2-04 · `chunks` table | #16 | T-2.1-01 · `immutable_unaccent()` | #30 |
+| T-2.2-05 · allowlist API | #40 | T-3.1-01 · `common/` HTTP infrastructure | #67 |
+| T-2.3-06 · `POST /search` | #47 | T-3.4-10 · embeddings persisted | #105 |
+| T-2.4-02 · audit transaction interceptor | #54 | T-3.1-01 · `common/` | #67 |
+| T-2.4-04 · wire authentication events | #56 | T-3.1-09 · lockout | #75 |
+| T-2.4-05 · wire workspace events | #57 | T-3.3-02 · membership endpoints | #88 |
+| T-2.4-06 · wire ingestion events | #58 | T-3.4-03 · state machine | #98 |
+| T-2.5-05 · architecture rule 4 | #65 | T-3.6-04 · the 19 routes | #114 |
+| T-3.2-06 · guards on every implemented route | #84 | T-3.3-04 · upload endpoint | #90 |
+| T-3.2-06 | #84 | T-3.5-04 · `GET /me` | #110 |
+
+The first one is the one that would have hurt: **`chunks` cannot be created until the `IMMUTABLE` unaccent wrapper exists** (defect S-1), and `chunks` is what four other packages build on. The cluster in WP-2.4 says something structural — **audit wiring follows the feature it audits**, so those four tasks are late by nature and were listed early only because their package sits in G2.
+
+Four dependencies were also **loosened** while building the graph, because the package-level statements in the detail document were stricter than the work actually is:
+
+| Package | Detail doc says | Actually needs | Why it matters |
+| --- | --- | --- | --- |
+| WP-3.3 workspaces, upload | depends on T-3.2-04 (workspace guard) | the schema and `common/` — guards are wired on by T-3.2-06 | Otherwise the lead waits for the whole of identity + authorisation before touching upload |
+| WP-2.3 retrieval | depends on T-3.4-10 | only T-2.3-06 onward needs indexed chunks; the query can be written against the schema | Retrieval and the pipeline overlap by about three days |
+| WP-3.6 web | depends on T-3.1-03, T-3.5-04 | the shell tasks need neither — they run against a mocked client from day 1 | The frontend is not blocked in week 1 |
+| WP-3.6 screens | listed in sequence | each screen needs the shell and its own route, not the previous screen | A second frontend developer can parallelise |
+
+---
+
+## 3. G1 · Foundation that blocks everything
 
 ### WP-1.1 · Repo, toolchain, Compose stack, Dev Container — 48 h
 
@@ -110,7 +332,7 @@ Ten tasks, about 47 hours of work, spread across three weeks by their dependenci
 
 ---
 
-## 3. G2 · Safety invariants
+## 4. G2 · Safety invariants
 
 ### WP-2.1 · Invariant database constraints — 16 h
 
@@ -187,7 +409,7 @@ Ten tasks, about 47 hours of work, spread across three weeks by their dependenci
 
 ---
 
-## 4. G3 · The product path
+## 5. G3 · The product path
 
 ### WP-3.1 · Identity — 56 h
 
@@ -289,7 +511,7 @@ Ten tasks, about 47 hours of work, spread across three weeks by their dependenci
 
 ---
 
-## 5. G4 · Measurement — the parallel lane
+## 6. G4 · Measurement — the parallel lane
 
 ### WP-4.1 · Corpus, OCR spike, GPU benchmark — 80 h
 
@@ -313,7 +535,7 @@ Ten tasks, about 47 hours of work, spread across three weeks by their dependenci
 
 ---
 
-## 6. G5 · Pre-agreed slack
+## 7. G5 · Pre-agreed slack
 
 Cut in package order — WP-5.1 first — if capacity runs short. Each package names where it lands instead (detail §6).
 
@@ -360,7 +582,7 @@ Cut in package order — WP-5.1 first — if capacity runs short. Each package n
 
 ---
 
-## 7. Conventions
+## 8. Conventions
 
 **One task, one commit, one verifiable change.** The commit message starts with the task id: `T-2.3-02: permitted CTE in hybrid search`. A task that cannot be finished in one sitting was estimated wrong — split it and give the halves `a`/`b` suffixes rather than letting it run for three days.
 
@@ -372,11 +594,11 @@ Cut in package order — WP-5.1 first — if capacity runs short. Each package n
 
 **Package closure** needs the detail document's proving command for that package, not just every task ticked.
 
-**Which day each task lands on** is detail §9 — the fifteen-day, five-lane schedule. Task ids are deliberately not stamped with days: the schedule moves, the dependency order does not.
+**Which day each task lands on** depends on staffing, so it is not stamped on the ticket. §2 gives the order, which does not move; [detail §9](./ei-ai-phase-1-detail.md) gives one possible fifteen-day, five-lane layout, and [overview §6](./ei-ai-phase-1-overview.md) gives what the simulation says it actually costs.
 
 ---
 
-## 8. Deliberately not tasks in Phase 1
+## 9. Deliberately not tasks in Phase 1
 
 Listed so nobody adds them by reflex, and so the absences read as decisions rather than oversights.
 

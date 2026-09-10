@@ -120,6 +120,8 @@ The dotted line from G2 to G3 is the one worth reading twice: the permission pre
 
 ## 5. Three weeks, by group
 
+> This is the shape of the work, not a commitment to three weeks — §6 says what the schedule actually costs. Under the recommended option the same three centres of gravity spread across four weeks.
+
 | Week | Centre of gravity | Ends with |
 | --- | --- | --- |
 | **1** | **G1** in full, **G4** starts, G3's identity work begins behind it | Stack up, every table in, 19 routes render, first measurements taken |
@@ -144,11 +146,30 @@ The top-level plan gives Phase 1 **15 pw over 3 weeks**, which implies five peop
 
 Backend is short by 37.5 pd as staffed, and by 22.5 pd even with the second backend pulled forward. The per-lane figures are the sum of the individual tasks in [Phase 1 · Tasks](./ei-ai-phase-1-tasks.md), not a top-down allocation — which is why they do not round neatly.
 
-| | Option | Effect on the 26-week timeline | Cost |
+### Schedule simulation
+
+The 149 tasks were run through their dependency graph with eight-hour days and one worker per lane unless stated ([tasks §2](./ei-ai-phase-1-tasks.md)):
+
+| Staffing | Finishes on day | ≈ weeks |
+| --- | --- | --- |
+| As staffed in the top-level plan §9.1 — 1 backend, 1 FE, 1 ML, DevOps modelled generously at full time | **55** | 11 |
+| Second backend from day 1 | 32 | 6.5 |
+| Three backends | 25 | 5 |
+| Three backends, G5 deferred | 22 | 4.5 |
+| **Four backends, G5 deferred** | **19** | **4** |
+| Five backends, two frontends, G5 deferred | 16 | 3.2 |
+
+**This corrects an earlier version of this section.** It claimed that a second backend from day 1 plus a third for weeks 2–3 would still close Phase 1 at the end of week 3. That does not hold: backend demand is 52.5 pd, three people across three weeks supply 45 pd at perfect utilisation with zero dependency idling, and the simulation — which accounts for the idling — puts that combination at day 25.
+
+**The critical path is only 8.2 days**, so this is a volume problem, not a sequencing one. Three weeks cannot be bought with better ordering; it can only be bought with people or with scope.
+
+| | Option | Gate lands | Cost |
 | --- | --- | --- | --- |
-| **A** *(recommended)* | Second backend from day 1, **plus a third backend for weeks 2–3** | None — Phase 1 still closes at the end of week 3 | One extra person for two weeks |
-| **B** | Second backend from day 1, **Phase 1 runs 4 weeks** | Everything shifts a week, or Phase 4 absorbs it | One week of schedule |
-| **C** | Second backend from day 1, 3 weeks, **G5 is cut and formats narrow to `.md`/`.txt`** | None visible now; the deferred work lands in weeks 4–5 and eats into milestone 2A | The G5 list, plus a smaller upload surface |
+| **A** *(recommended)* | **Four backend-capable people** (lead + 3), DevOps at full time in week 1, **G5 deferred** | **Day 19 — end of week 4** | One week of schedule, absorbed in Phase 2's nine weeks or in Phase 4 |
+| **B** | The team as staffed, plus the second backend from day 1 | Day 32 — week 6.5 | Phase 1 more than doubles; the 26-week plan becomes roughly 30 |
+| **C** | Four backends, **G5 plus about 12 pd out of G3** — web down to login and search only, upload narrowed to `.md`/`.txt`, document status API only | Day 15 — end of week 3 | The week-3 demo no longer demonstrates the milestone, and milestone 2A inherits the format work |
+
+**Recommendation: A.** Option C holds the date by removing the thing the date was for — a demo that cannot accept a PDF or open a workspace screen does not prove that the foundation works. Option B is honest but expensive. A costs one week and keeps the gate meaningful.
 
 DevOps is also short by 4.5 pd under every option — either raise them above half time for weeks 1–2, or the lead absorbs the Compose and CI work and the backend gap widens further.
 
