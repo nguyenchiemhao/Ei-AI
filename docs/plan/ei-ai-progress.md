@@ -4,8 +4,8 @@
 
 | Field | Value |
 | --- | --- |
-| Version | 0.1 |
-| Updated | 2026-09-10 |
+| Version | 0.2 |
+| Updated | 2026-09-12 |
 | Phase in flight | **Phase 1 · Foundation** — not started |
 | Blocking decisions | **1 open** — D-2 capacity. D-1 closed 2026-09-10 |
 | Code written | **none** — the repository holds documents only |
@@ -21,18 +21,21 @@
 | --- | --- |
 | ⬜ | Not started |
 | 🟡 | In progress — someone is on it now |
+| 🔎 | Awaiting review — the work is finished, the gate is open |
+| ↩ | Sent back — the review rejected it, and it is being reworked |
 | ✅ | Done, and its "Done when" was demonstrated |
 | 🚫 | Blocked — the note says by what |
 | ⏭ | Deferred or cut — the note says where it went |
 
-**Four rules.**
+**Five rules.**
 
 1. **A row moves to ✅ only when the "Done when" in [Tasks](./ei-ai-phase-1-tasks.md) has actually been demonstrated** — not when the code is written. A task whose proof needs a running stack is not closed by a unit test.
-2. **A package closes only when its proving command in [Detail](./ei-ai-phase-1-detail.md) passes**, even if every task under it is ticked.
-3. **Status changes travel in the same commit as the work.** The commit message starts with the task id (`T-2.3-02: permitted CTE in hybrid search`), so `git log --grep` reconstructs this file at any point in the past.
-4. **Never widen scope here.** A task that turns out to be two tasks is split in the task document first, with `a`/`b` suffixes, and then appears here.
+2. **Nothing reaches ✅ by the hand that did the work.** Finished work moves to 🔎 and waits there; the review either closes it or sends it back to ↩ with the reason. 🟡 straight to ✅ is a review that did not happen, not a review that went quickly.
+3. **A package closes only when its proving command in [Detail](./ei-ai-phase-1-detail.md) passes**, even if every task under it is ticked.
+4. **Status changes travel in the same commit as the work.** The commit message starts with the task id (`T-2.3-02: permitted CTE in hybrid search`), so `git log --grep` reconstructs this file at any point in the past.
+5. **Never widen scope here.** A task that turns out to be two tasks is split in the task document first, with `a`/`b` suffixes, and then appears here.
 
-Only ⬜ needs no note. Every other mark carries one: a date for ✅, a name or a branch for 🟡, the blocker for 🚫, the destination for ⏭.
+Only ⬜ needs no note. Every other mark carries one: a date for ✅, a name or a branch for 🟡, the date the gate opened for 🔎, the reason it came back for ↩, the blocker for 🚫, the destination for ⏭.
 
 ---
 
