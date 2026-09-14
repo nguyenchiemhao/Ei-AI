@@ -787,7 +787,182 @@ Một lượt agent **giữ kết nối SSE nhưng không giữ trạng thái tr
 
 ### 6.1 Schema
 
-Chỉ trình bày các bảng mới hoặc thay đổi so với v1; các bảng nạp tài liệu, identity và audit giữ nguyên hình dạng đã kiểm chứng.
+Mục này gồm hai phần: **6.1.1** các bảng nền mà mọi thứ khác dựa lên, và **6.1.2** các bảng mới hoặc thay đổi so với v1. Trước 2026-09-14 chỉ có phần thứ hai, và phần thứ nhất được coi là "giữ nguyên hình dạng đã kiểm chứng" — nhưng hình dạng đó chưa từng được viết ra, nên mười một bảng không có định nghĩa ở bất kỳ đâu.
+
+#### 6.1.1 Bảng nền
+
+*Bổ sung 2026-09-14, khi mở WP-1.2.* Mười một bảng dưới đây được nhắc tới xuyên suốt tài liệu — `workspace_members` và `document_grants` nằm ngay trong permission predicate ở §6.1.2 — nhưng chưa từng được định nghĩa ở đâu. Chúng được viết ra ở đây để migration có một nguồn sự thật duy nhất.
+
+**Quan hệ với tài liệu v1.** Mười bốn bảng còn lại (`workspaces`, `documents`, `document_versions`, `pages`, `chunks`, `answers`, `claims`, `citations`, `audit_events`, `egress_records` và ba bảng trùng nói dưới) giữ nguyên định nghĩa trong [tài liệu v1](../archive/v1-non-agentic/ei-ai-self-hosted-knowledge-assistant.md) §6.1, và khối SQL ở đó là **phụ lục quy phạm** của mục này. Ba bảng — `turns`, `approval_requests`, `approval_decisions` — được định nghĩa ở cả hai nơi; **bản trong §6.1.2 thắng**, vì nó mang trạng thái và ngân sách của vòng lặp agent mà bản v1 không có.
+
+```sql
+-- Vòng đời một phiên bản tài liệu. ENUM thứ năm, cùng bốn ENUM ở 6.1.2.
+CREATE TYPE version_status AS ENUM (
+    'uploaded','parsing','parsed','chunking','embedding',
+    'indexed','failed','quarantined','superseded','purged'
+);
+
+-- Vai trò hệ thống và vai trò workspace là TEXT + CHECK chứ không phải ENUM:
+-- ma trận quyền ở §9.1 đổi thường xuyên hơn schema, và ALTER TYPE khoá bảng.
+CREATE TABLE users (
+    id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email          TEXT NOT NULL,
+    display_name   TEXT NOT NULL,
+    password_hash  TEXT,                       -- Argon2id; NULL khi đăng nhập bằng OIDC
+    auth_source    TEXT NOT NULL DEFAULT 'local'
+                   CHECK (auth_source IN ('local','oidc')),
+    system_role    TEXT NOT NULL DEFAULT 'Member'
+                   CHECK (system_role IN ('Administrator','Knowledge Manager',
+                                          'Approver','Member','Auditor')),
+    status         TEXT NOT NULL DEFAULT 'active'
+                   CHECK (status IN ('active','disabled')),
+    locked_until   TIMESTAMPTZ,                -- FR-65, khoá sau 10 lần thất bại liên tiếp
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT users_email_unique UNIQUE (email),
+    -- FR-58: tài khoản local buộc phải có hash, tài khoản OIDC không bao giờ có
+    CONSTRAINT users_password_matches_source CHECK (
+        (auth_source = 'local' AND password_hash IS NOT NULL)
+        OR (auth_source = 'oidc' AND password_hash IS NULL)
+    )
+);
+
+-- FR-64. Token lưu dưới dạng hash: rò database không cho ai một refresh token dùng được.
+-- family_id nối cả chuỗi xoay vòng, nên phát hiện tái sử dụng thu hồi được toàn bộ chuỗi.
+CREATE TABLE refresh_tokens (
+    id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id        UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    family_id      UUID NOT NULL,
+    token_hash     TEXT NOT NULL,
+    issued_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    expires_at     TIMESTAMPTZ NOT NULL,
+    used_at        TIMESTAMPTZ,                -- dùng một lần: lần thứ hai là tái sử dụng
+    revoked_at     TIMESTAMPTZ,
+    revoked_reason TEXT CHECK (revoked_reason IN ('rotated','reuse_detected',
+                                                  'logout','account_disabled')),
+    replaced_by    UUID REFERENCES refresh_tokens(id),
+    CONSTRAINT refresh_tokens_hash_unique UNIQUE (token_hash)
+);
+
+-- FR-65. Ghi email chứ không chỉ user_id: lần thử vào tài khoản không tồn tại
+-- cũng phải bị đếm, nếu không rate limit trở thành công cụ dò tài khoản.
+CREATE TABLE login_attempts (
+    id           BIGSERIAL PRIMARY KEY,
+    email        TEXT NOT NULL,
+    user_id      UUID REFERENCES users(id) ON DELETE SET NULL,
+    succeeded    BOOLEAN NOT NULL,
+    ip           INET,
+    attempted_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- FR-59. Ánh xạ nhóm của nhà cung cấp danh tính sang vai trò hệ thống.
+CREATE TABLE group_mappings (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    provider    TEXT NOT NULL DEFAULT 'oidc',
+    group_name  TEXT NOT NULL,
+    system_role TEXT NOT NULL
+                CHECK (system_role IN ('Administrator','Knowledge Manager',
+                                       'Approver','Member','Auditor')),
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT group_mappings_unique UNIQUE (provider, group_name)
+);
+
+-- FR-62. Khoá chính kép: một người có đúng một vai trò trong một workspace.
+CREATE TABLE workspace_members (
+    workspace_id   UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    user_id        UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    workspace_role TEXT NOT NULL CHECK (workspace_role IN ('Owner','Editor','Reader')),
+    added_by       UUID REFERENCES users(id),
+    added_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (workspace_id, user_id)
+);
+
+-- FR-14. Chỉ có nghĩa khi documents.restricted = TRUE; permission predicate đọc bảng này.
+CREATE TABLE document_grants (
+    document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+    user_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    granted_by  UUID NOT NULL REFERENCES users(id),
+    granted_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (document_id, user_id)
+);
+
+CREATE TABLE conversations (
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title      TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- FR-51, FR-56, FR-57. credential_enc mã hoá khi lưu; timeout và rate limit là
+-- thuộc tính của server chứ không phải hằng số trong code, vì mỗi ERP chịu được một mức khác nhau.
+CREATE TABLE mcp_servers (
+    id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name                  TEXT NOT NULL,
+    transport             TEXT NOT NULL CHECK (transport IN ('stdio','http','sse')),
+    endpoint              TEXT NOT NULL,
+    credential_enc        BYTEA,
+    status                TEXT NOT NULL DEFAULT 'unknown'
+                          CHECK (status IN ('unknown','healthy','unhealthy','disabled')),
+    timeout_ms            INTEGER NOT NULL DEFAULT 10000
+                          CHECK (timeout_ms BETWEEN 1000 AND 120000),
+    rate_limit_per_minute INTEGER CHECK (rate_limit_per_minute > 0),
+    last_seen_at          TIMESTAMPTZ,
+    created_by            UUID NOT NULL REFERENCES users(id),
+    created_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT mcp_servers_name_unique UNIQUE (name)
+);
+
+-- FR-45. Bảng rỗng nghĩa là chặn hết; đó là cấu hình mặc định, không phải chỗ trống chờ điền.
+CREATE TABLE allowlist_entries (
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    host       TEXT NOT NULL,
+    port       INTEGER NOT NULL DEFAULT 443 CHECK (port BETWEEN 1 AND 65535),
+    protocol   TEXT NOT NULL DEFAULT 'https' CHECK (protocol IN ('http','https')),
+    purpose    TEXT NOT NULL,
+    enabled    BOOLEAN NOT NULL DEFAULT TRUE,
+    created_by UUID NOT NULL REFERENCES users(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT allowlist_entries_unique UNIQUE (host, port, protocol)
+);
+
+-- FR-47, FR-48. Ràng buộc cuối cùng cho lời xác nhận: không bật được provider ngoài
+-- nếu chưa có người ký nhận rằng nội dung tài liệu sẽ rời khỏi mạng.
+CREATE TABLE model_provider_settings (
+    id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    provider             TEXT NOT NULL,
+    model_id             TEXT NOT NULL,
+    api_key_enc          BYTEA,
+    enabled              BOOLEAN NOT NULL DEFAULT FALSE,
+    acknowledged_by      UUID REFERENCES users(id),
+    acknowledged_at      TIMESTAMPTZ,
+    acknowledgement_text TEXT,
+    created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT model_provider_settings_unique UNIQUE (provider),
+    CONSTRAINT mps_enabled_requires_acknowledgement CHECK (
+        enabled = FALSE
+        OR (acknowledged_by IS NOT NULL AND acknowledged_at IS NOT NULL)
+    )
+);
+
+-- Ảnh chụp trạng thái đối tượng ở hệ thống đích ngay trước khi một tool write chạy,
+-- để hoàn tác được (Phase 3). Tạo rỗng từ Phase 1: bảng rỗng gần như không tốn gì,
+-- đổi schema ở tuần 20 tốn nhiều ngày (§6.3).
+CREATE TABLE write_snapshots (
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    agent_step_id UUID NOT NULL REFERENCES agent_steps(id) ON DELETE CASCADE,
+    tool_id       UUID NOT NULL REFERENCES tools(id),
+    target_kind   TEXT NOT NULL,   -- loại đối tượng ở hệ đích, ví dụ 'erp.purchase_order'
+    target_id     TEXT NOT NULL,   -- khoá ở hệ đích, không phải khoá của ta
+    before_state  JSONB NOT NULL,  -- nguyên văn trước khi ghi
+    captured_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    reverted_at   TIMESTAMPTZ,
+    reverted_by   UUID REFERENCES users(id),
+    CONSTRAINT write_snapshots_step_unique UNIQUE (agent_step_id)
+);
+```
+
+#### 6.1.2 Bảng của thiết kế agentic
 
 ```sql
 -- Vòng đời một lượt hỏi đáp
@@ -967,12 +1142,12 @@ LIMIT 60;
 | `chunks_embedding_hnsw` | chunks | `USING hnsw (embedding halfvec_cosine_ops)` | Nhánh dense của tìm kiếm hybrid |
 | `chunks_text_search_gin` | chunks | `USING gin (text_search)` | Nhánh lexical |
 | `chunks_version_idx` | chunks | `(document_version_id)` | Join với permitted CTE |
-| `agent_steps_turn_seq` | agent_steps | `(turn_id, seq)` | Đọc lại chuỗi bước của một lượt |
+| ~~`agent_steps_turn_seq`~~ | agent_steps | ~~`(turn_id, seq)`~~ | **Bỏ 2026-09-14** — `UNIQUE (turn_id, seq)` trên bảng đã tạo đúng index này; khai báo lại là dựng hai lần |
 | `agent_steps_pending` | agent_steps | `(status) WHERE status IN ('pending','awaiting_approval')` | Bảng theo dõi và job hết hạn |
 | `turns_user_recent` | turns | `(user_id, started_at DESC)` | Danh sách hội thoại gần đây |
-| `approval_requests_open` | approval_requests | `(expires_at) WHERE id NOT IN (SELECT approval_request_id FROM approval_decisions)` | Hộp chờ duyệt và job hết hạn |
+| `approval_requests_open` | approval_requests | `(expires_at) WHERE decided_at IS NULL` | Hộp chờ duyệt và job hết hạn. **Sửa 2026-09-14** — predicate của index không chứa được subquery (defect S-3); bảng nhận thêm cột `decided_at` |
 | `tools_enabled_role` | tools | `(enabled, min_system_role) WHERE enabled = TRUE` | Lọc danh mục tool theo vai trò mỗi vòng lặp |
-| `audit_events_seq` | audit_events | `(seq)` | Kiểm chứng hash chain |
+| `audit_events_chain` | audit_events | `(id)` | Kiểm chứng hash chain. **Sửa 2026-09-14** — bảng không có cột `seq`; thứ tự chuỗi là `BIGSERIAL id` ([kế hoạch Phase 1 §1.1](../plan/ei-ai-phase-1-detail.md)) |
 | `audit_events_search` | audit_events | `USING gin (to_tsvector('simple', payload::text))` | Tìm kiếm audit |
 
 ### 6.3 Migration, seed và khối lượng dữ liệu

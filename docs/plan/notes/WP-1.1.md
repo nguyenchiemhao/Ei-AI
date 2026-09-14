@@ -42,6 +42,8 @@ Opened 2026-09-12. Authorities: [Detail](../ei-ai-phase-1-detail.md) §2 · [Tas
 
 ## Tradeoffs
 
+- 2026-09-14 — `llamacpp` runs the CPU `:server` build with `-c 4096`, dropping the CUDA build and the model's full 262k context: the card already carries both embedding models, and sizing the KV cache to the advertised context OOM-kills the container under the 18 GB WSL cap (exit 137).
+
 - 2026-09-14 — chose to drop `${...}` interpolation from compose and hand postgres the root `.env` through `env_file`, dropped an interpolated `POSTGRES_PASSWORD`, because the Dev Container starts compose with no `--env-file` and an interpolated secret makes the whole file fail to parse before a single service is created. The cost is that the postgres container sees variables it does not need; the alternative was a second `.env`, which is exactly the drift C-4 was raised against.
 
 - 2026-09-14 — chose to pin `ubuntu/squid:6.6-24.04_beta` by digest, dropped building Squid from `ubuntu:24.04` with an apt-pinned version, because the second costs about 4 h outside the plan to remove a word from a tag rather than a risk from the image.
@@ -56,3 +58,20 @@ Opened 2026-09-12. Authorities: [Detail](../ei-ai-phase-1-detail.md) §2 · [Tas
 - 2026-09-14 — detail §7's tree names `infra/compose/compose.gpu.yml`, and the gate asks that **both profiles start, default and `--profile dev-local`**, but no Phase 1 task creates the `llamacpp` service or fills that file. The GPU reservation now sits in the service itself (a plain `docker compose up` is what the gate runs, and an overlay would hand it a CPU-bound embedder), and the file was removed. · needed before the Phase 1 gate
 - 2026-09-14 — `T-1.1-12`'s "Done when" is a GUI action — open the folder in the container, hit a breakpoint. It cannot be proved from a shell and stays manual, like dev env steps B4a/B4b. · needed before WP-1.1 closes
 - 2026-09-14 — how does a browser on the host reach `web` (5173) and `api` (3000) when both sit on an `internal: true` network that silently drops published ports? The milestone says clone, `docker compose up`, log in. **Resolved 2026-09-14 by adding the ingress service** — the second of the three options. It is new scope no Phase 1 task named, so it needs confirming at the gate: either `T-1.1-10` grows to cover ingress, or it becomes a task of its own with an id.
+
+---
+
+## Gate · closed 2026-09-14
+
+Reviewed and accepted: 12 tasks of WP-1.1 plus T-2.2-02 and T-2.2-03, borrowed. Dev Container
+confirmed by hand. The `ingress` service accepted provisionally.
+
+**Promoted to [CLAUDE.md](../../../CLAUDE.md)** — two new sections, six rules, in force from the
+next package: a check that can pass for the wrong reason, "Up" is not "working", pin by digest,
+pin what your pin drags in, pulling a task forward for a proving command, and unnamed scope
+being provisional until a gate.
+
+**Promoted to [Progress §3](../ei-ai-progress.md)** — Q-07 the ingress service, Q-08 the missing
+`task-order.py`, Q-09 the `dev-local` profile with no task behind it.
+
+Nothing else moved.

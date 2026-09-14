@@ -4,12 +4,12 @@
 
 | Field | Value |
 | --- | --- |
-| Version | 0.4 |
+| Version | 0.5 |
 | Updated | 2026-09-14 |
-| Phase in flight | **Phase 1 · Foundation** — WP-1.1 🔎 awaiting review |
-| Blocking decisions | **none open** — D-1 closed 2026-09-10, D-2 closed 2026-09-12 |
+| Phase in flight | **Phase 1 · Foundation** — WP-1.1 ✅ closed, WP-2.2 🟡 |
+| Blocking decisions | **none open** — D-1, D-2 closed; Q-07…Q-09 opened and closed at the WP-1.1 gate |
 | Code written | WP-1.1 · the stack boots; WP-2.2 borrowed T-2.2-02 and T-2.2-03 |
-| Phase 1 progress | **14 / 149 tasks written · 54 / 688 h** — none closed; all 14 sit at 🔎 |
+| Phase 1 progress | **16 / 151 tasks · 58 / 692 h** — WP-1.1 closed at its gate 2026-09-14 |
 
 **Authorities.** [Implementation plan](./ei-ai-implementation-plan.md) — phases, gates, dependencies · [Phase 1 · Overview](./ei-ai-phase-1-overview.md) — priority groups and the pre-agreed cut · [Phase 1 · Detail](./ei-ai-phase-1-detail.md) — 20 packages, one proving command each · [Phase 1 · Tasks](./ei-ai-phase-1-tasks.md) — the 149 tasks and their "Done when" · [Development environment](./ei-ai-dev-environment.md) — the machine and the stack.
 
@@ -47,8 +47,7 @@ Only ⬜ needs no note. Every other mark carries one: a date for ✅, a name or 
 | Implementation plan — 4 phases | ✅ Written, **still marked draft awaiting review** | [plan](./ei-ai-implementation-plan.md) §1 |
 | Phase 1 — three planning layers | ✅ Written, **all three marked `0.1 draft for review`** | overview · detail · tasks |
 | Development environment | ✅ Verified green except three manual steps | [dev env](./ei-ai-dev-environment.md) §4.4 |
-| **Product code** | 🔎 **WP-1.1 written** — `package.json`, `apps/{api,web,parser}`, `packages/`, `infra/`, `.devcontainer/` exist and the stack boots. No `.github/` yet (WP-1.3) | WP-1.1 proving command, 2026-09-14 |
-| `docs/plan/tools/task-order.py` | 🚫 **Referenced by [Tasks §2](./ei-ai-phase-1-tasks.md) but absent** — the wave order cannot be recomputed after a task edit | `ls docs/plan/tools` fails |
+| **Product code** | ✅ **WP-1.1 closed** — `package.json`, `apps/{api,web,parser}`, `packages/`, `infra/`, `.devcontainer/` exist and the stack boots. No `.github/` yet (WP-1.3) | WP-1.1 proving command, 2026-09-14 |
 | `docs/ops/week-1-measurements.md` | ⬜ Expected output of WP-4.1 | directory does not exist yet |
 
 ### 2.1 Entry conditions — re-verified 2026-09-10, E-4 again on 2026-09-12
@@ -90,6 +89,9 @@ Copied from [plan §10](./ei-ai-implementation-plan.md) and [overview §9](./ei-
 | Q-02 | Real ERP tool catalogue with read/write classification. **Ask in week 10, not week 13** | week 10 | ⬜ Open |
 | Q-06 | Identity provider confirmed, and whether OIDC is available | week 12 | ⬜ Open |
 | Q-03 | Hardware budget and tier. **Do not buy before the trajectory numbers exist** | week 16 | ⬜ Open |
+| ~~Q-07~~ | ~~The ingress service is scope no Phase 1 task names~~ | — | ✅ **Closed 2026-09-14: its own id, `T-1.1-13`** |
+| ~~Q-08~~ | ~~`task-order.py` cited but never committed~~ | — | ✅ **Closed 2026-09-14: discarded.** The wave table is maintained by hand and Tasks §2 no longer cites it |
+| ~~Q-09~~ | ~~No task creates the `llamacpp` service the `dev-local` gate line needs~~ | — | ✅ **Closed 2026-09-14: `T-1.1-14`.** `compose.gpu.yml` stays removed — the GPU reservation belongs on the service |
 
 ### 3.1 What the public-repository decision commits us to
 
@@ -139,12 +141,12 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 
 | Group | Name | Packages | Tasks | Hours | Done | Cuttable |
 | --- | --- | --- | --- | --- | --- | --- |
-| **G1** | Foundation that blocks everything | 3 | 28 | 112 h | 43 % written, 0 % closed | No — nothing else starts |
-| **G2** | Safety invariants | 5 | 38 | 136 h | 0 % | No — scope may narrow, the invariant may not |
+| **G1** | Foundation that blocks everything | 3 | 30 | 116 h | 47 % closed | No — nothing else starts |
+| **G2** | Safety invariants | 5 | 38 | 136 h | 5 % | No — scope may narrow, the invariant may not |
 | **G3** | The product path | 6 | 56 | 280 h | 0 % | Partly — cut from G5 first |
 | **G4** | Measurement | 1 | 11 | 80 h | 0 % | No, but it never blocks code |
 | **G5** | Pre-agreed slack | 5 | 16 | 80 h | 0 % | Yes, first |
-| | **Total** | **20** | **149** | **688 h** | **0 %** | |
+| | **Total** | **20** | **151** | **692 h** | **9 %** | |
 
 ### 4.2 Roll-up by package
 
@@ -152,11 +154,11 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 
 | Package | Lane | Tasks | Hours | W | Status | Proving command passed |
 | --- | --- | --- | --- | --- | --- | --- |
-| [WP-1.1](./ei-ai-phase-1-tasks.md#wp-11--repo-toolchain-compose-stack-dev-container--48-h) · Repo, toolchain, Compose stack, Dev Container | DO · L | 12/12 | 48/48 h | 1 | 🔎 2026-09-14 | ✅ passed 2026-09-14 |
+| [WP-1.1](./ei-ai-phase-1-tasks.md#wp-11--repo-toolchain-compose-stack-dev-container--52-h) · Repo, toolchain, Compose stack, Dev Container | DO · L | 14/14 | 52/52 h | 1 | ✅ 2026-09-14 | ✅ passed 2026-09-14 |
 | [WP-1.2](./ei-ai-phase-1-tasks.md#wp-12--schema-migrations-seed--40-h) · Schema, migrations, seed | B2 · L | 0/10 | 0/40 h | 3 | ⬜ | ⬜ |
 | [WP-1.3](./ei-ai-phase-1-tasks.md#wp-13--base-ci--stages-13-5-6--24-h) · Base CI — stages 1–3, 5, 6 | DO · L | 0/6 | 0/24 h | 1 | ⬜ | ⬜ |
 | [WP-2.1](./ei-ai-phase-1-tasks.md#wp-21--invariant-database-constraints--16-h) · Invariant database constraints | L | 0/6 | 0/16 h | 4 | ⬜ | ⬜ |
-| [WP-2.2](./ei-ai-phase-1-tasks.md#wp-22--egress-default-deny--24-h) · Egress default-deny | DO · L | 0/6 | 0/24 h | 1 | ⬜ | ⬜ |
+| [WP-2.2](./ei-ai-phase-1-tasks.md#wp-22--egress-default-deny--24-h) · Egress default-deny | DO · L | 2/6 | 6/24 h | 1 | 🟡 | ⬜ |
 | [WP-2.3](./ei-ai-phase-1-tasks.md#wp-23--retrieval-with-the-permission-predicate--48-h) · Retrieval with the permission predicate | L | 0/11 | 0/48 h | 3 | ⬜ | ⬜ |
 | [WP-2.4](./ei-ai-phase-1-tasks.md#wp-24--audit-append-only--32-h) · Audit, append-only | B2 | 0/8 | 0/32 h | 6 | ⬜ | ⬜ |
 | [WP-2.5](./ei-ai-phase-1-tasks.md#wp-25--architecture-rules-in-ci--16-h) · Architecture rules in CI | DO · L | 0/7 | 0/16 h | 3 | ⬜ | ⬜ |
@@ -179,22 +181,24 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 
 #### G1 · Foundation that blocks everything
 
-**WP-1.1 · Repo, toolchain, Compose stack, Dev Container — 12/12 tasks written · 48/48 h · 🔎 awaiting review**
+**WP-1.1 · Repo, toolchain, Compose stack, Dev Container — 14/14 · 52/52 h · ✅ closed 2026-09-14**
 
 | ID | Task | Lane | h | W | Status | Note |
 | --- | --- | --- | --- | --- | --- | --- |
-| T-1.1-01 | pnpm 10 workspace root: package.json, pnpm-workspace.yaml… | L | 4 | 1 | 🔎 | 2026-09-14 · `pnpm install` resolves api, web and both packages |
-| T-1.1-02 | packages/tsconfig and packages/eslint-config + Prettier config… | L | 4 | 1 | 🔎 | 2026-09-14 · `pnpm -r lint` and `pnpm -r typecheck` green |
-| T-1.1-03 | apps/api NestJS 11 scaffold: main.ts, app.module.ts, worker.main.ts… | L | 4 | 2 | 🔎 | 2026-09-14 · `GET /health` → 200 `{"status":"ok"}` |
-| T-1.1-04 | config/ — zod schema for every environment variable, fail-fast boot… | L | 4 | 3 | 🔎 | 2026-09-14 · boot without DATABASE_URL → named error, no stack trace |
-| T-1.1-05 | apps/api/Dockerfile multi-stage dev/prod, Node 22.13 + pnpm 10 pinned… | DO | 5 | 1 | 🔎 | 2026-09-14 · `--target dev` builds; `node -v` → v22.13.1 |
-| T-1.1-06 | apps/web/Dockerfile with a dev target running Vite bound to 0.0.0.0 | DO | 3 | 1 | 🔎 | 2026-09-14 · Vite 6.0.7 serves 200 on 5173 |
-| T-1.1-07 | apps/parser/Dockerfile — Python 3.12, Docling and Tesseract installed… | DO | 3 | 1 | 🔎 | 2026-09-14 · Python 3.12.14; `tesseract --list-langs` → eng osd **vie** |
-| T-1.1-08 | Compose: postgres 17.2 + pgvector 0.8.0 and redis 7.4, both pinned… | DO | 4 | 1 | 🔎 | 2026-09-14 · postgres healthy; `\dx` lists vector 0.8.0. **Image carries PG 17.6**, not 17.2 |
-| T-1.1-09 | Compose: infinity 0.0.76 with the GPU reservation and the models… | DO | 4 | 1 | 🔎 | 2026-09-14 · `/embeddings` → 1024 dimensions; VRAM 3577 MiB with both models loaded |
-| T-1.1-10 | Compose: two networks — backend (internal: true) for api, worker… | DO | 5 | 1 | 🔎 | 2026-09-14 · no default route in api, web, worker or parser; all three names resolve. Host access needed a new **ingress** service — scope no task named, confirm at the gate |
-| T-1.1-11 | Compose: uploads volume (rw in api/worker, ro in parser) and… | DO | 4 | 1 | 🔎 | 2026-09-14 · one root `.env` via `--env-file`; node_modules are named volumes |
-| T-1.1-12 | .devcontainer/devcontainer.json with in-container typescript.tsdk… | DO | 4 | 1 | 🔎 | 2026-09-14 · files written; **opening in the container is a manual GUI step, still unverified** |
+| T-1.1-01 | pnpm 10 workspace root: package.json, pnpm-workspace.yaml… | L | 4 | 1 | ✅ | reviewed 2026-09-14 · 2026-09-14 · `pnpm install` resolves api, web and both packages |
+| T-1.1-02 | packages/tsconfig and packages/eslint-config + Prettier config… | L | 4 | 1 | ✅ | reviewed 2026-09-14 · 2026-09-14 · `pnpm -r lint` and `pnpm -r typecheck` green |
+| T-1.1-03 | apps/api NestJS 11 scaffold: main.ts, app.module.ts, worker.main.ts… | L | 4 | 2 | ✅ | reviewed 2026-09-14 · 2026-09-14 · `GET /health` → 200 `{"status":"ok"}` |
+| T-1.1-04 | config/ — zod schema for every environment variable, fail-fast boot… | L | 4 | 3 | ✅ | reviewed 2026-09-14 · 2026-09-14 · boot without DATABASE_URL → named error, no stack trace |
+| T-1.1-05 | apps/api/Dockerfile multi-stage dev/prod, Node 22.13 + pnpm 10 pinned… | DO | 5 | 1 | ✅ | reviewed 2026-09-14 · 2026-09-14 · `--target dev` builds; `node -v` → v22.13.1 |
+| T-1.1-06 | apps/web/Dockerfile with a dev target running Vite bound to 0.0.0.0 | DO | 3 | 1 | ✅ | reviewed 2026-09-14 · 2026-09-14 · Vite 6.0.7 serves 200 on 5173 |
+| T-1.1-07 | apps/parser/Dockerfile — Python 3.12, Docling and Tesseract installed… | DO | 3 | 1 | ✅ | reviewed 2026-09-14 · 2026-09-14 · Python 3.12.14; `tesseract --list-langs` → eng osd **vie** |
+| T-1.1-08 | Compose: postgres 17.2 + pgvector 0.8.0 and redis 7.4, both pinned… | DO | 4 | 1 | ✅ | reviewed 2026-09-14 · 2026-09-14 · postgres healthy; `\dx` lists vector 0.8.0. **Image carries PG 17.6**, not 17.2 |
+| T-1.1-09 | Compose: infinity 0.0.76 with the GPU reservation and the models… | DO | 4 | 1 | ✅ | reviewed 2026-09-14 · 2026-09-14 · `/embeddings` → 1024 dimensions; VRAM 3577 MiB with both models loaded |
+| T-1.1-10 | Compose: two networks — backend (internal: true) for api, worker… | DO | 5 | 1 | ✅ | reviewed 2026-09-14 · 2026-09-14 · no default route in api, web, worker or parser; all three names resolve. Host access needed a new **ingress** service — scope no task named, confirm at the gate |
+| T-1.1-11 | Compose: uploads volume (rw in api/worker, ro in parser) and… | DO | 4 | 1 | ✅ | reviewed 2026-09-14 · 2026-09-14 · one root `.env` via `--env-file`; node_modules are named volumes |
+| T-1.1-12 | .devcontainer/devcontainer.json with in-container typescript.tsdk… | DO | 4 | 1 | ✅ | reviewed 2026-09-14 · autocomplete and breakpoint confirmed by hand in VS Code |
+| T-1.1-13 | ingress — nginx, the only way in; added at the WP-1.1 gate | DO | 2 | 2 | ✅ | reviewed 2026-09-14 · 4173 and 4180 answer from the host, api still has no default route |
+| T-1.1-14 | llamacpp under the dev-local profile; added at the WP-1.1 gate | DO | 2 | 2 | ✅ | reviewed 2026-09-14 · `--profile dev-local` starts it healthy, `/health` → 200 from inside; the default profile excludes it; no default route |
 
 **WP-1.2 · Schema, migrations, seed — 0/10 tasks · 0/40 h**
 
@@ -240,8 +244,8 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 | ID | Task | Lane | h | W | Status | Note |
 | --- | --- | --- | --- | --- | --- | --- |
 | T-2.2-01 | squid.conf — custom log format name (C-3), include… | DO | 5 | 2 | ⬜ | |
-| T-2.2-02 | Squid service on a pinned stable tag, joined to both networks, with a… | DO | 4 | 1 | 🔎 | 2026-09-14 · run early inside WP-1.1 (deviation); squid healthy, pinned by digest. **Image carries Squid 6.13**, not 6.6 |
-| T-2.2-03 | allowlist.conf ships empty, with a README stating that empty means deny… | DO | 2 | 1 | 🔎 | 2026-09-14 · run early inside WP-1.1 (deviation); `allowlist.conf` ships empty with its README |
+| T-2.2-02 | Squid service on a pinned stable tag, joined to both networks, with a… | DO | 4 | 1 | ✅ | reviewed 2026-09-14 · 2026-09-14 · run early inside WP-1.1 (deviation); squid healthy, pinned by digest. **Image carries Squid 6.13**, not 6.6 |
+| T-2.2-03 | allowlist.conf ships empty, with a README stating that empty means deny… | DO | 2 | 1 | ✅ | reviewed 2026-09-14 · 2026-09-14 · run early inside WP-1.1 (deviation); `allowlist.conf` ships empty with its README |
 | T-2.2-04 | Network verification script — no default route, service names resolve… | DO | 5 | 3 | ⬜ | |
 | T-2.2-05 | allowlist_entries repository and GET/POST /egress/allowlist… | L | 5 | 5 | ⬜ | |
 | T-2.2-06 | Seed one destination, document the manual reload step, and wire the… | L | 3 | 6 | ⬜ | |
@@ -629,6 +633,7 @@ Quoted from [Detail §10](./ei-ai-phase-1-detail.md), where each line carries th
 
 | Date | Change |
 | --- | --- |
+| 2026-09-14 | **WP-1.1 closed at its gate.** 14 rows reviewed and moved to ✅; Dev Container confirmed by hand; ingress accepted provisionally. Diary promoted: four rules added to CLAUDE.md, Q-07…Q-09 opened here. |
 | 2026-09-14 | **WP-1.1 executed and proved**, with T-2.2-02/03 borrowed from WP-2.2. Rows sit at 🔎. Findings: the images contradict their tags (PG 17.6 under a `pg17` tag, Squid 6.13 under a `6.6` tag), and the C-1 check was a false green until `iproute2` was installed. |
 | 2026-09-12 | **D-2 decided: option D** — single operator, wave order, no date commitment. §3.2 records what stays in force and what does not. E-4 re-verified; E-6 moot. |
 | 2026-09-10 | **D-1 decided: public repository** — a personal research project. §3.1 records what that commits us to. |

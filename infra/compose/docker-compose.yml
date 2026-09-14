@@ -156,6 +156,24 @@ services:
     # Both networks, like squid: the only way in, as squid is the only way out.
     networks: [backend, ingress]
 
+  llamacpp:
+    image: ghcr.io/ggml-org/llama.cpp:server@sha256:cbcdcb52d484e08e23bfc0135afa5beadd2d540513bbb7c65b233231fa033ff4
+    # dev-local only: the default profile generates nothing in Phase 1, and the 4 GB card is
+    # already carrying both embedding models. Start it with --profile dev-local.
+    profiles: [dev-local]
+    # -c 4096: the model advertises a 262k context and llama.cpp sizes the KV cache to it,
+    # which the 18 GB WSL cap cannot hold — the container is OOM-killed while loading.
+    command: ["-m", "/models/qwen3-4b-instruct-q4_k_m.gguf", "-c", "4096", "--host", "0.0.0.0", "--port", "8080"]
+    volumes:
+      - models:/models
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+    networks: [backend]
+
 volumes:
   postgres-data:
   redis-data:

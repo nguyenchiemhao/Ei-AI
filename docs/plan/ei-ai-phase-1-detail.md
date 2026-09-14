@@ -7,7 +7,7 @@
 | Version | 1.0 — **approved 2026-09-12** |
 | Date | 2026-09-10 · approved 2026-09-12 |
 | Pairs with | [Phase 1 · Overview](./ei-ai-phase-1-overview.md) |
-| Work packages | 20, across 5 groups, 86 person-days |
+| Work packages | 20, across 5 groups, 86.5 person-days |
 
 **Reading key.** Lanes: `L` tech lead / backend · `B2` second backend · `FE` frontend · `ML` Python/ML · `DO` DevOps. Package ids are `WP-<group>.<n>`, stable across revisions of this draft — if a package is dropped, its id is retired rather than reused.
 
@@ -45,9 +45,9 @@ Design §6.3 says migrations are **forward-only**; §11.2 stage 6 says "test mig
 
 ---
 
-## 2. G1 · Foundation that blocks everything — 14 pd
+## 2. G1 · Foundation that blocks everything — 14.5 pd
 
-### WP-1.1 · Repo, toolchain, Compose stack, Dev Container · 6 pd · DO 4 · L 2
+### WP-1.1 · Repo, toolchain, Compose stack, Dev Container · 6.5 pd · DO 4.5 · L 2
 
 **Contents**
 
@@ -59,6 +59,8 @@ Design §6.3 says migrations are **forward-only**; §11.2 stage 6 says "test mig
 - `node_modules` as named volumes, never bind-mounted.
 - `.devcontainer/devcontainer.json` with `typescript.tsdk` pointing inside the container, `runServices` limited to api/postgres/redis so opening the IDE does not demand the GPU, port 9229 exposed, and a `launch.json` with `remoteRoot: /workspace`.
 - `config/` in the API: every environment variable parsed by a zod schema at boot; **a missing required variable stops the process** — no silent defaults (design §9.4).
+- An `ingress` service (nginx) on `backend` and a new `ingress` network — **T-1.1-13, added at the gate**. Docker silently drops published ports for a container on an `internal: true` network, so without it `web` and `api` are unreachable from the host. It is the mirror of Squid: the only way in, as Squid is the only way out.
+- A `llamacpp` service behind the `dev-local` profile — **T-1.1-14, added at the gate**, because §10 requires both profiles to start and no task created it.
 
 **Done when**
 
@@ -336,9 +338,10 @@ ei-ai/
 │  ├─ eslint-config/
 │  └─ tsconfig/
 ├─ infra/
-│  ├─ compose/                 # docker-compose.yml + compose.gpu.yml
+│  ├─ compose/                 # docker-compose.yml — the GPU reservation sits on the service
 │  ├─ postgres/init/           # CREATE EXTENSION on first boot
-│  ├─ squid/                   # squid.conf + allowlist.conf (ships empty)
+│  ├─ squid/                   # squid.conf + allowlist.conf (ships empty) — the only way out
+│  ├─ ingress/                 # nginx.conf — the only way in
 │  └─ scripts/                 # seed, backup, bundle
 ├─ eval/
 │  ├─ golden-set/              # empty in Phase 1; the customer's 2h/week starts week 4

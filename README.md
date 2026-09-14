@@ -52,6 +52,7 @@ their own tag says, which is exactly why the digest is the pin:
 | Tesseract | 5.3.0, langs `eng osd vie` | installed in the parser image |
 | Docling | 2.15.1 (with `docling-core` 2.14.0) | pinned together; an open `docling-core` makes pip backtrack without terminating |
 | Models | `BAAI/bge-m3` · `BAAI/bge-reranker-v2-m3` | 4.3 GB, cached in the `models` volume |
+| llama.cpp (`dev-local` only) | `server` build, CPU | `ghcr.io/ggml-org/llama.cpp:server@sha256:cbcdcb52…` with `Qwen3-4B-Instruct-2507-Q4_K_M` |
 
 ---
 
@@ -106,7 +107,22 @@ its own. `docker system df` shows where the space went.
 Ports 3000 and 8080 are commonly taken by other projects, so the host side uses 4173 and
 4180 instead. Inside the stack the services still listen on their conventional ports.
 
-### 5. Stop
+### 5. Optional — the `dev-local` profile
+
+Phase 1 generates no text, so nothing calls a language model. The profile exists because the
+Phase 1 gate requires both profiles to start:
+
+```bash
+docker run --rm -v ei-ai_models:/models curlimages/curl:8.11.1 -sL \
+  -o /models/qwen3-4b-instruct-q4_k_m.gguf \
+  https://huggingface.co/unsloth/Qwen3-4B-Instruct-2507-GGUF/resolve/main/Qwen3-4B-Instruct-2507-Q4_K_M.gguf
+
+docker compose -f infra/compose/docker-compose.yml --profile dev-local up -d
+```
+
+The CPU build is used deliberately: the 4 GB card is already carrying both embedding models.
+
+### 6. Stop
 
 ```bash
 docker compose -f infra/compose/docker-compose.yml down     # keeps volumes

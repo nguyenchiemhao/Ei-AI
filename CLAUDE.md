@@ -32,6 +32,22 @@ A body is the exception. Add one only when a decision needs a "why" the diff can
 
 **No attribution trailer.** A commit carries no `Co-Authored-By` line and no co-author of any kind — the author is whoever ran the commit. `.claude/settings.json` sets `attribution.commit` to an empty string so the trailer is not generated; never add one by hand.
 
+## Proving
+
+**A check that can pass for the wrong reason has not been run.** `ip route | grep -c default` printed `0` in an image with no `ip` — grep read empty input, and the invariant it defends looked green. Before trusting a check, confirm the tool it depends on exists and that the check can still fail.
+
+**"Up" is not "working".** A container stays up while the process inside is dead, and a port answers because a different project is holding it. Prove a service through its own address, from inside its own network, and know which process replied.
+
+**Pin by digest; a tag is a label, not a version.** `pgvector:0.8.0-pg17` carries PostgreSQL 17.6 and `ubuntu/squid:6.6-24.04_beta` carries Squid 6.13. Record the version the running image actually reports, and correct the plan when it differs from what was written.
+
+**Pin what your pin drags in.** A pinned package with an unpinned transitive dependency lets the resolver walk backwards through every release without terminating. Pin them together, in the same line.
+
+## Packages
+
+**A proving command that needs another package's task pulls it forward, it does not wait.** Run the task early, record it as a deviation, and leave its hours with the package that owns it. Scope moves between packages only through the task document.
+
+**Scope the plan never named is provisional until the gate.** When the work needs something no task describes, build the smallest version that keeps the invariants, record it as an open question, and let the gate decide whether it grows an existing task or earns an id.
+
 ## Code
 
 **Comments in English, and few of them.** A comment sits above a declaration and says *why*; it never restates what the line already says. One or two lines each.

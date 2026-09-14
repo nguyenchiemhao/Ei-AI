@@ -6,7 +6,7 @@
 | --- | --- |
 | Version | 1.0 — **approved 2026-09-12** |
 | Date | 2026-09-10 · approved 2026-09-12 |
-| Contents | **149 tasks · 688 hours · 86 person-days** across 20 packages |
+| Contents | **151 tasks · 692 hours · 86.5 person-days** across 20 packages |
 | Pairs with | [Overview](./ei-ai-phase-1-overview.md) · [Detail](./ei-ai-phase-1-detail.md) |
 
 **How to read it.** Ids are `T-<package>-<nn>` and are stable — a dropped task keeps its id retired rather than reused. Lanes: `L` tech lead / backend · `B2` second backend · `FE` frontend · `ML` Python/ML · `DO` DevOps. Hours are working hours at 8 h per person-day; **every package's task hours sum exactly to its person-day figure in the detail document**, so the three layers cannot drift without the arithmetic showing it.
@@ -19,7 +19,7 @@
 
 | Group | Package | Tasks | Hours | pd | Lanes |
 | --- | --- | --- | --- | --- | --- |
-| **G1** | WP-1.1 Repo, toolchain, Compose, Dev Container | 12 | 48 | 6 | DO 32 · L 16 |
+| **G1** | WP-1.1 Repo, toolchain, Compose, Dev Container | 14 | 52 | 6.5 | DO 36 · L 16 |
 | | WP-1.2 Schema, migrations, seed | 10 | 40 | 5 | L 32 · B2 8 |
 | | WP-1.3 Base CI — stages 1–3, 5, 6 | 6 | 24 | 3 | DO 16 · L 8 |
 | **G2** | WP-2.1 Invariant database constraints | 6 | 16 | 2 | L 16 |
@@ -39,7 +39,7 @@
 | | WP-5.3 Document detail API and screen | 2 | 16 | 2 | L 8 · FE 8 |
 | | WP-5.4 CI stages 7–9 | 3 | 16 | 2 | DO 16 |
 | | WP-5.5 Contract tests, wireframes, accessibility | 3 | 16 | 2 | FE 12 · B2 4 |
-| | **Total** | **149** | **688** | **86** | |
+| | **Total** | **151** | **692** | **86.5** | |
 
 ### 1.1 Startable on day 1, with nothing blocking them
 
@@ -93,9 +93,9 @@ Rank is by **dependency wave**: a task's wave is one more than the deepest wave 
 
 Read the shape rather than the rows: **ML and DevOps front-load and finish early** (both are done by wave 5, ML by wave 4), while **backend load grows through the middle waves and peaks at wave 9**. The lane that is idle in week 1 is the one that has 6 days of work in a single wave later — which is the argument for moving DevOps to full time in week 1 and adding backend capacity from week 2 rather than spreading everyone evenly.
 
-The table below was computed once from the dependency graph. **The script that computed it was never committed** — `tools/task-order.py` does not exist, so after a task is split or a dependency changes the order must be recomputed by hand until it is written. Recorded as an open question in [notes/WP-1.1](./notes/WP-1.1.md).
+The table below was computed once from the dependency graph and is **maintained by hand from here on** — the script that produced it was discarded rather than committed. A task added or split therefore carries its wave in the row that introduces it, and the ranks around it are left alone.
 
-`T-1.3-06` is split here into `T-1.3-06a` (script, backend) and `T-1.3-06b` (CI wiring, DevOps). `T-2.5-07` is a 0-hour checklist item folded into `T-2.5-01` and is not ranked.
+`T-1.3-06` is split here into `T-1.3-06a` (script, backend) and `T-1.3-06b` (CI wiring, DevOps). `T-2.5-07` is a 0-hour checklist item folded into `T-2.5-01` and is not ranked. `T-1.1-13` and `T-1.1-14` were added at the WP-1.1 gate and sit in wave 2, after the services they wrap; they are appended below rather than renumbered into the middle.
 
 | # | Wave | ID | Lane | h | Task | Blocked by |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -248,6 +248,8 @@ The table below was computed once from the dependency graph. **The script that c
 | 147 | 13 | T-5.5-01 | B2 | 4 | Contract tests for every 501 route — code, feature, planne… | T-1.1-03, T-3.5-04 |
 | 148 | 13 | T-5.5-03 | FE | 4 | Accessibility pass on the four real screens — keyboard, fo… | T-3.6-12 |
 | 149 | 14 | T-3.2-07 | B2 | 3 | Negative tests — Reader cannot upload, Editor cannot chang… | T-3.2-06 |
+| 150 | 2 | T-1.1-13 | DO | 2 | ingress — nginx, the only way in; added at the WP-1.1… | T-1.1-10 |
+| 151 | 2 | T-1.1-14 | DO | 2 | llamacpp under the dev-local profile; added at the WP-1.1… | T-1.1-08 |
 
 ### 2.1 The ten tasks that were out of order
 
@@ -281,7 +283,7 @@ Four dependencies were also **loosened** while building the graph, because the p
 
 ## 3. G1 · Foundation that blocks everything
 
-### WP-1.1 · Repo, toolchain, Compose stack, Dev Container — 48 h
+### WP-1.1 · Repo, toolchain, Compose stack, Dev Container — 52 h
 
 *Package depends on: E-4 (Docker usable from Ubuntu).*
 
@@ -299,6 +301,8 @@ Four dependencies were also **loosened** while building the graph, because the p
 | T-1.1-10 | Compose: **two networks** — `backend` (`internal: true`) for api, worker, parser, web, postgres, redis, infinity; `egress` for Squid only (**C-1**) | DO | 5 | `ip route` in api shows no default route; `getent hosts postgres redis infinity` resolves all three |
 | T-1.1-11 | Compose: `uploads` volume (rw in api/worker, ro in parser) and `node_modules` named volumes; **one root `.env`** via `--env-file`, wrapped in `pnpm dev` (**C-4, C-5**) | DO | 4 | `docker compose config` shows one env source; `/workspace/node_modules` is a volume, not a bind mount |
 | T-1.1-12 | `.devcontainer/devcontainer.json` with in-container `typescript.tsdk`, `runServices: [api, postgres, redis]`, port 9229 forwarded, and `launch.json` with `remoteRoot: /workspace` | DO | 4 | Opening the folder in the container gives working autocomplete; a breakpoint in a controller is hit |
+| T-1.1-13 | `ingress` — nginx on `backend` + a new `ingress` network, the only way in, upstreams re-resolved through Docker DNS. **Added at the WP-1.1 gate:** Docker silently drops published ports on an `internal: true` network, so `web` and `api` are otherwise unreachable | DO | 2 | `curl localhost:4173` and `curl localhost:4180/health` answer from the host while `ip route` in `api` still shows no default route |
+| T-1.1-14 | `llamacpp` service under the `dev-local` profile, pinned by digest, with the model file documented. **Added at the WP-1.1 gate:** [detail §10](./ei-ai-phase-1-detail.md) requires both profiles to start and no task created it | DO | 2 | `docker compose --profile dev-local up -d` starts it; the default profile does not |
 
 ### WP-1.2 · Schema, migrations, seed — 40 h
 
