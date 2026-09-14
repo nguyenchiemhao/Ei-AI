@@ -4,9 +4,9 @@
 
 | Field | Value |
 | --- | --- |
-| Version | 1.0 |
-| Date | 2026-09-09 |
-| Status | Draft — awaiting review |
+| Version | 1.1 |
+| Date | 2026-09-09 · approved 2026-09-12 |
+| Status | **Approved** — Phase 1 runs under D-2 option D, one operator, no date commitment ([progress §3.2](./ei-ai-progress.md)) |
 | Total effort | ~114 person-weeks |
 | Timeline | 26 weeks |
 | Team | 5 people (1 part-time) |

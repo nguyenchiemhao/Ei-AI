@@ -4,8 +4,8 @@
 
 | Field | Value |
 | --- | --- |
-| Version | 0.1 — **draft for review** |
-| Date | 2026-09-10 |
+| Version | 1.0 — **approved 2026-09-12** |
+| Date | 2026-09-10 · approved 2026-09-12 |
 | Pairs with | [Phase 1 · Overview](./ei-ai-phase-1-overview.md) |
 | Work packages | 20, across 5 groups, 86 person-days |
 
@@ -52,7 +52,7 @@ Design §6.3 says migrations are **forward-only**; §11.2 stage 6 says "test mig
 **Contents**
 
 - pnpm 10 workspace: `apps/{api,web,parser}`, `packages/{shared-types,eslint-config,tsconfig}`, `infra/`, `eval/`, `docs/` — the tree in §7.
-- Dockerfiles with **pinned** versions: Node 22.13, pnpm 10, Python 3.12, Postgres 17.2 + pgvector 0.8.0, Infinity 0.0.76, Squid 6.x stable **(C-2)**. `api` is multi-stage with `dev` and `prod` targets; `api` and `ingest-worker` share one image and differ only by entrypoint.
+- Dockerfiles with **pinned** versions, every image by digest **(C-2)**: Node 22.13, pnpm 10, Python 3.12, `pgvector/pgvector:0.8.0-pg17` (the tag names the Postgres **major**; there is no `pg17.2` tag, so the digest is the pin and the real patch is recorded from `SELECT version()`), Infinity 0.0.76, and `ubuntu/squid:6.6-24.04_beta` (Canonical publishes squid only on `_beta` and `_edge`; the suffix is the image's channel, not the state of Squid 6.6, and the digest is what makes C-2 true). `api` is multi-stage with `dev` and `prod` targets; `api` and `ingest-worker` share one image and differ only by entrypoint.
 - Compose stack **with C-1 fixed**: a `backend` network marked `internal: true` carrying api, ingest-worker, parser, postgres, redis, infinity; an `egress` network carrying only Squid; Squid joined to both.
 - **C-4**: one `.env` at the repo root, `.env.example` committed, and a `pnpm dev` script wrapping `docker compose --env-file` so nobody has to remember the flag.
 - **C-5**: an `uploads` named volume, read-write in api and ingest-worker, read-only in parser.
@@ -400,7 +400,9 @@ ei-ai/
 
 ---
 
-## 9. Day-level schedule — 15 working days
+## 9. Day-level schedule — 15 working days · **not in force**
+
+> **Superseded on 2026-09-12 by D-2, option D** — one operator, no date commitment ([progress §3.2](./ei-ai-progress.md)). Five parallel lanes describe a team that does not exist, so no day in this table is a commitment and no lane is a person. **The execution order is the wave table in [tasks §2](./ei-ai-phase-1-tasks.md#2-execution-order)**, which is a property of the dependency graph and therefore valid at any headcount. The schedule below is kept because it records which packages interleave and where the lane conflicts are — read it as a dependency sketch, not a calendar.
 
 Assumes the second backend is available from day 1 (overview §6). Lanes run in parallel; a package appears on the day its lane starts it.
 

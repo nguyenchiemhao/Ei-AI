@@ -8,7 +8,7 @@ build/
 .next/
 *.tsbuildinfo
 
-# Môi trường — KHÔNG BAO GIỜ commit secret
+# Environment — never commit a secret
 .env
 .env.*
 !.env.example
@@ -19,14 +19,14 @@ __pycache__/
 .venv/
 venv/
 
-# Model weights & dữ liệu cục bộ
+# Model weights and local data
 models/
 *.gguf
 *.safetensors
 storage/
 uploads/
 
-# Log & cache
+# Logs and caches
 *.log
 npm-debug.log*
 .cache/

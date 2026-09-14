@@ -858,7 +858,7 @@ Five numbers. **They decide whether anything in the plan has to change.**
 | --- | --- | --- | --- |
 | — | ~~Where the source lives~~ | **Decided: option A** (Ubuntu WSL2, `~/ei-ai`) · 2026-09-08 | — |
 | — | ~~Is the GitHub repository public or private?~~ | **Decided: public** — personal research project · 2026-09-10 | — |
-| 2 | **Anthropic API key** for the development environment | Not available | **Week 1** |
+| 2 | **Anthropic API key** for the development environment | Not available | **Week 7** — corrected 2026-09-14; Phase 1 makes no generation call, and `ANTHROPIC_API_KEY` is optional in the config schema until then (`Q-04`) |
 | 3 | Runbook steps 1–7 (§9.1) | ~40 minutes of work left | **Week 1** |
 | 4 | Real customer documents to close R-01 | Not available | **Week 8** |
 | 5 | Real ERP MCP tool catalogue | Not available | Week 10 |

@@ -4,8 +4,8 @@
 
 | Field | Value |
 | --- | --- |
-| Version | 0.1 — **draft for review** |
-| Date | 2026-09-10 |
+| Version | 1.0 — **approved 2026-09-12** |
+| Date | 2026-09-10 · approved 2026-09-12 |
 | Contents | **149 tasks · 688 hours · 86 person-days** across 20 packages |
 | Pairs with | [Overview](./ei-ai-phase-1-overview.md) · [Detail](./ei-ai-phase-1-detail.md) |
 
@@ -93,7 +93,7 @@ Rank is by **dependency wave**: a task's wave is one more than the deepest wave 
 
 Read the shape rather than the rows: **ML and DevOps front-load and finish early** (both are done by wave 5, ML by wave 4), while **backend load grows through the middle waves and peaks at wave 9**. The lane that is idle in week 1 is the one that has 6 days of work in a single wave later — which is the argument for moving DevOps to full time in week 1 and adding backend capacity from week 2 rather than spreading everyone evenly.
 
-The graph lives in [`tools/task-order.py`](./tools/task-order.py), which reads the task tables below for ids, lanes and hours — run it after changing any task and paste its `--table` output back into this section, so the order cannot drift from the tasks it orders.
+The table below was computed once from the dependency graph. **The script that computed it was never committed** — `tools/task-order.py` does not exist, so after a task is split or a dependency changes the order must be recomputed by hand until it is written. Recorded as an open question in [notes/WP-1.1](./notes/WP-1.1.md).
 
 `T-1.3-06` is split here into `T-1.3-06a` (script, backend) and `T-1.3-06b` (CI wiring, DevOps). `T-2.5-07` is a 0-hour checklist item folded into `T-2.5-01` and is not ranked.
 
@@ -294,7 +294,7 @@ Four dependencies were also **loosened** while building the graph, because the p
 | T-1.1-05 | `apps/api/Dockerfile` multi-stage `dev`/`prod`, Node 22.13 + pnpm 10 **pinned by digest** (C-2) | DO | 5 | `docker build --target dev` succeeds; `node -v` inside → v22.13.x |
 | T-1.1-06 | `apps/web/Dockerfile` with a `dev` target running Vite bound to 0.0.0.0 | DO | 3 | Image builds; container serves on 5173 |
 | T-1.1-07 | `apps/parser/Dockerfile` — Python 3.12, Docling and Tesseract installed, skeleton entrypoint | DO | 3 | `python -V` → 3.12.x; `tesseract --list-langs` includes `vie` |
-| T-1.1-08 | Compose: `postgres` 17.2 + pgvector 0.8.0 and `redis` 7.4, both pinned, with healthchecks and `postgres/init` scripts | DO | 4 | `docker compose ps` shows postgres `healthy`; `\dx` lists `vector` |
+| T-1.1-08 | Compose: `pgvector/pgvector:0.8.0-pg17` and `redis` 7.4, **both pinned by digest**, with healthchecks and `postgres/init` scripts | DO | 4 | `docker compose ps` shows postgres `healthy`; `\dx` lists `vector`; the Postgres patch from `SELECT version()` is recorded in [notes/WP-1.1](./notes/WP-1.1.md) |
 | T-1.1-09 | Compose: `infinity` 0.0.76 with the GPU reservation and the `models` volume; **download weights on first boot, before the network is locked** | DO | 4 | `curl localhost:7997/embeddings` returns a 1024-dimension vector |
 | T-1.1-10 | Compose: **two networks** — `backend` (`internal: true`) for api, worker, parser, web, postgres, redis, infinity; `egress` for Squid only (**C-1**) | DO | 5 | `ip route` in api shows no default route; `getent hosts postgres redis infinity` resolves all three |
 | T-1.1-11 | Compose: `uploads` volume (rw in api/worker, ro in parser) and `node_modules` named volumes; **one root `.env`** via `--env-file`, wrapped in `pnpm dev` (**C-4, C-5**) | DO | 4 | `docker compose config` shows one env source; `/workspace/node_modules` is a volume, not a bind mount |

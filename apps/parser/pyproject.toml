@@ -1,0 +1,15 @@
+[project]
+name = "ei-ai-parser"
+version = "0.0.0"
+description = "Document parsing worker. Phase 1 ships the skeleton; the OCR spike runs out-of-band."
+requires-python = "==3.12.*"
+dependencies = [
+  "docling==2.15.1",
+  # Pinned with docling: leaving it open makes pip walk backwards through
+  # every docling-core release, which does not terminate in reasonable time.
+  "docling-core[chunking]==2.14.0",
+]
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"

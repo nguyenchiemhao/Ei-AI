@@ -4,8 +4,8 @@
 
 | Field | Value |
 | --- | --- |
-| Version | 0.1 — **draft for review** |
-| Date | 2026-09-10 |
+| Version | 1.0 — **approved 2026-09-12** |
+| Date | 2026-09-10 · approved 2026-09-12 |
 | Covers | Weeks 1–3 · FR-01, 02, 04, 05, 09, 10, 11, 45, 58, 61, 62, 64, 65, 66 · skeleton of FR-21, FR-75 |
 | Budget in the top-level plan | 15 pw / 3 weeks |
 | Measured bottom-up | **86 person-days ≈ 17 pw** — §6 says what to do about the difference |
@@ -165,13 +165,16 @@ The 149 tasks were run through their dependency graph with eight-hour days and o
 
 | | Option | Gate lands | Cost |
 | --- | --- | --- | --- |
-| **A** *(recommended)* | **Four backend-capable people** (lead + 3), DevOps at full time in week 1, **G5 deferred** | **Day 19 — end of week 4** | One week of schedule, absorbed in Phase 2's nine weeks or in Phase 4 |
+| **A** | **Four backend-capable people** (lead + 3), DevOps at full time in week 1, **G5 deferred** | **Day 19 — end of week 4** | One week of schedule, absorbed in Phase 2's nine weeks or in Phase 4 |
 | **B** | The team as staffed, plus the second backend from day 1 | Day 32 — week 6.5 | Phase 1 more than doubles; the 26-week plan becomes roughly 30 |
 | **C** | Four backends, **G5 plus about 12 pd out of G3** — web down to login and search only, upload narrowed to `.md`/`.txt`, document status API only | Day 15 — end of week 3 | The week-3 demo no longer demonstrates the milestone, and milestone 2A inherits the format work |
+| **D** ✅ *(chosen 2026-09-12)* | **One operator**, working the wave order in [tasks §2](./ei-ai-phase-1-tasks.md#2-execution-order), G5 cut first if anything is cut | **No date** | Nothing is promised, so nothing is broken by slipping. The gate still closes on its proving commands — it just does not close on a day |
 
-**Recommendation: A.** Option C holds the date by removing the thing the date was for — a demo that cannot accept a PDF or open a workspace screen does not prove that the foundation works. Option B is honest but expensive. A costs one week and keeps the gate meaningful.
+**Decided 2026-09-12: option D.** A, B and C were written for a staffed team, and the recommendation among them was A. None of the three applies to a personal research project: each buys a calendar date with people who do not exist. **D drops the date instead of pretending to hold it.** The rest of this section is kept as the record of why three weeks was never reachable — the volume is 86 pd against one person, and the 8.2-day critical path proves that no amount of reordering shortens it.
 
-DevOps is also short by 4.5 pd under every option — either raise them above half time for weeks 1–2, or the lead absorbs the Compose and CI work and the backend gap widens further.
+**What that changes elsewhere in this document.** Every day count above, the day-15 gate in §8, and the three-week table in §5 are no longer commitments. The order of work is the wave table in [tasks §2](./ei-ai-phase-1-tasks.md#2-execution-order); a package closes on its proving command in [detail](./ei-ai-phase-1-detail.md), not on a date. The full consequences are in [progress §3.2](./ei-ai-progress.md).
+
+The original recommendation, left in place: *Option C holds the date by removing the thing the date was for — a demo that cannot accept a PDF or open a workspace screen does not prove that the foundation works. Option B is honest but expensive. A costs one week and keeps the gate meaningful.* DevOps was also short by 4.5 pd under all three.
 
 ---
 
@@ -218,7 +221,7 @@ The full checklist with a proving command per line is §10 of the detail documen
 | # | Question | Why it blocks |
 | --- | --- | --- |
 | ~~D-1~~ | ~~Public or private repository?~~ | **Decided 2026-09-10: public.** A personal research project, published deliberately. The standing constraint that follows is in [dev env §9.1](./ei-ai-dev-environment.md) step 1 — no corpus and no real customer document enters the tree |
-| **D-2** | **Capacity — option A, B or C?** | It decides whether the day-15 gate is honest or aspirational |
+| ~~D-2~~ | ~~Capacity — option A, B or C?~~ | **Decided 2026-09-12: option D** — one operator, wave order, no date. §6 and [progress §3.2](./ei-ai-progress.md) |
 | D-3 | Do you accept the G5 list as the pre-agreed cut? | If not, name what replaces it — the point is that the decision exists before week 3, not that it is mine |
 | D-4 | Who commits 2 hours per week from week 4 for the golden set? | Not a Phase 1 blocker, but the ask has to be made **in week 3** to be honoured in week 4 |
 

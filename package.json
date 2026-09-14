@@ -1,0 +1,28 @@
+{
+  "name": "ei-ai",
+  "private": true,
+  "packageManager": "pnpm@10.34.5",
+  "engines": {
+    "node": ">=22.13.0 <23"
+  },
+  "scripts": {
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "dev": "docker compose -f infra/compose/docker-compose.yml up -d",
+    "dev:down": "docker compose -f infra/compose/docker-compose.yml down",
+    "dev:logs": "docker compose -f infra/compose/docker-compose.yml logs -f",
+    "dev:config": "docker compose -f infra/compose/docker-compose.yml config"
+  },
+  "devDependencies": {
+    "prettier": "3.4.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@nestjs/core",
+      "esbuild"
+    ]
+  }
+}
