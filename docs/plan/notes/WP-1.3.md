@@ -11,6 +11,9 @@ Opened 2026-09-15. Authorities: [Detail §2](../ei-ai-phase-1-detail.md) · [Tas
 - 2026-09-15 — **every "Done when" in this package needs a run on GitHub**, and the machine has no `.github/` directory and no `gh` CLI. Nothing here can be demonstrated without a push, which [CLAUDE.md `## Git`](../../../CLAUDE.md) reserves to an explicit request. The pull-request half of the wording is resolved under Interpretations: `dev` is the trunk.
 - 2026-09-15 — `T-1.3-05` builds all three images on a hosted runner. The parser image is **2.88 GB** and takes several minutes because Docling pulls CPU torch; GitHub-hosted runners start with roughly 14 GB free. Not a contradiction in the plan, but the first thing likely to fail in practice.
 
+- 2026-09-15 — **`--target dev` compiles nothing.** Proving stages 1 and 2 could fail also showed stage 5 staying green against code that does not typecheck: the `dev` target only copies source and sets a CMD, while `nest build` lives in the `build` stage that only `prod` depends on. CI was therefore never building the image that ships.
+- 2026-09-15 — **the `prod` target had never been built, and did not work.** Its first build ever, run today, failed with `ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY`: `pnpm install --prod` has to remove the dev `node_modules` and refuses to do so unprompted without a TTY. A defect carried since `T-1.1-05`, invisible because nothing built that target.
+
 ## Open questions
 
 - 2026-09-15 — does stage 6 run against a plain `postgres` service container instead of Testcontainers, keeping the dependency inside G1? Testcontainers would pull `T-5.4-01` forward out of the pre-agreed cut. · **blocks `T-1.3-06`**
@@ -32,5 +35,7 @@ Opened 2026-09-15. Authorities: [Detail §2](../ei-ai-phase-1-detail.md) · [Tas
 - 2026-09-15 — `*.controller.ts` is outside the coverage gate's scope. Controllers are the HTTP edge, which [detail §11](../ei-ai-phase-1-detail.md) covers with contract and end-to-end tests; counting them in a unit-coverage gate measures the wrong thing. `health.controller.spec.ts` was written anyway, so the exclusion removes a bad metric rather than a test.
 
 ## Tradeoffs
+
+- 2026-09-15 — stage 5 builds **both** api targets rather than only `dev`. `T-1.3-05` says "build api, web and parser images" without naming a target, and building the one that skips compilation is the weaker reading of it — demonstrably so, since it passed on code that did not compile. The cost is about 40 s.
 
 - 2026-09-15 — the coverage gate is declared at 80% over an empty domain scope, rather than set low and raised later. It reports 0% and passes today, which is only defensible because the gate was shown to still fail: a deliberately untested domain file turned it red with `Exit status 1` before being removed.

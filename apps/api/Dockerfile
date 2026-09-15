@@ -27,7 +27,10 @@ EXPOSE 3000 9229
 CMD ["pnpm", "--filter", "@ei-ai/api", "start:debug"]
 
 FROM dev AS build
-RUN pnpm --filter @ei-ai/api build && pnpm install --prod --frozen-lockfile
+# confirmModulesPurge: switching to prod-only dependencies removes the existing
+# node_modules, and pnpm refuses to do that unprompted without a TTY.
+RUN pnpm --filter @ei-ai/api build \
+ && pnpm install --prod --frozen-lockfile --config.confirmModulesPurge=false
 
 FROM base AS prod
 ENV NODE_ENV=production
