@@ -20,6 +20,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Probe: superseded-run cancellation, T-1.3-07. Reverted immediately.
   # Stage 1
   lint:
     name: 1 · Lint and format
