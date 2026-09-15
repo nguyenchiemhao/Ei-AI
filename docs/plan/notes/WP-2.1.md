@@ -32,3 +32,23 @@ Opened 2026-09-15. Authorities: [Detail §1.1](../ei-ai-phase-1-detail.md) — t
 
 - 2026-09-15 — each check builds its own fixtures inside its transaction rather than selecting from seeded rows. The seeded version was shorter and read better, and it failed on CI: stage 6 migrates but never seeds, so the inserts matched nothing, touched no constraint, and reported that four invariants had stopped holding. The same mechanism could as easily have reported that a missing constraint still held.
 - 2026-09-15 — two probes exercise S-4 separately, one for the CHECK and one for the foreign key, instead of one covering both. The single check passed while never consulting the key: `tools_no_write_in_v1` fired first on an enabled tool, so the foreign key could have been absent entirely and the suite would still have been green.
+
+---
+
+## Gate · closed 2026-09-15
+
+Reviewed and accepted: all six tasks, `T-2.1-01` having been borrowed into WP-1.2 and
+`T-2.1-03` closing as already done. CI stage 6 green, nine invariant checks running on
+every push against a migrated-but-unseeded database.
+
+The package's lasting lesson is about its own checks rather than its constraints. Twice a
+check reported success without reaching what it claimed to test — once because
+`tools_no_write_in_v1` refused before the foreign key was consulted, once because empty
+fixtures meant the offending statement affected no rows at all. The constraints were right
+both times; the evidence was not.
+
+**Promoted to [CLAUDE.md](../../../CLAUDE.md)** — two rules, in force from the next package:
+make the check reach its subject; forward-only means a new file, never an edit.
+
+**Promoted to [Progress §3](../ei-ai-progress.md)** — nothing. All three opening questions
+were answered inside the package. Nothing else moved.

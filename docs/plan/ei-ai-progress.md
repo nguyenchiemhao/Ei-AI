@@ -4,12 +4,12 @@
 
 | Field | Value |
 | --- | --- |
-| Version | 0.9 |
+| Version | 1.0 |
 | Updated | 2026-09-15 |
 | Phase in flight | **Phase 1 · Foundation** — **G1 complete**, WP-2.1 · WP-2.2 🟡 |
 | Blocking decisions | **none open** — D-1, D-2 closed; Q-07…Q-09 closed at the WP-1.1 gate; Q-10, Q-11 opened at the WP-1.2 gate |
 | Code written | WP-1.1 the stack boots; WP-1.2 the schema migrates and seeds; T-2.1-01 and T-2.2-02/03 borrowed |
-| Phase 1 progress | **40 / 154 tasks · 149 / 700 h** — all closed at their gates; `T-2.2-05` deferred |
+| Phase 1 progress | **45 / 154 tasks · 162 / 700 h** — all closed at their gates; `T-2.2-05` deferred |
 
 **Authorities.** [Implementation plan](./ei-ai-implementation-plan.md) — phases, gates, dependencies · [Phase 1 · Overview](./ei-ai-phase-1-overview.md) — priority groups and the pre-agreed cut · [Phase 1 · Detail](./ei-ai-phase-1-detail.md) — 20 packages, one proving command each · [Phase 1 · Tasks](./ei-ai-phase-1-tasks.md) — the 149 tasks and their "Done when" · [Development environment](./ei-ai-dev-environment.md) — the machine and the stack.
 
@@ -145,11 +145,11 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 | Group | Name | Packages | Tasks | Hours | Done | Cuttable |
 | --- | --- | --- | --- | --- | --- | --- |
 | **G1** | Foundation that blocks everything | 3 | 33 | 124 h | 97 % closed — only `T-1.3-07` open | No — nothing else starts |
-| **G2** | Safety invariants | 5 | 38 | 136 h | 17 % — WP-2.2 closed | No — scope may narrow, the invariant may not |
+| **G2** | Safety invariants | 5 | 38 | 136 h | 29 % — WP-2.1 · WP-2.2 closed | No — scope may narrow, the invariant may not |
 | **G3** | The product path | 6 | 56 | 280 h | 0 % | Partly — cut from G5 first |
 | **G4** | Measurement | 1 | 11 | 80 h | 0 % | No, but it never blocks code |
 | **G5** | Pre-agreed slack | 5 | 16 | 80 h | 0 % | Yes, first |
-| | **Total** | **20** | **154** | **700 h** | **26 %** | |
+| | **Total** | **20** | **154** | **700 h** | **29 %** | |
 
 ### 4.2 Roll-up by package
 
@@ -160,7 +160,7 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 | [WP-1.1](./ei-ai-phase-1-tasks.md#wp-11--repo-toolchain-compose-stack-dev-container--53-h) · Repo, toolchain, Compose stack, Dev Container | DO · L | 15/15 | 53/53 h | 1 | ✅ 2026-09-15 | ✅ passed 2026-09-14 |
 | [WP-1.2](./ei-ai-phase-1-tasks.md#wp-12--schema-migrations-seed--44-h) · Schema, migrations, seed | B2 · L | 11/11 | 44/44 h | 3 | ✅ 2026-09-15 | ✅ passed 2026-09-14 |
 | [WP-1.3](./ei-ai-phase-1-tasks.md#wp-13--base-ci--stages-13-5-6--24-h) · Base CI — stages 1–3, 5, 6 | DO · L | 6/7 | 24/27 h | 1 | ✅ 2026-09-15 | ✅ run #3 green, #2 red on purpose |
-| [WP-2.1](./ei-ai-phase-1-tasks.md#wp-21--invariant-database-constraints--16-h) · Invariant database constraints | L | 6/6 | 16/16 h | 4 | 🔎 2026-09-15 | ✅ passed 2026-09-15 |
+| [WP-2.1](./ei-ai-phase-1-tasks.md#wp-21--invariant-database-constraints--16-h) · Invariant database constraints | L | 6/6 | 16/16 h | 4 | ✅ 2026-09-15 | ✅ passed 2026-09-15 · CI stage 6 green |
 | [WP-2.2](./ei-ai-phase-1-tasks.md#wp-22--egress-default-deny--24-h) · Egress default-deny | DO · L | 5/6 | 19/24 h | 1 | ✅ 2026-09-15 | ✅ passed 2026-09-15 · CI stage 6b green |
 | [WP-2.3](./ei-ai-phase-1-tasks.md#wp-23--retrieval-with-the-permission-predicate--48-h) · Retrieval with the permission predicate | L | 0/11 | 0/48 h | 3 | ⬜ | ⬜ |
 | [WP-2.4](./ei-ai-phase-1-tasks.md#wp-24--audit-append-only--32-h) · Audit, append-only | B2 | 0/8 | 0/32 h | 6 | ⬜ | ⬜ |
@@ -234,16 +234,16 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 
 #### G2 · Safety invariants
 
-**WP-2.1 · Invariant database constraints — 6/6 · 16/16 h · 🔎 awaiting review**
+**WP-2.1 · Invariant database constraints — 6/6 · 16/16 h · ✅ closed 2026-09-15**
 
 | ID | Task | Lane | h | W | Status | Note |
 | --- | --- | --- | --- | --- | --- | --- |
 | T-2.1-01 | S-1 — immutable_unaccent(text) as IMMUTABLE PARALLEL SAFE, and the… | L | 3 | 4 | ✅ | reviewed 2026-09-15 · 2026-09-14 · run early inside WP-1.2 (deviation); `immutable_unaccent` in `001`, generated column proven on a real row |
-| T-2.1-02 | S-2 — partial unique index pre_auth_one_active … WHERE revoked_at IS… | L | 2 | 5 | 🔎 | 2026-09-15 · `008` · two active pre-auths for one tool → duplicate key error; a revoked one plus a new one is accepted |
-| T-2.1-03 | S-3 — approval_requests.decided_at, and the corrected partial index… | L | 2 | 5 | 🔎 | 2026-09-15 · **already done in WP-1.2** — `decided_at` and the subquery-free index were written with `005`/`007`; verified, no new SQL |
-| T-2.1-04 | tools — UNIQUE (id, classification) and tools_no_write_in_v1… | L | 3 | 5 | 🔎 | 2026-09-15 · `008` · enabling a write tool → check violation; `UNIQUE (id, classification)` present as the composite FK's parent |
-| T-2.1-05 | S-4 · FR-44 — pre_authorisations.classification + composite FK to… | L | 3 | 6 | 🔎 | 2026-09-15 · `008` · **FR-44 refused by the database** — both the CHECK and the composite FK proven separately, and reclassifying a pre-authorised tool is refused |
-| T-2.1-06 | S-5 — reject_mutation() plus triggers on audit_events and… | L | 3 | 5 | 🔎 | 2026-09-15 · `008` · `UPDATE`/`DELETE audit_events` raise `append-only table: …`, not `UPDATE 0`. No v1 rule existed to remove |
+| T-2.1-02 | S-2 — partial unique index pre_auth_one_active … WHERE revoked_at IS… | L | 2 | 5 | ✅ | reviewed 2026-09-15 · 2026-09-15 · `008` · two active pre-auths for one tool → duplicate key error; a revoked one plus a new one is accepted |
+| T-2.1-03 | S-3 — approval_requests.decided_at, and the corrected partial index… | L | 2 | 5 | ✅ | reviewed 2026-09-15 · 2026-09-15 · **already done in WP-1.2** — `decided_at` and the subquery-free index were written with `005`/`007`; verified, no new SQL |
+| T-2.1-04 | tools — UNIQUE (id, classification) and tools_no_write_in_v1… | L | 3 | 5 | ✅ | reviewed 2026-09-15 · 2026-09-15 · `008` · enabling a write tool → check violation; `UNIQUE (id, classification)` present as the composite FK's parent |
+| T-2.1-05 | S-4 · FR-44 — pre_authorisations.classification + composite FK to… | L | 3 | 6 | ✅ | reviewed 2026-09-15 · 2026-09-15 · `008` · **FR-44 refused by the database** — both the CHECK and the composite FK proven separately, and reclassifying a pre-authorised tool is refused |
+| T-2.1-06 | S-5 — reject_mutation() plus triggers on audit_events and… | L | 3 | 5 | ✅ | reviewed 2026-09-15 · 2026-09-15 · `008` · `UPDATE`/`DELETE audit_events` raise `append-only table: …`, not `UPDATE 0`. No v1 rule existed to remove |
 
 **WP-2.2 · Egress default-deny — 5/6 · 19/24 h · ✅ closed 2026-09-15** — `T-2.2-05` deferred to after `T-3.2-02`
 
@@ -639,6 +639,7 @@ Quoted from [Detail §10](./ei-ai-phase-1-detail.md), where each line carries th
 
 | Date | Change |
 | --- | --- |
+| 2026-09-15 | **WP-2.1 closed at its gate.** FR-44 is refused by the database, not by code that remembers to check; `UPDATE audit_events` raises rather than reporting `UPDATE 0`. Two of the package's own checks first passed without reaching what they claimed to test. |
 | 2026-09-15 | **WP-2.2 closed at its gate.** The egress boundary denies with an empty allowlist, opens for one destination with byte counts logged, and closes again; CI stage 6b proves it on every push. Two defects found on the way: the plan's own proving command could not run, and a single-file bind mount let the boundary fail open while a reload reported success. |
 | 2026-09-15 | **WP-1.3 closed at its gate — G1 is complete.** Runs #1 and #3 green, #2 deliberately red to prove stages 1 and 2 can fail; that test found the `prod` image had never been built and did not work. `T-1.3-07` opened for workflow hardening, Q-12 for branch protection. |
 | 2026-09-15 | **WP-1.2 closed at its gate.** 12 rows reviewed and moved to ✅, the schema inspected by hand through a desktop client. Diary promoted: three rules added to CLAUDE.md, Q-10 and Q-11 opened here. |

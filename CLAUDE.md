@@ -50,6 +50,8 @@ A body is the exception. Add one only when a decision needs a "why" the diff can
 
 **What the process reads is not always what the file says.** A single-file bind mount pins an inode, so an edit that writes a new file and renames it — `git checkout`, `sed -i`, most editors — leaves the container on the old content. Squid kept permitting a destination whose rule had been deleted, and the reload reported success. Mount the directory, and verify the effect rather than the file.
 
+**Make the check reach its subject.** Two checks in WP-2.1 ran green without ever touching what they claimed to test: one because a different constraint refused first, so the foreign key could have been absent entirely; one because empty fixtures made the offending statement affect no rows. Name the mechanism you expect to refuse and confirm it is the one that did, and build the fixtures rather than borrowing whatever the database happens to hold.
+
 **A check asserts only what it proves.** `verify-egress.sh` required a service that the egress boundary has nothing to do with, and went red on CI for a reason unrelated to the invariant it defends. A check that fails for reasons outside its subject gets muted, and then it defends nothing.
 
 **Build the artefact that ships.** CI built the `dev` image target and stayed green against code that did not compile, because that target copies source and compiles nothing. The `prod` target — the one that runs the build and the one that ships — had never been built at all, and did not work when it finally was. A build step that exercises a convenient stand-in proves the stand-in.
@@ -59,6 +61,8 @@ A body is the exception. Add one only when a decision needs a "why" the diff can
 **Skip because something later covers it, never because it is awkward.** A check may be deferred only by naming the task or gate that will run it. Cost is a reason to reschedule a check, never a reason to stop counting it.
 
 ## Packages
+
+**Forward-only means a new file, never an edit.** The plan described later constraints as belonging "inside" migrations already written, which the checksum guard refuses and the discipline forbids. Work that arrives after a migration is applied arrives as the next number.
 
 **A proving command that needs another package's task pulls it forward, it does not wait.** Run the task early, record it as a deviation, and leave its hours with the package that owns it. Scope moves between packages only through the task document.
 
