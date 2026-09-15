@@ -48,6 +48,10 @@ A body is the exception. Add one only when a decision needs a "why" the diff can
 
 **Say what the machine did not prove.** A package's proof ends with three lists, not one: what a command demonstrated, **what needs the reader's hands** — the exact steps and what a pass looks like — and **what was skipped on purpose**, each with the risk that leaves open. A "Done when" only a person can check is not a lesser test; it is the one that gets quietly dropped.
 
+**What the process reads is not always what the file says.** A single-file bind mount pins an inode, so an edit that writes a new file and renames it — `git checkout`, `sed -i`, most editors — leaves the container on the old content. Squid kept permitting a destination whose rule had been deleted, and the reload reported success. Mount the directory, and verify the effect rather than the file.
+
+**A check asserts only what it proves.** `verify-egress.sh` required a service that the egress boundary has nothing to do with, and went red on CI for a reason unrelated to the invariant it defends. A check that fails for reasons outside its subject gets muted, and then it defends nothing.
+
 **Build the artefact that ships.** CI built the `dev` image target and stayed green against code that did not compile, because that target copies source and compiles nothing. The `prod` target — the one that runs the build and the one that ships — had never been built at all, and did not work when it finally was. A build step that exercises a convenient stand-in proves the stand-in.
 
 **The order of work and the order of proof need not match.** `T-2.1-01` had to run before `chunks` existed, and its "Done when" could only be shown after the task that depended on it. When they diverge, say which later task demonstrates the earlier one, so the proof is deferred rather than forgotten.

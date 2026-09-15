@@ -4,12 +4,12 @@
 
 | Field | Value |
 | --- | --- |
-| Version | 0.8 |
+| Version | 0.9 |
 | Updated | 2026-09-15 |
 | Phase in flight | **Phase 1 · Foundation** — **G1 complete**, WP-2.1 · WP-2.2 🟡 |
 | Blocking decisions | **none open** — D-1, D-2 closed; Q-07…Q-09 closed at the WP-1.1 gate; Q-10, Q-11 opened at the WP-1.2 gate |
 | Code written | WP-1.1 the stack boots; WP-1.2 the schema migrates and seeds; T-2.1-01 and T-2.2-02/03 borrowed |
-| Phase 1 progress | **35 / 154 tasks · 130 / 700 h** — all 35 closed at their gates |
+| Phase 1 progress | **40 / 154 tasks · 149 / 700 h** — all closed at their gates; `T-2.2-05` deferred |
 
 **Authorities.** [Implementation plan](./ei-ai-implementation-plan.md) — phases, gates, dependencies · [Phase 1 · Overview](./ei-ai-phase-1-overview.md) — priority groups and the pre-agreed cut · [Phase 1 · Detail](./ei-ai-phase-1-detail.md) — 20 packages, one proving command each · [Phase 1 · Tasks](./ei-ai-phase-1-tasks.md) — the 149 tasks and their "Done when" · [Development environment](./ei-ai-dev-environment.md) — the machine and the stack.
 
@@ -145,11 +145,11 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 | Group | Name | Packages | Tasks | Hours | Done | Cuttable |
 | --- | --- | --- | --- | --- | --- | --- |
 | **G1** | Foundation that blocks everything | 3 | 33 | 124 h | 97 % closed — only `T-1.3-07` open | No — nothing else starts |
-| **G2** | Safety invariants | 5 | 38 | 136 h | 5 % | No — scope may narrow, the invariant may not |
+| **G2** | Safety invariants | 5 | 38 | 136 h | 17 % — WP-2.2 closed | No — scope may narrow, the invariant may not |
 | **G3** | The product path | 6 | 56 | 280 h | 0 % | Partly — cut from G5 first |
 | **G4** | Measurement | 1 | 11 | 80 h | 0 % | No, but it never blocks code |
 | **G5** | Pre-agreed slack | 5 | 16 | 80 h | 0 % | Yes, first |
-| | **Total** | **20** | **154** | **700 h** | **23 %** | |
+| | **Total** | **20** | **154** | **700 h** | **26 %** | |
 
 ### 4.2 Roll-up by package
 
@@ -161,7 +161,7 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 | [WP-1.2](./ei-ai-phase-1-tasks.md#wp-12--schema-migrations-seed--44-h) · Schema, migrations, seed | B2 · L | 11/11 | 44/44 h | 3 | ✅ 2026-09-15 | ✅ passed 2026-09-14 |
 | [WP-1.3](./ei-ai-phase-1-tasks.md#wp-13--base-ci--stages-13-5-6--24-h) · Base CI — stages 1–3, 5, 6 | DO · L | 6/7 | 24/27 h | 1 | ✅ 2026-09-15 | ✅ run #3 green, #2 red on purpose |
 | [WP-2.1](./ei-ai-phase-1-tasks.md#wp-21--invariant-database-constraints--16-h) · Invariant database constraints | L | 1/6 | 3/16 h | 4 | 🟡 | ⬜ |
-| [WP-2.2](./ei-ai-phase-1-tasks.md#wp-22--egress-default-deny--24-h) · Egress default-deny | DO · L | 5/6 | 19/24 h | 1 | 🔎 2026-09-15 | ✅ passed 2026-09-15 |
+| [WP-2.2](./ei-ai-phase-1-tasks.md#wp-22--egress-default-deny--24-h) · Egress default-deny | DO · L | 5/6 | 19/24 h | 1 | ✅ 2026-09-15 | ✅ passed 2026-09-15 · CI stage 6b green |
 | [WP-2.3](./ei-ai-phase-1-tasks.md#wp-23--retrieval-with-the-permission-predicate--48-h) · Retrieval with the permission predicate | L | 0/11 | 0/48 h | 3 | ⬜ | ⬜ |
 | [WP-2.4](./ei-ai-phase-1-tasks.md#wp-24--audit-append-only--32-h) · Audit, append-only | B2 | 0/8 | 0/32 h | 6 | ⬜ | ⬜ |
 | [WP-2.5](./ei-ai-phase-1-tasks.md#wp-25--architecture-rules-in-ci--16-h) · Architecture rules in CI | DO · L | 0/7 | 0/16 h | 3 | ⬜ | ⬜ |
@@ -245,16 +245,16 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 | T-2.1-05 | S-4 · FR-44 — pre_authorisations.classification + composite FK to… | L | 3 | 6 | ⬜ | |
 | T-2.1-06 | S-5 — reject_mutation() plus triggers on audit_events and… | L | 3 | 5 | ⬜ | |
 
-**WP-2.2 · Egress default-deny — 5/6 · 19/24 h · 🔎 awaiting review** — `T-2.2-05` deferred
+**WP-2.2 · Egress default-deny — 5/6 · 19/24 h · ✅ closed 2026-09-15** — `T-2.2-05` deferred to after `T-3.2-02`
 
 | ID | Task | Lane | h | W | Status | Note |
 | --- | --- | --- | --- | --- | --- | --- |
-| T-2.2-01 | squid.conf — custom log format name (C-3), include… | DO | 5 | 2 | 🔎 | 2026-09-15 · `squid -k parse` clean; logformat named `eiai` (C-3) live in the log, `%ssl::>sni` dropped |
-| T-2.2-02 | Squid service on a pinned stable tag, joined to both networks, with a… | DO | 4 | 1 | 🔎 | 2026-09-15 · reworked after being sent back: `squid-logs` named volume, so the access log outlives `docker compose down` |
+| T-2.2-01 | squid.conf — custom log format name (C-3), include… | DO | 5 | 2 | ✅ | reviewed 2026-09-15 · 2026-09-15 · `squid -k parse` clean; logformat named `eiai` (C-3) live in the log, `%ssl::>sni` dropped |
+| T-2.2-02 | Squid service on a pinned stable tag, joined to both networks, with a… | DO | 4 | 1 | ✅ | reviewed 2026-09-15 · 2026-09-15 · reworked after being sent back: `squid-logs` named volume, so the access log outlives `docker compose down` |
 | T-2.2-03 | allowlist.conf ships empty, with a README stating that empty means deny… | DO | 2 | 1 | ✅ | reviewed 2026-09-14 · 2026-09-14 · run early inside WP-1.1 (deviation); `allowlist.conf` ships empty with its README |
-| T-2.2-04 | Network verification script — no default route, service names resolve… | DO | 5 | 3 | 🔎 | 2026-09-15 · `verify-egress.sh` 5/5 ok; **proven able to fail** — allowing example.com made it exit 1 |
+| T-2.2-04 | Network verification script — no default route, service names resolve… | DO | 5 | 3 | ✅ | reviewed 2026-09-15 · 2026-09-15 · `verify-egress.sh` 5/5 ok; **proven able to fail** — allowing example.com made it exit 1 |
 | T-2.2-05 | allowlist_entries repository and GET/POST /egress/allowlist… | L | 5 | 5 | ⏭ | **deferred to after `T-3.2-02`** — the Done when needs an authenticated principal, and no authentication exists until WP-3.1. Routes answer 501 |
-| T-2.2-06 | Seed one destination, document the manual reload step, and wire the… | L | 3 | 6 | 🔎 | 2026-09-15 · stage **6b** in CI, seed writes one `allowlist_entries` row, README documents parse-then-reload |
+| T-2.2-06 | Seed one destination, document the manual reload step, and wire the… | L | 3 | 6 | ✅ | reviewed 2026-09-15 · 2026-09-15 · stage **6b** in CI, seed writes one `allowlist_entries` row, README documents parse-then-reload |
 
 **WP-2.3 · Retrieval with the permission predicate — 0/11 tasks · 0/48 h**
 
@@ -639,6 +639,7 @@ Quoted from [Detail §10](./ei-ai-phase-1-detail.md), where each line carries th
 
 | Date | Change |
 | --- | --- |
+| 2026-09-15 | **WP-2.2 closed at its gate.** The egress boundary denies with an empty allowlist, opens for one destination with byte counts logged, and closes again; CI stage 6b proves it on every push. Two defects found on the way: the plan's own proving command could not run, and a single-file bind mount let the boundary fail open while a reload reported success. |
 | 2026-09-15 | **WP-1.3 closed at its gate — G1 is complete.** Runs #1 and #3 green, #2 deliberately red to prove stages 1 and 2 can fail; that test found the `prod` image had never been built and did not work. `T-1.3-07` opened for workflow hardening, Q-12 for branch protection. |
 | 2026-09-15 | **WP-1.2 closed at its gate.** 12 rows reviewed and moved to ✅, the schema inspected by hand through a desktop client. Diary promoted: three rules added to CLAUDE.md, Q-10 and Q-11 opened here. |
 | 2026-09-14 | **WP-1.2 executed and proved.** 27 tables migrate from empty to head and seed with no manual step; the eleven tables that had no DDL anywhere were written into design §6.1.1 first. `T-1.2-11` added for the seed no task owned; `T-2.1-01` borrowed. |

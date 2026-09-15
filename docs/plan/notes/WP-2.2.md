@@ -32,3 +32,23 @@ Opened 2026-09-15. Authorities: [Detail §3](../ei-ai-phase-1-detail.md) · [Tas
 ## Tradeoffs
 
 - 2026-09-15 — the https path is judged by Squid's own log verdict rather than by curl's status code, dropping the simpler single-check design. A denied `CONNECT` never yields an origin status, so curl reports `000` whether the refusal worked or the proxy was unreachable — a code that cannot distinguish success from failure is not worth asserting on.
+
+---
+
+## Gate · closed 2026-09-15
+
+Reviewed and accepted: five tasks. `T-2.2-05` is ⏭, deferred to after `T-3.2-02`. CI stage 6b
+green on the runner in 1m18s, so the boundary is now checked on every push rather than by hand.
+
+The package found two defects that had nothing to do with its own tasks. The proving command in
+[detail §3](../ei-ai-phase-1-detail.md) — "the single most important check in Phase 1" — was
+written with `curl`, which the api image does not carry, so it would have printed `BLOCKED` from
+`command not found`. And a single-file bind mount let the boundary fail **open** while a reload
+reported success.
+
+**Promoted to [CLAUDE.md](../../../CLAUDE.md)** — two rules, in force from the next package:
+what the process reads is not always what the file says; a check asserts only what it proves.
+
+**Promoted to [Progress §3](../ei-ai-progress.md)** — nothing. All four opening questions were
+answered inside the package, and the one deferral carries a named successor rather than a
+question. Nothing else moved.
