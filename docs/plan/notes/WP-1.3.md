@@ -89,4 +89,4 @@ under the same four headings.
 
 ### Open questions
 
-- 2026-09-15 — the "superseded run is cancelled" half of the "Done when" needs two pushes to the same ref within seconds of each other, and no honest second commit exists. Prove it on the next occasion two pushes land close together, or on a throwaway branch through its pull request? · **leaves `T-1.3-07` short of closed**
+- ~~2026-09-15 — the "superseded run is cancelled" half needs two pushes to the same ref seconds apart, and no honest second commit exists.~~ · **Answered 2026-09-15:** proved the way WP-2.5's gate was — a probe commit touching only a comment in `ci.yml`, pushed, then reverted and pushed again the moment the first run appeared. Run #15 on `71b47bf` went to `cancelled`; `git diff fb83904 HEAD` is empty, so the pair left nothing behind.
