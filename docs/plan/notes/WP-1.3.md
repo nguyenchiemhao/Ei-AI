@@ -59,3 +59,34 @@ does not gate, and run #2 put a broken commit on the trunk with nothing to stop 
 
 `T-1.3-07` was opened rather than left as a question, following the precedent set for the
 ingress and the database tunnel. Nothing else moved.
+
+---
+
+## T-1.3-07 · run after the gate, 2026-09-15
+
+The last open task of a package already closed. Recorded here rather than in a note of its own,
+under the same four headings.
+
+### Contradictions found on opening
+
+- 2026-09-15 — **pinning the actions by SHA, as the task words it, would have frozen the very warning it was opened for.** The gate note reads "GitHub having moved the runtime under three floating action tags", which implies `v4` was re-pointed at node24. It was not: `actions/checkout@v4`, `setup-node@v4` and `cache@v4` all still declare `using: node20`, and node24 lives on the `v5` line. Hardening therefore required a major-version bump the task text does not mention.
+- 2026-09-15 — **`paths-ignore` on `pull_request` would make `Q-12` unimplementable.** With required status checks turned on, a docs-only pull request never starts its checks, so they never report, so the pull request can never merge. The "Done when" asks only that *a docs-only push* runs no job, which `push` alone satisfies.
+- 2026-09-15 — the deprecation warning came mostly from `./.github/actions/pnpm`, not from `ci.yml`. A composite action is where `setup-node` and `cache` actually live, and "`actions/*` carry 40-character SHAs" is only true if it is pinned too.
+
+### Contradictions found while running
+
+- 2026-09-15 — **the `v5` bump broke every job, and the cause was a default rather than an API change.** `actions/setup-node@v5` turns package-manager caching on by itself when `package.json` carries a `packageManager` field — ours has carried `pnpm@10.34.5` since `T-1.1-01` — and that caching runs *before* the composite action's `corepack enable`. It called `pnpm store path` with no pnpm on `PATH` and the step died in about ten seconds. Under `v4` the same caching only happened when `cache: pnpm` was passed, so the workflow never asked for it and never noticed. Fixed by `package-manager-cache: false`, leaving the explicit `actions/cache` step as the only one.
+- 2026-09-15 — the failure also **demonstrated `needs` working** before anything was written to prove it: the four cheap jobs went red and stages 5, 6 and 6b skipped instead of spending their minutes.
+
+### Interpretations
+
+- 2026-09-15 — the three slow jobs (5, 6, 6b) take `needs: [lint, typecheck, unit, architecture]`. A green run costs roughly a minute more in series; a red one stops before spending five minutes building images against code that does not lint.
+- 2026-09-15 — `paths-ignore` covers `docs/**` and `**/*.md` on `push` only, for the reason above.
+
+### Tradeoffs
+
+- 2026-09-15 — moving to `v5` buys node24 and costs a major-version bump of three actions at once, unpinned until now and therefore never deliberately upgraded. The alternative — pin `v4` by SHA — satisfies the task text literally and leaves every job printing a deprecation notice until the runtime is withdrawn.
+
+### Open questions
+
+- 2026-09-15 — the "superseded run is cancelled" half of the "Done when" needs two pushes to the same ref within seconds of each other, and no honest second commit exists. Prove it on the next occasion two pushes land close together, or on a throwaway branch through its pull request? · **leaves `T-1.3-07` short of closed**

@@ -9,7 +9,7 @@
 | Phase in flight | **Phase 1 · Foundation** — **G1 complete**, WP-2.1 · WP-2.2 · WP-2.5 closed |
 | Blocking decisions | **none open** — D-1, D-2 closed; Q-07…Q-09 closed at the WP-1.1 gate; Q-10, Q-11 opened at the WP-1.2 gate; Q-13 at the WP-2.5 gate |
 | Code written | WP-1.1 the stack boots; WP-1.2 the schema migrates and seeds; WP-2.5 the boundaries refuse in CI; T-2.1-01 and T-2.2-02/03 borrowed |
-| Phase 1 progress | **52 / 154 tasks · 178 / 700 h** — all closed at their gates; `T-2.2-05` deferred |
+| Phase 1 progress | **53 / 154 tasks · 181 / 700 h** — all closed at their gates; `T-2.2-05` deferred |
 
 **Authorities.** [Implementation plan](./ei-ai-implementation-plan.md) — phases, gates, dependencies · [Phase 1 · Overview](./ei-ai-phase-1-overview.md) — priority groups and the pre-agreed cut · [Phase 1 · Detail](./ei-ai-phase-1-detail.md) — 20 packages, one proving command each · [Phase 1 · Tasks](./ei-ai-phase-1-tasks.md) — the 149 tasks and their "Done when" · [Development environment](./ei-ai-dev-environment.md) — the machine and the stack.
 
@@ -145,7 +145,7 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 
 | Group | Name | Packages | Tasks | Hours | Done | Cuttable |
 | --- | --- | --- | --- | --- | --- | --- |
-| **G1** | Foundation that blocks everything | 3 | 33 | 124 h | 97 % closed — only `T-1.3-07` open | No — nothing else starts |
+| **G1** | Foundation that blocks everything | 3 | 33 | 124 h | 100 % closed | No — nothing else starts |
 | **G2** | Safety invariants | 5 | 38 | 136 h | 47 % — WP-2.1 · WP-2.2 · WP-2.5 closed | No — scope may narrow, the invariant may not |
 | **G3** | The product path | 6 | 56 | 280 h | 0 % | Partly — cut from G5 first |
 | **G4** | Measurement | 1 | 11 | 80 h | 0 % | No, but it never blocks code |
@@ -160,7 +160,7 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 | --- | --- | --- | --- | --- | --- | --- |
 | [WP-1.1](./ei-ai-phase-1-tasks.md#wp-11--repo-toolchain-compose-stack-dev-container--53-h) · Repo, toolchain, Compose stack, Dev Container | DO · L | 15/15 | 53/53 h | 1 | ✅ 2026-09-15 | ✅ passed 2026-09-14 |
 | [WP-1.2](./ei-ai-phase-1-tasks.md#wp-12--schema-migrations-seed--44-h) · Schema, migrations, seed | B2 · L | 11/11 | 44/44 h | 3 | ✅ 2026-09-15 | ✅ passed 2026-09-14 |
-| [WP-1.3](./ei-ai-phase-1-tasks.md#wp-13--base-ci--stages-13-5-6--24-h) · Base CI — stages 1–3, 5, 6 | DO · L | 6/7 | 24/27 h | 1 | ✅ 2026-09-15 | ✅ run #3 green, #2 red on purpose |
+| [WP-1.3](./ei-ai-phase-1-tasks.md#wp-13--base-ci--stages-13-5-6--24-h) · Base CI — stages 1–3, 5, 6 | DO · L | 7/7 | 27/27 h | 1 | ✅ 2026-09-15 | ✅ run #3 green, #2 red on purpose |
 | [WP-2.1](./ei-ai-phase-1-tasks.md#wp-21--invariant-database-constraints--16-h) · Invariant database constraints | L | 6/6 | 16/16 h | 4 | ✅ 2026-09-15 | ✅ passed 2026-09-15 · CI stage 6 green |
 | [WP-2.2](./ei-ai-phase-1-tasks.md#wp-22--egress-default-deny--24-h) · Egress default-deny | DO · L | 5/6 | 19/24 h | 1 | ✅ 2026-09-15 | ✅ passed 2026-09-15 · CI stage 6b green |
 | [WP-2.3](./ei-ai-phase-1-tasks.md#wp-23--retrieval-with-the-permission-predicate--48-h) · Retrieval with the permission predicate | L | 0/11 | 0/48 h | 3 | ⬜ | ⬜ |
@@ -221,7 +221,7 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 | T-1.2-11 | infra seed — 1 admin, 3 users, 2 workspaces, 20 documents, search_documents | B2 | 4 | 6 | ✅ | reviewed 2026-09-15 · 2026-09-14 · seeds 4 users, 2 workspaces, 20 documents, 1 tool; identical counts on a second run |
 | T-1.2-10 | kysely-codegen wiring, database/db.ts, transaction.ts helper | B2 | 4 | 5 | ✅ | reviewed 2026-09-15 · 2026-09-14 · 28 tables introspected; a query on `emial` fails typecheck |
 
-**WP-1.3 · Base CI — stages 1–3, 5, 6 — 6/6 · 24/24 h · ✅ closed 2026-09-15**
+**WP-1.3 · Base CI — stages 1–3, 5, 6 — 7/7 · 27/27 h · ✅ closed 2026-09-15, `T-1.3-07` run after the gate**
 
 | ID | Task | Lane | h | W | Status | Note |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -230,7 +230,7 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 | T-1.3-03 | Stage 2 — tsc --noEmit in every package | DO | 2 | 1 | ✅ | reviewed 2026-09-15 · 2026-09-15 · green on #1 and #3; **red on #2** — `Type 'string' is not assignable to type 'number'` |
 | T-1.3-04 | Stage 3 — Vitest with a coverage gate of 80% on domain modules | L | 4 | 3 | ✅ | reviewed 2026-09-15 · 2026-09-15 · green on #1–#3; gate proven able to fail locally with an untested domain file |
 | T-1.3-05 | Stage 5 — build api, web and parser images | DO | 4 | 1 | ✅ | reviewed 2026-09-15 · 2026-09-15 · green on #1–#3, 1m12s. Now builds **both api targets**: #2 showed `dev` passing on code that does not compile. Clean cache locally: api 36s, web 21s, parser 344s |
-| T-1.3-07 | Workflow hardening — SHA-pinned actions, needs, concurrency, paths-ignore… | DO | 3 | 4 | ⬜ | added at the WP-1.3 gate |
+| T-1.3-07 | Workflow hardening — SHA-pinned actions, needs, concurrency, paths-ignore… | DO | 3 | 4 | 🔎 | 2026-09-15 · actions on **node24**, all three 40-char SHAs, composite action pinned too. **Every job carried `Node.js 20 is deprecated` before, none after.** `needs` proven by a red run: 4 cheap jobs red, stages 5/6/6b skipped. `permissions: contents: read`, `timeout-minutes` everywhere. **`concurrency` cancellation not yet proven** — needs two pushes seconds apart |
 | T-1.3-06 | Stage 6 — empty → head, and previous release tag → head (§1.3 of the… | L 4 · DO 4 | 8 | 4 | ✅ | reviewed 2026-09-15 · 2026-09-15 · green on #1–#3 against a service-container postgres, **red on #2**. Notice records the release-tag half skipping, no tag exists |
 
 #### G2 · Safety invariants
@@ -640,6 +640,7 @@ Quoted from [Detail §10](./ei-ai-phase-1-detail.md), where each line carries th
 
 | Date | Change |
 | --- | --- |
+| 2026-09-15 | **`T-1.3-07` run after the WP-1.3 gate.** Actions pinned by SHA on node24, the slow jobs gated behind the cheap ones, `concurrency`, `paths-ignore`, `permissions` and `timeout-minutes`. The bump to `v5` reddened every job first: `setup-node` now enables package-manager caching by itself whenever `package.json` carries a `packageManager` field, and it runs before corepack exists. |
 | 2026-09-15 | **WP-2.5 closed at its gate.** Five architecture rules refuse in CI stage 4: run #9 green, #10 red at stage 4 alone on a deliberate violation, #11 green after the revert. Two findings outlived the package — a prohibition on imports was blind to every import the compiler erases, and a rule can fire on a symptom that merely resembles its subject. `Q-13` opened for the `shared-types` package nobody owns. |
 | 2026-09-15 | **WP-2.1 closed at its gate.** FR-44 is refused by the database, not by code that remembers to check; `UPDATE audit_events` raises rather than reporting `UPDATE 0`. Two of the package's own checks first passed without reaching what they claimed to test. |
 | 2026-09-15 | **WP-2.2 closed at its gate.** The egress boundary denies with an empty allowlist, opens for one destination with byte counts logged, and closes again; CI stage 6b proves it on every push. Two defects found on the way: the plan's own proving command could not run, and a single-file bind mount let the boundary fail open while a reload reported success. |
