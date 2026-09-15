@@ -14,7 +14,7 @@ services:
       - postgres-data:/var/lib/postgresql/data
       - ../postgres/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d eiai"]
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d eiai']
       interval: 5s
       timeout: 5s
       retries: 10
@@ -22,11 +22,11 @@ services:
 
   redis:
     image: redis:7.4-alpine@sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf
-    command: ["redis-server", "--appendonly", "yes"]
+    command: ['redis-server', '--appendonly', 'yes']
     volumes:
       - redis-data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
       timeout: 3s
       retries: 10
@@ -41,7 +41,7 @@ services:
       - --model-id
       - BAAI/bge-reranker-v2-m3
       - --port
-      - "7997"
+      - '7997'
     environment:
       HF_HOME: /models
     volumes:
@@ -56,7 +56,13 @@ services:
               count: 1
               capabilities: [gpu]
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:7997/health')"]
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:7997/health')",
+        ]
       interval: 15s
       timeout: 10s
       retries: 20
@@ -80,8 +86,8 @@ services:
       - api-dist:/workspace/apps/api/dist
       - uploads:/workspace/uploads
     expose:
-      - "3000"
-      - "9229"
+      - '3000'
+      - '9229'
     depends_on:
       postgres:
         condition: service_healthy
@@ -94,7 +100,7 @@ services:
       context: ../..
       dockerfile: apps/api/Dockerfile
       target: dev
-    command: ["sh", "-c", "pnpm --filter @ei-ai/api build && pnpm --filter @ei-ai/api start:worker"]
+    command: ['sh', '-c', 'pnpm --filter @ei-ai/api build && pnpm --filter @ei-ai/api start:worker']
     env_file:
       - ../../.env
     volumes:
@@ -129,7 +135,7 @@ services:
       - web-node-modules:/workspace/node_modules
       - web-app-node-modules:/workspace/apps/web/node_modules
     expose:
-      - "5173"
+      - '5173'
     networks: [backend]
 
   squid:
@@ -138,7 +144,7 @@ services:
       - ../squid/squid.conf:/etc/squid/squid.conf:ro
       - ../squid/allowlist.conf:/etc/squid/allowlist.conf:ro
     healthcheck:
-      test: ["CMD-SHELL", "squid -k check || exit 1"]
+      test: ['CMD-SHELL', 'squid -k check || exit 1']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -150,9 +156,9 @@ services:
     volumes:
       - ../ingress/nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
-      - "4180:3000"
-      - "4173:5173"
-      - "127.0.0.1:5433:5432"
+      - '4180:3000'
+      - '4173:5173'
+      - '127.0.0.1:5433:5432'
     depends_on: [api, web]
     # Both networks, like squid: the only way in, as squid is the only way out.
     networks: [backend, ingress]
@@ -164,11 +170,21 @@ services:
     profiles: [dev-local]
     # -c 4096: the model advertises a 262k context and llama.cpp sizes the KV cache to it,
     # which the 18 GB WSL cap cannot hold — the container is OOM-killed while loading.
-    command: ["-m", "/models/qwen3-4b-instruct-q4_k_m.gguf", "-c", "4096", "--host", "0.0.0.0", "--port", "8080"]
+    command:
+      [
+        '-m',
+        '/models/qwen3-4b-instruct-q4_k_m.gguf',
+        '-c',
+        '4096',
+        '--host',
+        '0.0.0.0',
+        '--port',
+        '8080',
+      ]
     volumes:
       - models:/models
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/health || exit 1"]
+      test: ['CMD-SHELL', 'curl -fsS http://127.0.0.1:8080/health || exit 1']
       interval: 15s
       timeout: 10s
       retries: 10

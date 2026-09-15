@@ -61,7 +61,21 @@ async function dropSchema(client: Client): Promise<void> {
   await client.query('CREATE SCHEMA public');
 }
 
-export async function migrate(fresh = false): Promise<void> {
+async function reportApplied(client: Client, expected: number): Promise<void> {
+  const { rows } = await client.query<{ count: string }>(
+    'SELECT count(*)::text AS count FROM schema_migrations',
+  );
+  const applied = Number(rows[0]!.count);
+  process.stdout.write(`applied ${applied} of ${expected} migration files\n`);
+  if (applied !== expected) {
+    throw new Error(
+      `ledger holds ${applied} migrations but ${expected} files exist on disk — ` +
+        `the database and the repository disagree`,
+    );
+  }
+}
+
+export async function migrate(fresh = false, verify = false): Promise<void> {
   const client = new Client({ connectionString: process.env.DATABASE_URL });
   await client.connect();
   try {
@@ -82,14 +96,19 @@ export async function migrate(fresh = false): Promise<void> {
       await applyMigration(client, filename, sql);
       process.stdout.write(`+ ${filename}\n`);
     }
+    if (verify) {
+      await reportApplied(client, (await migrationFiles()).length);
+    }
   } finally {
     await client.end();
   }
 }
 
 if (process.argv[1]?.endsWith('migrate.js') || process.argv[1]?.endsWith('migrate.ts')) {
-  migrate(process.argv.includes('--fresh')).catch((error: unknown) => {
-    process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
-    process.exit(1);
-  });
+  migrate(process.argv.includes('--fresh'), process.argv.includes('--verify')).catch(
+    (error: unknown) => {
+      process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+      process.exit(1);
+    },
+  );
 }

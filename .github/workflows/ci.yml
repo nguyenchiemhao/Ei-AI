@@ -1,0 +1,138 @@
+name: CI
+
+# A push that never becomes a pull request is still checked: dev is where work lands.
+on:
+  pull_request:
+  push:
+    branches: [main, dev]
+
+jobs:
+  # Stage 1
+  lint:
+    name: 1 · Lint and format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/pnpm
+      - run: pnpm -r lint
+      - run: pnpm format:check
+
+  # Stage 2
+  typecheck:
+    name: 2 · Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/pnpm
+      - run: pnpm -r typecheck
+
+  # Stage 3
+  unit:
+    name: 3 · Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/pnpm
+      - run: pnpm -r test:coverage
+
+  # Stage 4 · WP-2.5 · dependency-cruiser, the five architecture rules
+  architecture:
+    name: 4 · Architecture rules
+    runs-on: ubuntu-latest
+    if: false
+    steps:
+      - run: echo "not implemented until T-2.5-01"
+
+  # Stage 5
+  build:
+    name: 5 · Build images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Free disk before building
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          df -h / | tail -1
+      - run: docker build -f apps/api/Dockerfile --target dev -t ei-ai/api:ci .
+      - run: docker build -f apps/web/Dockerfile --target dev -t ei-ai/web:ci .
+      # The parser image is 2.88 GB because Docling pulls CPU torch, so it is built only when
+      # something under apps/parser changed. A hosted runner starts with about 14 GB free.
+      # On a branch's first push `github.event.before` is all zeroes and the diff fails, so an
+      # unresolvable base means build it rather than silently skip the heaviest image.
+      - name: Did the parser change?
+        id: parser
+        run: |
+          base="${{ github.event.pull_request.base.sha || github.event.before }}"
+          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ] \
+             || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::no usable base commit — building the parser image to be safe"
+          elif git diff --name-only "$base" HEAD | grep -q '^apps/parser/'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::parser image skipped — nothing under apps/parser/ changed"
+          fi
+      - if: steps.parser.outputs.changed == 'true'
+        run: docker build -f apps/parser/Dockerfile -t ei-ai/parser:ci .
+
+  # Stage 6
+  migrations:
+    name: 6 · Migrations
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector@sha256:40b404964359299eefdd5f8518facf1886c562848cf4de13b6eaf91cb70c2b87
+        env:
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: eiai
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d eiai"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:ci@localhost:5432/eiai
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/pnpm
+      - run: pnpm --filter @ei-ai/api build
+      - name: Empty to head
+        run: pnpm --filter @ei-ai/api migrate:verify
+      # Forward-only means there is no `down` to test. The customer's real path is an older
+      # release's database migrated to head — which needs a release, and there is none yet.
+      - name: Previous release tag to head
+        run: |
+          tag=$(git tag --sort=-v:refname | head -1)
+          if [ -z "$tag" ]; then
+            echo "::notice::skipped — no release tag exists yet; this half turns on with the first tag"
+            exit 0
+          fi
+          echo "would migrate the database of $tag to head"
+
+  # Stage 7 · WP-5.4 · Testcontainers integration suite
+  integration:
+    name: 7 · Integration
+    runs-on: ubuntu-latest
+    if: false
+    steps:
+      - run: echo "not implemented until T-5.4-01"
+
+  # Stage 8 · WP-5.4 · red-team harness, zero cases in Phase 1
+  red-team:
+    name: 8 · Red team
+    runs-on: ubuntu-latest
+    if: false
+    steps:
+      - run: echo "not implemented until T-5.4-02"
+
+  # Stage 9 · WP-5.4 · Trivy, npm audit, versioned push to GHCR
+  security:
+    name: 9 · Security scan and publish
+    runs-on: ubuntu-latest
+    if: false
+    steps:
+      - run: echo "not implemented until T-5.4-03"

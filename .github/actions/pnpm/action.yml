@@ -1,0 +1,23 @@
+name: Set up pnpm
+description: Node and pnpm at the versions the images are pinned to, with the store cached.
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22.13.1
+    # The corepack bundled with Node 22.13.1 cannot verify current npm signing keys and
+    # refuses to activate pnpm, so it is updated before being enabled.
+    - shell: bash
+      run: npm install -g corepack@latest && corepack enable
+    - id: store
+      shell: bash
+      run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+    - uses: actions/cache@v4
+      with:
+        path: ${{ steps.store.outputs.path }}
+        key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: pnpm-${{ runner.os }}-
+    - shell: bash
+      run: pnpm install --frozen-lockfile

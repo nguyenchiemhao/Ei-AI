@@ -4,3 +4,7 @@ build/
 coverage/
 pnpm-lock.yaml
 docs/
+
+# Tooling definitions, not project source: reformatting them is churn and a template
+# is easy to alter by accident.
+.claude/

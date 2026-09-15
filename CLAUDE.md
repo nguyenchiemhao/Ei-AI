@@ -60,7 +60,7 @@ A body is the exception. Add one only when a decision needs a "why" the diff can
 
 ## Code
 
-**Comments in English, and few of them.** A comment sits above a declaration and says *why*; it never restates what the line already says. One or two lines each.
+**Comments in English, and few of them.** A comment sits above a declaration and says _why_; it never restates what the line already says. One or two lines each.
 
 **Avoid comments inside a function body.** A block that needs explaining wants a name, not a note — extract it into a small named function instead. The exception is a genuinely surprising constraint (a workaround, an ordering requirement, a spec quirk), and then one line is enough.
 

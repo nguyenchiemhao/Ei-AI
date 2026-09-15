@@ -16,8 +16,9 @@ describe('forward-only migrations', () => {
   it('refuses an applied file that has been edited, naming the file', () => {
     const applied = new Map([['001_extensions.sql', checksum('CREATE TABLE t (id INT)')]]);
 
-    expect(() => assertUnchanged('001_extensions.sql', 'CREATE TABLE t (id BIGINT)', applied))
-      .toThrowError(/001_extensions\.sql has changed/);
+    expect(() =>
+      assertUnchanged('001_extensions.sql', 'CREATE TABLE t (id BIGINT)', applied),
+    ).toThrowError(/001_extensions\.sql has changed/);
   });
 
   it('treats whitespace as a change, because Postgres would have applied the old text', () => {

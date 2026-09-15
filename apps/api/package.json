@@ -14,7 +14,9 @@
     "migrate": "node dist/database/migrate.js",
     "migrate:fresh": "node dist/database/migrate.js --fresh",
     "seed": "node dist/database/seed.js",
-    "codegen": "kysely-codegen --dialect postgres --url $DATABASE_URL --out-file src/database/schema.ts --camel-case false"
+    "codegen": "kysely-codegen --dialect postgres --url $DATABASE_URL --out-file src/database/schema.ts --camel-case false",
+    "migrate:verify": "node dist/database/migrate.js --verify",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@nestjs/common": "11.0.5",
@@ -36,6 +38,7 @@
     "typescript": "5.7.3",
     "vitest": "2.1.8",
     "@types/pg": "8.11.10",
-    "kysely-codegen": "0.17.0"
+    "kysely-codegen": "0.17.0",
+    "@vitest/coverage-v8": "2.1.8"
   }
 }

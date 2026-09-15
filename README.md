@@ -21,38 +21,38 @@ Everything else runs in Docker, so the host stays clean. **There is deliberately
 and no Python on the host** (ADR-13): the versions are guaranteed by the images, not by a
 reminder to install the right one.
 
-| Requirement | Verified with | Notes |
-| --- | --- | --- |
-| Docker Engine 29.4.3 | `docker --version` | Docker Desktop with WSL integration enabled, or native Docker in the distro |
-| Docker Compose 5.1.3 | `docker compose version` | v2 syntax throughout |
-| NVIDIA GPU, ≥4 GB VRAM | `nvidia-smi` | RTX 3050 Ti (4096 MiB, driver 581.95) is the reference machine |
-| NVIDIA Container Toolkit | `docker run --rm --gpus all nvidia/cuda:12.4.1-base-ubuntu22.04 nvidia-smi` | the embedding server reserves the card |
-| ~40 GB free disk | `df -h .` | images ≈ 24 GB (the Infinity image alone is 11.6 GB), volumes ≈ 8 GB |
-| Source on a Linux filesystem | `df -T .` → `ext4` | **not** `9p`/`drvfs`. On WSL2 keep the tree in `~`, never under `/mnt/c` |
+| Requirement                  | Verified with                                                               | Notes                                                                       |
+| ---------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Docker Engine 29.4.3         | `docker --version`                                                          | Docker Desktop with WSL integration enabled, or native Docker in the distro |
+| Docker Compose 5.1.3         | `docker compose version`                                                    | v2 syntax throughout                                                        |
+| NVIDIA GPU, ≥4 GB VRAM       | `nvidia-smi`                                                                | RTX 3050 Ti (4096 MiB, driver 581.95) is the reference machine              |
+| NVIDIA Container Toolkit     | `docker run --rm --gpus all nvidia/cuda:12.4.1-base-ubuntu22.04 nvidia-smi` | the embedding server reserves the card                                      |
+| ~40 GB free disk             | `df -h .`                                                                   | images ≈ 24 GB (the Infinity image alone is 11.6 GB), volumes ≈ 8 GB        |
+| Source on a Linux filesystem | `df -T .` → `ext4`                                                          | **not** `9p`/`drvfs`. On WSL2 keep the tree in `~`, never under `/mnt/c`    |
 
 ## Versions inside the stack
 
 Every image is pinned **by digest**, so these do not drift. Two of them do not match what
 their own tag says, which is exactly why the digest is the pin:
 
-| Component | Version | Pinned as |
-| --- | --- | --- |
-| Node | 22.13.1 | `node@sha256:83fdfa2a…` |
-| pnpm | 10.34.5 | `packageManager` in [package.json](package.json) |
-| TypeScript | 5.7.3 | workspace dependency |
-| NestJS | 11.0.5 | workspace dependency |
-| Vite | 6.0.7 | workspace dependency |
-| PostgreSQL | **17.6** | `pgvector/pgvector:0.8.0-pg17@sha256:40b40496…` — the tag names the major only |
-| pgvector | 0.8.0 | same image |
-| Redis | 7.4.11 | `redis:7.4-alpine@sha256:ff02b58f…` |
-| Infinity (embeddings) | 0.0.76 | `michaelf34/infinity:0.0.76@sha256:90bd83ec…` |
-| Squid | **6.13** | `ubuntu/squid:6.6-24.04_beta@sha256:6a097f68…` — Canonical publishes squid only on `_beta`/`_edge`; the suffix is the image channel, not the state of Squid |
-| nginx (ingress) | 1.27.5 | `nginx:1.27-alpine@sha256:65645c7b…` |
-| Python (parser) | 3.12.14 | `python:3.12-slim-bookworm@sha256:782412e8…` |
-| Tesseract | 5.3.0, langs `eng osd vie` | installed in the parser image |
-| Docling | 2.15.1 (with `docling-core` 2.14.0) | pinned together; an open `docling-core` makes pip backtrack without terminating |
-| Models | `BAAI/bge-m3` · `BAAI/bge-reranker-v2-m3` | 4.3 GB, cached in the `models` volume |
-| llama.cpp (`dev-local` only) | `server` build, CPU | `ghcr.io/ggml-org/llama.cpp:server@sha256:cbcdcb52…` with `Qwen3-4B-Instruct-2507-Q4_K_M` |
+| Component                    | Version                                   | Pinned as                                                                                                                                                   |
+| ---------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Node                         | 22.13.1                                   | `node@sha256:83fdfa2a…`                                                                                                                                     |
+| pnpm                         | 10.34.5                                   | `packageManager` in [package.json](package.json)                                                                                                            |
+| TypeScript                   | 5.7.3                                     | workspace dependency                                                                                                                                        |
+| NestJS                       | 11.0.5                                    | workspace dependency                                                                                                                                        |
+| Vite                         | 6.0.7                                     | workspace dependency                                                                                                                                        |
+| PostgreSQL                   | **17.6**                                  | `pgvector/pgvector:0.8.0-pg17@sha256:40b40496…` — the tag names the major only                                                                              |
+| pgvector                     | 0.8.0                                     | same image                                                                                                                                                  |
+| Redis                        | 7.4.11                                    | `redis:7.4-alpine@sha256:ff02b58f…`                                                                                                                         |
+| Infinity (embeddings)        | 0.0.76                                    | `michaelf34/infinity:0.0.76@sha256:90bd83ec…`                                                                                                               |
+| Squid                        | **6.13**                                  | `ubuntu/squid:6.6-24.04_beta@sha256:6a097f68…` — Canonical publishes squid only on `_beta`/`_edge`; the suffix is the image channel, not the state of Squid |
+| nginx (ingress)              | 1.27.5                                    | `nginx:1.27-alpine@sha256:65645c7b…`                                                                                                                        |
+| Python (parser)              | 3.12.14                                   | `python:3.12-slim-bookworm@sha256:782412e8…`                                                                                                                |
+| Tesseract                    | 5.3.0, langs `eng osd vie`                | installed in the parser image                                                                                                                               |
+| Docling                      | 2.15.1 (with `docling-core` 2.14.0)       | pinned together; an open `docling-core` makes pip backtrack without terminating                                                                             |
+| Models                       | `BAAI/bge-m3` · `BAAI/bge-reranker-v2-m3` | 4.3 GB, cached in the `models` volume                                                                                                                       |
+| llama.cpp (`dev-local` only) | `server` build, CPU                       | `ghcr.io/ggml-org/llama.cpp:server@sha256:cbcdcb52…` with `Qwen3-4B-Instruct-2507-Q4_K_M`                                                                   |
 
 ---
 
@@ -99,9 +99,9 @@ its own. `docker system df` shows where the space went.
 
 ### 4. Open
 
-| URL | What |
-| --- | --- |
-| http://localhost:4173 | Web app |
+| URL                          | What       |
+| ---------------------------- | ---------- |
+| http://localhost:4173        | Web app    |
 | http://localhost:4180/health | API health |
 
 Ports 3000 and 8080 are commonly taken by other projects, so the host side uses 4173 and

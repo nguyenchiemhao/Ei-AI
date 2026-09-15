@@ -6,7 +6,7 @@
 | --- | --- |
 | Version | 0.7 |
 | Updated | 2026-09-15 |
-| Phase in flight | **Phase 1 · Foundation** — WP-1.1 · WP-1.2 ✅ closed, WP-2.1 · WP-2.2 🟡 |
+| Phase in flight | **Phase 1 · Foundation** — WP-1.1 · WP-1.2 ✅, WP-1.3 🟡 written not proved, WP-2.1 · WP-2.2 🟡 |
 | Blocking decisions | **none open** — D-1, D-2 closed; Q-07…Q-09 closed at the WP-1.1 gate; Q-10, Q-11 opened at the WP-1.2 gate |
 | Code written | WP-1.1 the stack boots; WP-1.2 the schema migrates and seeds; T-2.1-01 and T-2.2-02/03 borrowed |
 | Phase 1 progress | **29 / 153 tasks · 106 / 697 h** — all 29 closed at their gates |
@@ -158,7 +158,7 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 | --- | --- | --- | --- | --- | --- | --- |
 | [WP-1.1](./ei-ai-phase-1-tasks.md#wp-11--repo-toolchain-compose-stack-dev-container--53-h) · Repo, toolchain, Compose stack, Dev Container | DO · L | 15/15 | 53/53 h | 1 | ✅ 2026-09-15 | ✅ passed 2026-09-14 |
 | [WP-1.2](./ei-ai-phase-1-tasks.md#wp-12--schema-migrations-seed--44-h) · Schema, migrations, seed | B2 · L | 11/11 | 44/44 h | 3 | ✅ 2026-09-15 | ✅ passed 2026-09-14 |
-| [WP-1.3](./ei-ai-phase-1-tasks.md#wp-13--base-ci--stages-13-5-6--24-h) · Base CI — stages 1–3, 5, 6 | DO · L | 0/6 | 0/24 h | 1 | ⬜ | ⬜ |
+| [WP-1.3](./ei-ai-phase-1-tasks.md#wp-13--base-ci--stages-13-5-6--24-h) · Base CI — stages 1–3, 5, 6 | DO · L | 6/6 | 24/24 h | 1 | 🟡 | ⬜ **needs a push to `dev`** |
 | [WP-2.1](./ei-ai-phase-1-tasks.md#wp-21--invariant-database-constraints--16-h) · Invariant database constraints | L | 1/6 | 3/16 h | 4 | 🟡 | ⬜ |
 | [WP-2.2](./ei-ai-phase-1-tasks.md#wp-22--egress-default-deny--24-h) · Egress default-deny | DO · L | 2/6 | 6/24 h | 1 | 🟡 | ⬜ |
 | [WP-2.3](./ei-ai-phase-1-tasks.md#wp-23--retrieval-with-the-permission-predicate--48-h) · Retrieval with the permission predicate | L | 0/11 | 0/48 h | 3 | ⬜ | ⬜ |
@@ -219,16 +219,16 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 | T-1.2-11 | infra seed — 1 admin, 3 users, 2 workspaces, 20 documents, search_documents | B2 | 4 | 6 | ✅ | reviewed 2026-09-15 · 2026-09-14 · seeds 4 users, 2 workspaces, 20 documents, 1 tool; identical counts on a second run |
 | T-1.2-10 | kysely-codegen wiring, database/db.ts, transaction.ts helper | B2 | 4 | 5 | ✅ | reviewed 2026-09-15 · 2026-09-14 · 28 tables introspected; a query on `emial` fails typecheck |
 
-**WP-1.3 · Base CI — stages 1–3, 5, 6 — 0/6 tasks · 0/24 h**
+**WP-1.3 · Base CI — stages 1–3, 5, 6 — 6/6 written · 24/24 h · 🟡 chờ chạy thật trên GitHub**
 
 | ID | Task | Lane | h | W | Status | Note |
 | --- | --- | --- | --- | --- | --- | --- |
-| T-1.3-01 | .github/workflows/ci.yml skeleton — the nine stages declared in order… | DO | 4 | 2 | ⬜ | |
-| T-1.3-02 | Stage 1 — ESLint + Prettier across the workspace | DO | 2 | 1 | ⬜ | |
-| T-1.3-03 | Stage 2 — tsc --noEmit in every package | DO | 2 | 1 | ⬜ | |
-| T-1.3-04 | Stage 3 — Vitest with a coverage gate of 80% on domain modules | L | 4 | 3 | ⬜ | |
-| T-1.3-05 | Stage 5 — build api, web and parser images | DO | 4 | 1 | ⬜ | |
-| T-1.3-06 | Stage 6 — empty → head, and previous release tag → head (§1.3 of the… | L 4 · DO 4 | 8 | 4 | ⬜ | |
+| T-1.3-01 | .github/workflows/ci.yml skeleton — the nine stages declared in order… | DO | 4 | 2 | 🟡 | 2026-09-15 · 9 jobs declared, 4 held at `if: false` with the task that implements each. **Read on the Actions run of a push to `dev`** — `dev` is the trunk, no PR yet |
+| T-1.3-02 | Stage 1 — ESLint + Prettier across the workspace | DO | 2 | 1 | 🟡 | 2026-09-15 · `pnpm -r lint` and `format:check` pass locally; turning red on CI not yet shown |
+| T-1.3-03 | Stage 2 — tsc --noEmit in every package | DO | 2 | 1 | 🟡 | 2026-09-15 · `pnpm -r typecheck` passes locally; **a deliberate type error turning it red is not yet shown** |
+| T-1.3-04 | Stage 3 — Vitest with a coverage gate of 80% on domain modules | L | 4 | 3 | 🟡 | 2026-09-15 · 80% gate scoped to domain dirs; proven still able to fail with an untested domain file |
+| T-1.3-05 | Stage 5 — build api, web and parser images | DO | 4 | 1 | 🟡 | 2026-09-15 · api 36s and web 21s from a clean cache locally; parser measured separately |
+| T-1.3-06 | Stage 6 — empty → head, and previous release tag → head (§1.3 of the… | L 4 · DO 4 | 8 | 4 | 🟡 | 2026-09-15 · `--verify` reports `applied 7 of 7`; the release-tag half skips with a stated reason, no tag exists |
 
 #### G2 · Safety invariants
 

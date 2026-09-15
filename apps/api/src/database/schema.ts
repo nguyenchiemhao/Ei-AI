@@ -3,11 +3,12 @@
  * Please do not edit it manually.
  */
 
-import type { ColumnType } from "kysely";
+import type { ColumnType } from 'kysely';
 
-export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
-  ? ColumnType<S, I | undefined, U>
-  : ColumnType<T, T | undefined, T>;
+export type Generated<T> =
+  T extends ColumnType<infer S, infer I, infer U>
+    ? ColumnType<S, I | undefined, U>
+    : ColumnType<T, T | undefined, T>;
 
 export type Int8 = ColumnType<string, bigint | number | string, bigint | number | string>;
 
@@ -23,17 +24,48 @@ export type JsonPrimitive = boolean | number | string | null;
 
 export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
-export type StepStatus = "awaiting_approval" | "denied" | "denied_expired" | "failed" | "pending" | "running" | "skipped" | "succeeded" | "timed_out";
+export type StepStatus =
+  | 'awaiting_approval'
+  | 'denied'
+  | 'denied_expired'
+  | 'failed'
+  | 'pending'
+  | 'running'
+  | 'skipped'
+  | 'succeeded'
+  | 'timed_out';
 
-export type StepType = "synthesis" | "tool_call" | "verification";
+export type StepType = 'synthesis' | 'tool_call' | 'verification';
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
-export type ToolClassification = "read" | "write";
+export type ToolClassification = 'read' | 'write';
 
-export type TurnStatus = "acting" | "answered" | "awaiting_approval" | "budget_exhausted" | "cancelled" | "failed" | "loop_detected" | "observing" | "planning" | "refused" | "synthesising" | "verifying";
+export type TurnStatus =
+  | 'acting'
+  | 'answered'
+  | 'awaiting_approval'
+  | 'budget_exhausted'
+  | 'cancelled'
+  | 'failed'
+  | 'loop_detected'
+  | 'observing'
+  | 'planning'
+  | 'refused'
+  | 'synthesising'
+  | 'verifying';
 
-export type VersionStatus = "chunking" | "embedding" | "failed" | "indexed" | "parsed" | "parsing" | "purged" | "quarantined" | "superseded" | "uploaded";
+export type VersionStatus =
+  | 'chunking'
+  | 'embedding'
+  | 'failed'
+  | 'indexed'
+  | 'parsed'
+  | 'parsing'
+  | 'purged'
+  | 'quarantined'
+  | 'superseded'
+  | 'uploaded';
 
 export interface AgentSteps {
   created_at: Generated<Timestamp>;

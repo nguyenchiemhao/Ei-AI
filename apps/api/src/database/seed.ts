@@ -68,7 +68,11 @@ async function seedMemberships(
 
 // Documents stop at 'uploaded': the ingestion pipeline is WP-3.4's, and a seed that pretended
 // to index them would make the pipeline's own tests pass against fiction.
-async function seedDocuments(client: Client, workspaceId: string, uploaderId: string): Promise<void> {
+async function seedDocuments(
+  client: Client,
+  workspaceId: string,
+  uploaderId: string,
+): Promise<void> {
   for (let i = 1; i <= SAMPLE_DOCUMENT_COUNT; i += 1) {
     const filename = `sample-${String(i).padStart(2, '0')}.md`;
     const { rows } = await client.query<{ id: string }>(
