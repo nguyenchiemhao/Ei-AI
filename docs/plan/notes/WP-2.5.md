@@ -38,3 +38,33 @@ Opened 2026-09-15. Authorities: [Detail §WP-2.5](../ei-ai-phase-1-detail.md) �
 - 2026-09-15 — **stage 4 is two commands, not one.** Folding rule 1 into stage 1's ESLint run would have kept it to one, and would have broken the gate line: *CI stage 4 red on a deliberate architecture violation*. The cost is a second install step in the job; the alternative was a gate line that no longer described where the rule lives.
 - 2026-09-15 — rule 1 matches the three shapes this codebase actually uses to reach a table — the Kysely builder, raw SQL in a string, raw SQL in a `sql` template — rather than attempting every shape SQL can take. A fourth shape would pass; the control that `` `indexed ${n} chunks` `` is *not* flagged is what keeps the rule from being switched off for noise.
 - 2026-09-15 — the gate's own violation was made **type-only** — `erp.client.ts` exports a type and `health.controller.ts` imports it with `import type` — so that stage 4 would be the only stage to go red. A value import would have added an uncovered file to the coverage scope and turned stage 3 red as well, and a probe that reddens two stages proves less about either. It also puts the hardest case in the gate's own evidence: the import the compiler erases.
+
+---
+
+## Gate · closed 2026-09-15
+
+Reviewed and accepted: all seven tasks. Run #9 green with stage 4 running for the first time,
+run #10 red at **stage 4 alone** on a deliberate rule-2 violation, run #11 green after the
+revert — and `git diff 78c3cd3 HEAD` empty, so the revert took nothing but the probe.
+
+The constraints were easy; the evidence was the work. Twice a rule reported what looked like
+the right answer for the wrong reason, and both were found only by running the control rather
+than the case: four import rules were blind to every `import type` until `tsPreCompilationDeps`
+was turned on, and the provider-SDK rule would have fired on any package that is not installed.
+A rule that has never refused the near miss has not been checked.
+
+Two of the five rules also had to be re-read before they could be written at all. Rule 1 cannot
+be a `dependency-cruiser` rule — a table name is source text, not an edge — so stage 4 is two
+commands. Rule 3's "only through `ports/`" is unsatisfiable, because `ports/` holds the three
+seams design §5.4 permits and may not grow a fourth.
+
+**Not read by a person:** the CI log line naming the rule. Job logs need admin rights, so the
+evidence is that stage 4 alone failed at step `Run pnpm arch`, and that the identical tree
+reproduces `connectors-only-via-governance` locally.
+
+**Promoted to [CLAUDE.md](../../../CLAUDE.md)** — two rules, in force from the next package:
+what the checker reads must be what the rule is written against; a rule that fires is not yet
+a rule that discriminates.
+
+**Promoted to [Progress §3](../ei-ai-progress.md)** — `Q-13`, the `shared-types` package that
+is named in the tree, written into by two later tasks, and created by none.

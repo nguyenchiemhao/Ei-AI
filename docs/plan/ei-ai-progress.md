@@ -6,10 +6,10 @@
 | --- | --- |
 | Version | 1.0 |
 | Updated | 2026-09-15 |
-| Phase in flight | **Phase 1 · Foundation** — **G1 complete**, WP-2.1 · WP-2.2 closed, WP-2.5 🔎 |
-| Blocking decisions | **none open** — D-1, D-2 closed; Q-07…Q-09 closed at the WP-1.1 gate; Q-10, Q-11 opened at the WP-1.2 gate |
-| Code written | WP-1.1 the stack boots; WP-1.2 the schema migrates and seeds; T-2.1-01 and T-2.2-02/03 borrowed |
-| Phase 1 progress | **45 / 154 tasks · 162 / 700 h** — all closed at their gates; `T-2.2-05` deferred |
+| Phase in flight | **Phase 1 · Foundation** — **G1 complete**, WP-2.1 · WP-2.2 · WP-2.5 closed |
+| Blocking decisions | **none open** — D-1, D-2 closed; Q-07…Q-09 closed at the WP-1.1 gate; Q-10, Q-11 opened at the WP-1.2 gate; Q-13 at the WP-2.5 gate |
+| Code written | WP-1.1 the stack boots; WP-1.2 the schema migrates and seeds; WP-2.5 the boundaries refuse in CI; T-2.1-01 and T-2.2-02/03 borrowed |
+| Phase 1 progress | **52 / 154 tasks · 178 / 700 h** — all closed at their gates; `T-2.2-05` deferred |
 
 **Authorities.** [Implementation plan](./ei-ai-implementation-plan.md) — phases, gates, dependencies · [Phase 1 · Overview](./ei-ai-phase-1-overview.md) — priority groups and the pre-agreed cut · [Phase 1 · Detail](./ei-ai-phase-1-detail.md) — 20 packages, one proving command each · [Phase 1 · Tasks](./ei-ai-phase-1-tasks.md) — the 149 tasks and their "Done when" · [Development environment](./ei-ai-dev-environment.md) — the machine and the stack.
 
@@ -94,6 +94,7 @@ Copied from [plan §10](./ei-ai-implementation-plan.md) and [overview §9](./ei-
 | **Q-12** | CI reports but does not **gate**: run #2 pushed a broken commit onto `dev` and nothing stopped it. Branch protection with required status checks is GitHub configuration rather than code, so no task can carry it — who turns it on, and when? | before the Phase 1 gate | ⬜ Open |
 | ~~Q-10~~ | ~~The host tunnel to the database that no task names~~ | — | ✅ **Closed 2026-09-15: its own id, `T-1.1-15`** |
 | **Q-11** | **Deferred to FR-54's design, 2026-09-15.** `write_snapshots` was given a shape — target system's own `target_kind`/`target_id`, `before_state` verbatim, one snapshot per step — from the undo feature's intent rather than from a design. Confirm or replace it when FR-54's undo path is actually designed | Phase 3 · milestone 3B | ⬜ Open |
+| **Q-13** | `packages/shared-types` is named in [detail §2 and §7](./ei-ai-phase-1-detail.md)'s tree and written into by `T-2.4-03` and `T-3.2-01`, but no task creates it and `T-1.1-01` closed without it. Rule 4 of WP-2.5 could therefore only be written as its negative half. Does it become its own id, or a condition on `T-3.2-01`? | before `T-3.2-01` | ⬜ Open |
 | ~~Q-09~~ | ~~No task creates the `llamacpp` service the `dev-local` gate line needs~~ | — | ✅ **Closed 2026-09-14: `T-1.1-14`.** `compose.gpu.yml` stays removed — the GPU reservation belongs on the service |
 
 ### 3.1 What the public-repository decision commits us to
@@ -145,11 +146,11 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 | Group | Name | Packages | Tasks | Hours | Done | Cuttable |
 | --- | --- | --- | --- | --- | --- | --- |
 | **G1** | Foundation that blocks everything | 3 | 33 | 124 h | 97 % closed — only `T-1.3-07` open | No — nothing else starts |
-| **G2** | Safety invariants | 5 | 38 | 136 h | 29 % — WP-2.1 · WP-2.2 closed | No — scope may narrow, the invariant may not |
+| **G2** | Safety invariants | 5 | 38 | 136 h | 47 % — WP-2.1 · WP-2.2 · WP-2.5 closed | No — scope may narrow, the invariant may not |
 | **G3** | The product path | 6 | 56 | 280 h | 0 % | Partly — cut from G5 first |
 | **G4** | Measurement | 1 | 11 | 80 h | 0 % | No, but it never blocks code |
 | **G5** | Pre-agreed slack | 5 | 16 | 80 h | 0 % | Yes, first |
-| | **Total** | **20** | **154** | **700 h** | **29 %** | |
+| | **Total** | **20** | **154** | **700 h** | **34 %** | |
 
 ### 4.2 Roll-up by package
 
@@ -164,7 +165,7 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 | [WP-2.2](./ei-ai-phase-1-tasks.md#wp-22--egress-default-deny--24-h) · Egress default-deny | DO · L | 5/6 | 19/24 h | 1 | ✅ 2026-09-15 | ✅ passed 2026-09-15 · CI stage 6b green |
 | [WP-2.3](./ei-ai-phase-1-tasks.md#wp-23--retrieval-with-the-permission-predicate--48-h) · Retrieval with the permission predicate | L | 0/11 | 0/48 h | 3 | ⬜ | ⬜ |
 | [WP-2.4](./ei-ai-phase-1-tasks.md#wp-24--audit-append-only--32-h) · Audit, append-only | B2 | 0/8 | 0/32 h | 6 | ⬜ | ⬜ |
-| [WP-2.5](./ei-ai-phase-1-tasks.md#wp-25--architecture-rules-in-ci--16-h) · Architecture rules in CI | DO · L | 7/7 | 16/16 h | 3 | 🔎 2026-09-15 | ✅ passed 2026-09-15 · run #9 green, #10 red on purpose at stage 4 alone |
+| [WP-2.5](./ei-ai-phase-1-tasks.md#wp-25--architecture-rules-in-ci--16-h) · Architecture rules in CI | DO · L | 7/7 | 16/16 h | 3 | ✅ 2026-09-15 | ✅ passed 2026-09-15 · run #9 green, #10 red on purpose at stage 4 alone |
 | [WP-3.1](./ei-ai-phase-1-tasks.md#wp-31--identity--56-h) · Identity | B2 | 0/12 | 0/56 h | 4 | ⬜ | ⬜ |
 | [WP-3.2](./ei-ai-phase-1-tasks.md#wp-32--authorisation--40-h) · Authorisation | B2 | 0/8 | 0/40 h | 9 | ⬜ | ⬜ |
 | [WP-3.3](./ei-ai-phase-1-tasks.md#wp-33--workspaces-upload-storage--40-h) · Workspaces, upload, storage | L | 0/9 | 0/40 h | 5 | ⬜ | ⬜ |
@@ -285,17 +286,17 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 | T-2.4-07 | Wire search events with workspace scope — no document content in any log | B2 | 3 | 12 | ⬜ | |
 | T-2.4-08 | Immutability and chain-integrity tests | B2 | 3 | 9 | ⬜ | |
 
-**WP-2.5 · Architecture rules in CI — 7/7 tasks · 16/16 h · 🔎 opened and finished 2026-09-15**
+**WP-2.5 · Architecture rules in CI — 7/7 · 16/16 h · ✅ closed 2026-09-15**
 
 | ID | Task | Lane | h | W | Status | Note |
 | --- | --- | --- | --- | --- | --- | --- |
-| T-2.5-01 | dependency-cruiser installed, baseline config, CI stage 4 wired | DO | 4 | 3 | 🔎 | 2026-09-15 · `dependency-cruiser` 18.3.1 at the root; 27 modules, 38 dependencies cruised, zero violations. **Run #9 green on `dev`** — stage 4 ran for the first time, three stages skipped now rather than four. Baseline `no-circular` proven able to fail on a temporary cycle, exit 1 |
-| T-2.5-02 | Rule 1 — only retrieval/hybrid-search.repository.ts may query chunks | L | 3 | 8 | 🔎 | 2026-09-15 · ESLint, not the cruiser — a table name is source text, not an edge. **16 files reached**; all three query shapes refused (builder incl. `chunks as c`, raw string, `sql` template), the permitted file accepted, and `` `indexed ${n} chunks` `` not flagged. Blocker `T-2.3-02` dropped |
-| T-2.5-03 | Rule 2 — only governance/execution.gateway.ts may import… | L | 2 | 4 | 🔎 | 2026-09-15 · `connectors-only-via-governance`. **Both directions proven**: an importer in `modules/admin` is refused by name, exit 1; the same import from `governance/execution.gateway.ts` is accepted, exit 0 |
-| T-2.5-04 | Rule 3 — no cross-module service imports; only through ports/ | L | 3 | 4 | 🔎 | 2026-09-15 · `no-cross-module-service`, read as "no module imports another module's `*.service.ts`" — the literal wording is unsatisfiable, see the note. **Both directions proven**: `admin` → `identity/users.service.ts` refused, exit 1; the same import from inside `identity` accepted, exit 0 |
-| T-2.5-05 | Rule 4 — apps/web imports packages/shared-types only, never apps/api | DO | 2 | 4 | 🔎 | 2026-09-15 · `web-not-to-api`. An `import type` from web into `apps/api/src/database/schema.ts` is refused by name, exit 1. Negative half only — `packages/shared-types` does not exist, see the note. Blocker `T-3.6-04` dropped |
-| T-2.5-06 | Rule 5 — a provider SDK may only be imported under… | DO | 2 | 4 | 🔎 | 2026-09-15 · `provider-sdk-only-in-adapter`. `@anthropic-ai/sdk` from a module refused by name, exit 1; from `adapters/model-provider/` accepted, exit 0; **a different unresolvable module from the same file accepted** — the rule reads the SDK name, not the failure to resolve |
-| T-2.5-07 | Deliberate-violation test documented, and one violation committed then… | L 0 · DO 0 | 0 | — | 🔎 | 2026-09-15 · `docs/ops/architecture-rules.md` — a probe per rule, and the two that pass for the wrong reason. **Run #10 red on `8f88b6c`: stage 4 alone failed, at step `Run pnpm arch`; stages 1, 2, 3, 5, 6 and 6b all green.** Reverted by `5964015`, which restores the tree to `78c3cd3` exactly |
+| T-2.5-01 | dependency-cruiser installed, baseline config, CI stage 4 wired | DO | 4 | 3 | ✅ | reviewed 2026-09-15 · 2026-09-15 · `dependency-cruiser` 18.3.1 at the root; 27 modules, 38 dependencies cruised, zero violations. **Run #9 green on `dev`** — stage 4 ran for the first time, three stages skipped now rather than four. Baseline `no-circular` proven able to fail on a temporary cycle, exit 1 |
+| T-2.5-02 | Rule 1 — only retrieval/hybrid-search.repository.ts may query chunks | L | 3 | 8 | ✅ | reviewed 2026-09-15 · 2026-09-15 · ESLint, not the cruiser — a table name is source text, not an edge. **16 files reached**; all three query shapes refused (builder incl. `chunks as c`, raw string, `sql` template), the permitted file accepted, and `` `indexed ${n} chunks` `` not flagged. Blocker `T-2.3-02` dropped |
+| T-2.5-03 | Rule 2 — only governance/execution.gateway.ts may import… | L | 2 | 4 | ✅ | reviewed 2026-09-15 · 2026-09-15 · `connectors-only-via-governance`. **Both directions proven**: an importer in `modules/admin` is refused by name, exit 1; the same import from `governance/execution.gateway.ts` is accepted, exit 0 |
+| T-2.5-04 | Rule 3 — no cross-module service imports; only through ports/ | L | 3 | 4 | ✅ | reviewed 2026-09-15 · 2026-09-15 · `no-cross-module-service`, read as "no module imports another module's `*.service.ts`" — the literal wording is unsatisfiable, see the note. **Both directions proven**: `admin` → `identity/users.service.ts` refused, exit 1; the same import from inside `identity` accepted, exit 0 |
+| T-2.5-05 | Rule 4 — apps/web imports packages/shared-types only, never apps/api | DO | 2 | 4 | ✅ | reviewed 2026-09-15 · 2026-09-15 · `web-not-to-api`. An `import type` from web into `apps/api/src/database/schema.ts` is refused by name, exit 1. Negative half only — `packages/shared-types` does not exist, see the note. Blocker `T-3.6-04` dropped |
+| T-2.5-06 | Rule 5 — a provider SDK may only be imported under… | DO | 2 | 4 | ✅ | reviewed 2026-09-15 · 2026-09-15 · `provider-sdk-only-in-adapter`. `@anthropic-ai/sdk` from a module refused by name, exit 1; from `adapters/model-provider/` accepted, exit 0; **a different unresolvable module from the same file accepted** — the rule reads the SDK name, not the failure to resolve |
+| T-2.5-07 | Deliberate-violation test documented, and one violation committed then… | L 0 · DO 0 | 0 | — | ✅ | reviewed 2026-09-15 · 2026-09-15 · `docs/ops/architecture-rules.md` — a probe per rule, and the two that pass for the wrong reason. **Run #10 red on `8f88b6c`: stage 4 alone failed, at step `Run pnpm arch`; stages 1, 2, 3, 5, 6 and 6b all green.** Reverted by `5964015`, which restores the tree to `78c3cd3` exactly |
 
 #### G3 · The product path
 
@@ -639,6 +640,7 @@ Quoted from [Detail §10](./ei-ai-phase-1-detail.md), where each line carries th
 
 | Date | Change |
 | --- | --- |
+| 2026-09-15 | **WP-2.5 closed at its gate.** Five architecture rules refuse in CI stage 4: run #9 green, #10 red at stage 4 alone on a deliberate violation, #11 green after the revert. Two findings outlived the package — a prohibition on imports was blind to every import the compiler erases, and a rule can fire on a symptom that merely resembles its subject. `Q-13` opened for the `shared-types` package nobody owns. |
 | 2026-09-15 | **WP-2.1 closed at its gate.** FR-44 is refused by the database, not by code that remembers to check; `UPDATE audit_events` raises rather than reporting `UPDATE 0`. Two of the package's own checks first passed without reaching what they claimed to test. |
 | 2026-09-15 | **WP-2.2 closed at its gate.** The egress boundary denies with an empty allowlist, opens for one destination with byte counts logged, and closes again; CI stage 6b proves it on every push. Two defects found on the way: the plan's own proving command could not run, and a single-file bind mount let the boundary fail open while a reload reported success. |
 | 2026-09-15 | **WP-1.3 closed at its gate — G1 is complete.** Runs #1 and #3 green, #2 deliberately red to prove stages 1 and 2 can fail; that test found the `prod` image had never been built and did not work. `T-1.3-07` opened for workflow hardening, Q-12 for branch protection. |

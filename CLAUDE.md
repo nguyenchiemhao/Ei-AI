@@ -60,6 +60,10 @@ A body is the exception. Add one only when a decision needs a "why" the diff can
 
 **Skip because something later covers it, never because it is awkward.** A check may be deferred only by naming the task or gate that will run it. Cost is a reason to reschedule a check, never a reason to stop counting it.
 
+**What the checker reads must be what the rule is written against.** Four architecture rules in WP-2.5 forbade imports that `dependency-cruiser` could not see: `consistent-type-imports` writes almost every cross-boundary import as `import type`, the compiler erases it, and the tool read the graph that survives. The identical violation reported `no dependency violations found` and exit 0 until `tsPreCompilationDeps` was turned on. Before trusting a rule, run one violation with the option you are unsure of turned off.
+
+**A rule that fires is not yet a rule that discriminates.** WP-2.5's provider-SDK rule went red on `@anthropic-ai/sdk` — and would have gone red on any package that is not installed, which is every package in an empty tree. The control is the near miss that must be **accepted**: a different unresolvable import from the same file. A prohibition that cannot tell its subject from a lookalike gets switched off the first time the lookalike is legitimate.
+
 ## Packages
 
 **Forward-only means a new file, never an edit.** The plan described later constraints as belonging "inside" migrations already written, which the checksum guard refuses and the discipline forbids. Work that arrives after a migration is applied arrives as the next number.
