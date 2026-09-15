@@ -223,12 +223,12 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 
 | ID | Task | Lane | h | W | Status | Note |
 | --- | --- | --- | --- | --- | --- | --- |
-| T-1.3-01 | .github/workflows/ci.yml skeleton — the nine stages declared in order… | DO | 4 | 2 | 🟡 | 2026-09-15 · run #1 on `dev`: **9 jobs, 5 ran, 4 skipped**, 1m28s. Read on the Actions run, not a PR — `dev` is the trunk |
-| T-1.3-02 | Stage 1 — ESLint + Prettier across the workspace | DO | 2 | 1 | 🟡 | 2026-09-15 · green on CI run #1 in 23s; **a badly formatted file turning it red is not yet shown** |
-| T-1.3-03 | Stage 2 — tsc --noEmit in every package | DO | 2 | 1 | 🟡 | 2026-09-15 · green on CI run #1 in 22s; **a deliberate type error turning it red is not yet shown** |
-| T-1.3-04 | Stage 3 — Vitest with a coverage gate of 80% on domain modules | L | 4 | 3 | 🟡 | 2026-09-15 · green on CI run #1 in 17s; gate proven able to fail locally with an untested domain file |
-| T-1.3-05 | Stage 5 — build api, web and parser images | DO | 4 | 1 | 🟡 | 2026-09-15 · green on CI run #1 in 1m23s; parser correctly skipped, unchanged. Locally from a clean cache: api 36s, web 21s, parser 344s |
-| T-1.3-06 | Stage 6 — empty → head, and previous release tag → head (§1.3 of the… | L 4 · DO 4 | 8 | 4 | 🟡 | 2026-09-15 · green on CI run #1 in 38s against a service-container postgres; notice records the release-tag half skipping |
+| T-1.3-01 | .github/workflows/ci.yml skeleton — the nine stages declared in order… | DO | 4 | 2 | 🟡 | 2026-09-15 · 9 jobs declared, 4 held at `if: false` with the task that implements each. **Read on the Actions run of a push to `dev`** — `dev` is the trunk, no PR yet |
+| T-1.3-02 | Stage 1 — ESLint + Prettier across the workspace | DO | 2 | 1 | 🟡 | 2026-09-15 · `pnpm -r lint` and `format:check` pass locally; turning red on CI not yet shown |
+| T-1.3-03 | Stage 2 — tsc --noEmit in every package | DO | 2 | 1 | 🟡 | 2026-09-15 · `pnpm -r typecheck` passes locally; **a deliberate type error turning it red is not yet shown** |
+| T-1.3-04 | Stage 3 — Vitest with a coverage gate of 80% on domain modules | L | 4 | 3 | 🟡 | 2026-09-15 · 80% gate scoped to domain dirs; proven still able to fail with an untested domain file |
+| T-1.3-05 | Stage 5 — build api, web and parser images | DO | 4 | 1 | 🟡 | 2026-09-15 · api 36s and web 21s from a clean cache locally; parser measured separately |
+| T-1.3-06 | Stage 6 — empty → head, and previous release tag → head (§1.3 of the… | L 4 · DO 4 | 8 | 4 | 🟡 | 2026-09-15 · `--verify` reports `applied 7 of 7`; the release-tag half skips with a stated reason, no tag exists |
 
 #### G2 · Safety invariants
 
