@@ -7,6 +7,10 @@ runs:
     - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
       with:
         node-version: 22.13.1
+        # v5 turns package-manager caching on by itself when package.json carries a
+        # `packageManager` field, and it runs before corepack — so it calls `pnpm store path`
+        # with no pnpm on PATH and the step dies. The explicit cache step below is the one.
+        package-manager-cache: false
     # The corepack bundled with Node 22.13.1 cannot verify current npm signing keys and
     # refuses to activate pnpm, so it is updated before being enabled.
     - shell: bash
