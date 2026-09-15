@@ -6,7 +6,7 @@
 | --- | --- |
 | Version | 1.0 — **approved 2026-09-12** |
 | Date | 2026-09-10 · approved 2026-09-12 |
-| Contents | **153 tasks · 697 hours · 87.125 person-days** across 20 packages |
+| Contents | **154 tasks · 700 hours · 87.5 person-days** across 20 packages |
 | Pairs with | [Overview](./ei-ai-phase-1-overview.md) · [Detail](./ei-ai-phase-1-detail.md) |
 
 **How to read it.** Ids are `T-<package>-<nn>` and are stable — a dropped task keeps its id retired rather than reused. Lanes: `L` tech lead / backend · `B2` second backend · `FE` frontend · `ML` Python/ML · `DO` DevOps. Hours are working hours at 8 h per person-day; **every package's task hours sum exactly to its person-day figure in the detail document**, so the three layers cannot drift without the arithmetic showing it.
@@ -21,7 +21,7 @@
 | --- | --- | --- | --- | --- | --- |
 | **G1** | WP-1.1 Repo, toolchain, Compose, Dev Container | 15 | 53 | 6.625 | DO 37 · L 16 |
 | | WP-1.2 Schema, migrations, seed | 11 | 44 | 5.5 | L 32 · B2 12 |
-| | WP-1.3 Base CI — stages 1–3, 5, 6 | 6 | 24 | 3 | DO 16 · L 8 |
+| | WP-1.3 Base CI — stages 1–3, 5, 6 | 7 | 27 | 3.375 | DO 19 · L 8 |
 | **G2** | WP-2.1 Invariant database constraints | 6 | 16 | 2 | L 16 |
 | | WP-2.2 Egress default-deny | 6 | 24 | 3 | DO 16 · L 8 |
 | | WP-2.3 Retrieval with the permission predicate | 11 | 48 | 6 | L 48 |
@@ -39,7 +39,7 @@
 | | WP-5.3 Document detail API and screen | 2 | 16 | 2 | L 8 · FE 8 |
 | | WP-5.4 CI stages 7–9 | 3 | 16 | 2 | DO 16 |
 | | WP-5.5 Contract tests, wireframes, accessibility | 3 | 16 | 2 | FE 12 · B2 4 |
-| | **Total** | **153** | **697** | **87.125** | |
+| | **Total** | **154** | **700** | **87.5** | |
 
 ### 1.1 Startable on day 1, with nothing blocking them
 
@@ -323,7 +323,7 @@ Four dependencies were also **loosened** while building the graph, because the p
 | T-1.2-10 | `kysely-codegen` wiring, `database/db.ts`, `transaction.ts` helper | B2 | 4 | Generated types compile; a query against a wrong column name fails typecheck |
 | T-1.2-11 | `infra/scripts/seed.ts` — 1 administrator, 3 sample users covering the other roles, 2 workspaces, 20 sample `.md` documents, and the `search_documents` tool enabled and classified `read`. **Added when WP-1.2 was opened:** [detail §2](./ei-ai-phase-1-detail.md) specifies the seed and its proving command runs it, but no task created it | B2 | 4 | `pnpm --filter api seed` on a freshly migrated database exits 0 and is idempotent on a second run |
 
-### WP-1.3 · Base CI — stages 1–3, 5, 6 — 24 h
+### WP-1.3 · Base CI — stages 1–3, 5, 6 — 27 h
 
 *Package depends on: T-1.1-02, T-1.2-09.*
 
@@ -334,7 +334,8 @@ Four dependencies were also **loosened** while building the graph, because the p
 | T-1.3-03 | Stage 2 — `tsc --noEmit` in every package | DO | 2 | A deliberate type error turns it red |
 | T-1.3-04 | Stage 3 — Vitest with a coverage gate of 80% on domain modules | L | 4 | Coverage below the gate fails the stage |
 | T-1.3-05 | Stage 5 — build api, web and parser images | DO | 4 | All three images build from a clean cache |
-| T-1.3-06 | Stage 6 — **empty → head**, and **previous release tag → head** (§1.3 of the detail doc) | L 4 · DO 4 | 8 | Both paths run against a Testcontainers Postgres and report the applied count |
+| T-1.3-06 | Stage 6 — **empty → head**, and **previous release tag → head** (§1.3 of the detail doc) | L 4 · DO 4 | 8 | Both paths run against a Postgres service container and report the applied count |
+| T-1.3-07 | Workflow hardening — actions pinned by SHA, `needs` so the slow jobs wait on the cheap ones, `concurrency` cancelling superseded runs, `paths-ignore` for docs-only pushes, `permissions: contents: read`, `timeout-minutes`. **Added at the WP-1.3 gate:** runs #1–#3 showed every job carrying `Node.js 20 is deprecated`, GitHub having moved the runtime under three floating action tags | DO | 3 | A docs-only push runs no job; a superseded run is cancelled; `actions/*` carry 40-character SHAs |
 
 ---
 

@@ -32,6 +32,8 @@ Types in use: `docs`, `feat`, `fix`, `chore`, `refactor`, `test`.
 
 A body is the exception. Add one only when a decision needs a "why" the diff cannot carry, and keep it to two or three lines. Findings, summaries, rationale and lists belong in the documents themselves — a commit message is not a place to re-explain work that is already written down.
 
+**A commit made to be reverted contains only the thing being reverted.** A deliberate-failure probe was committed with `git add -A`, swept up twelve lines of working notes, and the revert deleted them. Stage the probe by name.
+
 **No attribution trailer.** A commit carries no `Co-Authored-By` line and no co-author of any kind — the author is whoever ran the commit. `.claude/settings.json` sets `attribution.commit` to an empty string so the trailer is not generated; never add one by hand.
 
 ## Proving
@@ -45,6 +47,8 @@ A body is the exception. Add one only when a decision needs a "why" the diff can
 **Pin what your pin drags in.** A pinned package with an unpinned transitive dependency lets the resolver walk backwards through every release without terminating. Pin them together, in the same line.
 
 **Say what the machine did not prove.** A package's proof ends with three lists, not one: what a command demonstrated, **what needs the reader's hands** — the exact steps and what a pass looks like — and **what was skipped on purpose**, each with the risk that leaves open. A "Done when" only a person can check is not a lesser test; it is the one that gets quietly dropped.
+
+**Build the artefact that ships.** CI built the `dev` image target and stayed green against code that did not compile, because that target copies source and compiles nothing. The `prod` target — the one that runs the build and the one that ships — had never been built at all, and did not work when it finally was. A build step that exercises a convenient stand-in proves the stand-in.
 
 **The order of work and the order of proof need not match.** `T-2.1-01` had to run before `chunks` existed, and its "Done when" could only be shown after the task that depended on it. When they diverge, say which later task demonstrates the earlier one, so the proof is deferred rather than forgotten.
 

@@ -7,7 +7,7 @@
 | Version | 1.0 — **approved 2026-09-12** |
 | Date | 2026-09-10 · approved 2026-09-12 |
 | Pairs with | [Phase 1 · Overview](./ei-ai-phase-1-overview.md) |
-| Work packages | 20, across 5 groups, 87.125 person-days |
+| Work packages | 20, across 5 groups, 87.5 person-days |
 
 **Reading key.** Lanes: `L` tech lead / backend · `B2` second backend · `FE` frontend · `ML` Python/ML · `DO` DevOps. Package ids are `WP-<group>.<n>`, stable across revisions of this draft — if a package is dropped, its id is retired rather than reused.
 
@@ -45,7 +45,7 @@ Design §6.3 says migrations are **forward-only**; §11.2 stage 6 says "test mig
 
 ---
 
-## 2. G1 · Foundation that blocks everything — 15.125 pd
+## 2. G1 · Foundation that blocks everything — 15.5 pd
 
 ### WP-1.1 · Repo, toolchain, Compose stack, Dev Container · 6.625 pd · DO 4.625 · L 2
 
@@ -101,7 +101,7 @@ docker compose exec postgres psql -U postgres -d eiai -c "\dt"   # every table, 
 pnpm --filter api migrate:fresh && pnpm --filter api seed        # empty → head → seeded, no manual step
 ```
 
-### WP-1.3 · Base CI — stages 1–3, 5, 6 · 3 pd · DO 2 · L 1
+### WP-1.3 · Base CI — stages 1–3, 5, 6 · 3.375 pd · DO 2.375 · L 1
 
 | Stage | Contents |
 | --- | --- |

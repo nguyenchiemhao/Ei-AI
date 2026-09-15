@@ -39,3 +39,23 @@ Opened 2026-09-15. Authorities: [Detail §2](../ei-ai-phase-1-detail.md) · [Tas
 - 2026-09-15 — stage 5 builds **both** api targets rather than only `dev`. `T-1.3-05` says "build api, web and parser images" without naming a target, and building the one that skips compilation is the weaker reading of it — demonstrably so, since it passed on code that did not compile. The cost is about 40 s.
 
 - 2026-09-15 — the coverage gate is declared at 80% over an empty domain scope, rather than set low and raised later. It reports 0% and passes today, which is only defensible because the gate was shown to still fail: a deliberately untested domain file turned it red with `Exit status 1` before being removed.
+
+---
+
+## Gate · closed 2026-09-15
+
+Reviewed and accepted: all six tasks. Runs #1 and #3 green on `dev`, #2 deliberately red.
+**G1 is complete.**
+
+The deliberate failure earned its keep: it showed stage 5 green against code that did not
+compile, which led to the `prod` image target — never built since `T-1.1-05` — failing its
+first build ever with `ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY`.
+
+**Promoted to [CLAUDE.md](../../../CLAUDE.md)** — two rules, in force from the next package:
+build the artefact that ships; a commit made to be reverted contains only the thing being reverted.
+
+**Promoted to [Progress §3](../ei-ai-progress.md)** — Q-12, branch protection: CI reports but
+does not gate, and run #2 put a broken commit on the trunk with nothing to stop it.
+
+`T-1.3-07` was opened rather than left as a question, following the precedent set for the
+ingress and the database tunnel. Nothing else moved.

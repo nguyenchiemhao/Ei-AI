@@ -4,12 +4,12 @@
 
 | Field | Value |
 | --- | --- |
-| Version | 0.7 |
+| Version | 0.8 |
 | Updated | 2026-09-15 |
-| Phase in flight | **Phase 1 · Foundation** — WP-1.1 · WP-1.2 ✅, WP-1.3 🟡 written not proved, WP-2.1 · WP-2.2 🟡 |
+| Phase in flight | **Phase 1 · Foundation** — **G1 complete**, WP-2.1 · WP-2.2 🟡 |
 | Blocking decisions | **none open** — D-1, D-2 closed; Q-07…Q-09 closed at the WP-1.1 gate; Q-10, Q-11 opened at the WP-1.2 gate |
 | Code written | WP-1.1 the stack boots; WP-1.2 the schema migrates and seeds; T-2.1-01 and T-2.2-02/03 borrowed |
-| Phase 1 progress | **29 / 153 tasks · 106 / 697 h** — all 29 closed at their gates |
+| Phase 1 progress | **35 / 154 tasks · 130 / 700 h** — all 35 closed at their gates |
 
 **Authorities.** [Implementation plan](./ei-ai-implementation-plan.md) — phases, gates, dependencies · [Phase 1 · Overview](./ei-ai-phase-1-overview.md) — priority groups and the pre-agreed cut · [Phase 1 · Detail](./ei-ai-phase-1-detail.md) — 20 packages, one proving command each · [Phase 1 · Tasks](./ei-ai-phase-1-tasks.md) — the 149 tasks and their "Done when" · [Development environment](./ei-ai-dev-environment.md) — the machine and the stack.
 
@@ -91,6 +91,7 @@ Copied from [plan §10](./ei-ai-implementation-plan.md) and [overview §9](./ei-
 | Q-03 | Hardware budget and tier. **Do not buy before the trajectory numbers exist** | week 16 | ⬜ Open |
 | ~~Q-07~~ | ~~The ingress service is scope no Phase 1 task names~~ | — | ✅ **Closed 2026-09-14: its own id, `T-1.1-13`** |
 | ~~Q-08~~ | ~~`task-order.py` cited but never committed~~ | — | ✅ **Closed 2026-09-14: discarded.** The wave table is maintained by hand and Tasks §2 no longer cites it |
+| **Q-12** | CI reports but does not **gate**: run #2 pushed a broken commit onto `dev` and nothing stopped it. Branch protection with required status checks is GitHub configuration rather than code, so no task can carry it — who turns it on, and when? | before the Phase 1 gate | ⬜ Open |
 | ~~Q-10~~ | ~~The host tunnel to the database that no task names~~ | — | ✅ **Closed 2026-09-15: its own id, `T-1.1-15`** |
 | **Q-11** | **Deferred to FR-54's design, 2026-09-15.** `write_snapshots` was given a shape — target system's own `target_kind`/`target_id`, `before_state` verbatim, one snapshot per step — from the undo feature's intent rather than from a design. Confirm or replace it when FR-54's undo path is actually designed | Phase 3 · milestone 3B | ⬜ Open |
 | ~~Q-09~~ | ~~No task creates the `llamacpp` service the `dev-local` gate line needs~~ | — | ✅ **Closed 2026-09-14: `T-1.1-14`.** `compose.gpu.yml` stays removed — the GPU reservation belongs on the service |
@@ -143,12 +144,12 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 
 | Group | Name | Packages | Tasks | Hours | Done | Cuttable |
 | --- | --- | --- | --- | --- | --- | --- |
-| **G1** | Foundation that blocks everything | 3 | 32 | 121 h | 84 % closed | No — nothing else starts |
+| **G1** | Foundation that blocks everything | 3 | 33 | 124 h | 97 % closed — only `T-1.3-07` open | No — nothing else starts |
 | **G2** | Safety invariants | 5 | 38 | 136 h | 5 % | No — scope may narrow, the invariant may not |
 | **G3** | The product path | 6 | 56 | 280 h | 0 % | Partly — cut from G5 first |
 | **G4** | Measurement | 1 | 11 | 80 h | 0 % | No, but it never blocks code |
 | **G5** | Pre-agreed slack | 5 | 16 | 80 h | 0 % | Yes, first |
-| | **Total** | **20** | **153** | **697 h** | **19 %** | |
+| | **Total** | **20** | **154** | **700 h** | **23 %** | |
 
 ### 4.2 Roll-up by package
 
@@ -158,7 +159,7 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 | --- | --- | --- | --- | --- | --- | --- |
 | [WP-1.1](./ei-ai-phase-1-tasks.md#wp-11--repo-toolchain-compose-stack-dev-container--53-h) · Repo, toolchain, Compose stack, Dev Container | DO · L | 15/15 | 53/53 h | 1 | ✅ 2026-09-15 | ✅ passed 2026-09-14 |
 | [WP-1.2](./ei-ai-phase-1-tasks.md#wp-12--schema-migrations-seed--44-h) · Schema, migrations, seed | B2 · L | 11/11 | 44/44 h | 3 | ✅ 2026-09-15 | ✅ passed 2026-09-14 |
-| [WP-1.3](./ei-ai-phase-1-tasks.md#wp-13--base-ci--stages-13-5-6--24-h) · Base CI — stages 1–3, 5, 6 | DO · L | 6/6 | 24/24 h | 1 | 🟡 | ⬜ **needs a push to `dev`** |
+| [WP-1.3](./ei-ai-phase-1-tasks.md#wp-13--base-ci--stages-13-5-6--24-h) · Base CI — stages 1–3, 5, 6 | DO · L | 6/7 | 24/27 h | 1 | ✅ 2026-09-15 | ✅ run #3 green, #2 red on purpose |
 | [WP-2.1](./ei-ai-phase-1-tasks.md#wp-21--invariant-database-constraints--16-h) · Invariant database constraints | L | 1/6 | 3/16 h | 4 | 🟡 | ⬜ |
 | [WP-2.2](./ei-ai-phase-1-tasks.md#wp-22--egress-default-deny--24-h) · Egress default-deny | DO · L | 2/6 | 6/24 h | 1 | 🟡 | ⬜ |
 | [WP-2.3](./ei-ai-phase-1-tasks.md#wp-23--retrieval-with-the-permission-predicate--48-h) · Retrieval with the permission predicate | L | 0/11 | 0/48 h | 3 | ⬜ | ⬜ |
@@ -219,16 +220,17 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 | T-1.2-11 | infra seed — 1 admin, 3 users, 2 workspaces, 20 documents, search_documents | B2 | 4 | 6 | ✅ | reviewed 2026-09-15 · 2026-09-14 · seeds 4 users, 2 workspaces, 20 documents, 1 tool; identical counts on a second run |
 | T-1.2-10 | kysely-codegen wiring, database/db.ts, transaction.ts helper | B2 | 4 | 5 | ✅ | reviewed 2026-09-15 · 2026-09-14 · 28 tables introspected; a query on `emial` fails typecheck |
 
-**WP-1.3 · Base CI — stages 1–3, 5, 6 — 6/6 written · 24/24 h · 🟡 chờ chạy thật trên GitHub**
+**WP-1.3 · Base CI — stages 1–3, 5, 6 — 6/6 · 24/24 h · ✅ closed 2026-09-15**
 
 | ID | Task | Lane | h | W | Status | Note |
 | --- | --- | --- | --- | --- | --- | --- |
-| T-1.3-01 | .github/workflows/ci.yml skeleton — the nine stages declared in order… | DO | 4 | 2 | 🟡 | 2026-09-15 · 9 jobs declared, 4 held at `if: false` with the task that implements each. **Read on the Actions run of a push to `dev`** — `dev` is the trunk, no PR yet |
-| T-1.3-02 | Stage 1 — ESLint + Prettier across the workspace | DO | 2 | 1 | 🟡 | 2026-09-15 · `pnpm -r lint` and `format:check` pass locally; turning red on CI not yet shown |
-| T-1.3-03 | Stage 2 — tsc --noEmit in every package | DO | 2 | 1 | 🟡 | 2026-09-15 · `pnpm -r typecheck` passes locally; **a deliberate type error turning it red is not yet shown** |
-| T-1.3-04 | Stage 3 — Vitest with a coverage gate of 80% on domain modules | L | 4 | 3 | 🟡 | 2026-09-15 · 80% gate scoped to domain dirs; proven still able to fail with an untested domain file |
-| T-1.3-05 | Stage 5 — build api, web and parser images | DO | 4 | 1 | 🟡 | 2026-09-15 · api 36s and web 21s from a clean cache locally; parser measured separately |
-| T-1.3-06 | Stage 6 — empty → head, and previous release tag → head (§1.3 of the… | L 4 · DO 4 | 8 | 4 | 🟡 | 2026-09-15 · `--verify` reports `applied 7 of 7`; the release-tag half skips with a stated reason, no tag exists |
+| T-1.3-01 | .github/workflows/ci.yml skeleton — the nine stages declared in order… | DO | 4 | 2 | ✅ | reviewed 2026-09-15 · 2026-09-15 · runs #1–#3 on `dev`: **9 jobs, 5 ran, 4 skipped**. Read on the Actions run, not a PR — `dev` is the trunk |
+| T-1.3-02 | Stage 1 — ESLint + Prettier across the workspace | DO | 2 | 1 | ✅ | reviewed 2026-09-15 · 2026-09-15 · green on #1 and #3; **red on #2** with exit code 1 against a badly formatted file |
+| T-1.3-03 | Stage 2 — tsc --noEmit in every package | DO | 2 | 1 | ✅ | reviewed 2026-09-15 · 2026-09-15 · green on #1 and #3; **red on #2** — `Type 'string' is not assignable to type 'number'` |
+| T-1.3-04 | Stage 3 — Vitest with a coverage gate of 80% on domain modules | L | 4 | 3 | ✅ | reviewed 2026-09-15 · 2026-09-15 · green on #1–#3; gate proven able to fail locally with an untested domain file |
+| T-1.3-05 | Stage 5 — build api, web and parser images | DO | 4 | 1 | ✅ | reviewed 2026-09-15 · 2026-09-15 · green on #1–#3, 1m12s. Now builds **both api targets**: #2 showed `dev` passing on code that does not compile. Clean cache locally: api 36s, web 21s, parser 344s |
+| T-1.3-07 | Workflow hardening — SHA-pinned actions, needs, concurrency, paths-ignore… | DO | 3 | 4 | ⬜ | added at the WP-1.3 gate |
+| T-1.3-06 | Stage 6 — empty → head, and previous release tag → head (§1.3 of the… | L 4 · DO 4 | 8 | 4 | ✅ | reviewed 2026-09-15 · 2026-09-15 · green on #1–#3 against a service-container postgres, **red on #2**. Notice records the release-tag half skipping, no tag exists |
 
 #### G2 · Safety invariants
 
@@ -637,6 +639,7 @@ Quoted from [Detail §10](./ei-ai-phase-1-detail.md), where each line carries th
 
 | Date | Change |
 | --- | --- |
+| 2026-09-15 | **WP-1.3 closed at its gate — G1 is complete.** Runs #1 and #3 green, #2 deliberately red to prove stages 1 and 2 can fail; that test found the `prod` image had never been built and did not work. `T-1.3-07` opened for workflow hardening, Q-12 for branch protection. |
 | 2026-09-15 | **WP-1.2 closed at its gate.** 12 rows reviewed and moved to ✅, the schema inspected by hand through a desktop client. Diary promoted: three rules added to CLAUDE.md, Q-10 and Q-11 opened here. |
 | 2026-09-14 | **WP-1.2 executed and proved.** 27 tables migrate from empty to head and seed with no manual step; the eleven tables that had no DDL anywhere were written into design §6.1.1 first. `T-1.2-11` added for the seed no task owned; `T-2.1-01` borrowed. |
 | 2026-09-14 | **WP-1.1 closed at its gate.** 14 rows reviewed and moved to ✅; Dev Container confirmed by hand; ingress accepted provisionally. Diary promoted: four rules added to CLAUDE.md, Q-07…Q-09 opened here. |
