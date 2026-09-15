@@ -164,7 +164,7 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 | [WP-2.2](./ei-ai-phase-1-tasks.md#wp-22--egress-default-deny--24-h) · Egress default-deny | DO · L | 5/6 | 19/24 h | 1 | ✅ 2026-09-15 | ✅ passed 2026-09-15 · CI stage 6b green |
 | [WP-2.3](./ei-ai-phase-1-tasks.md#wp-23--retrieval-with-the-permission-predicate--48-h) · Retrieval with the permission predicate | L | 0/11 | 0/48 h | 3 | ⬜ | ⬜ |
 | [WP-2.4](./ei-ai-phase-1-tasks.md#wp-24--audit-append-only--32-h) · Audit, append-only | B2 | 0/8 | 0/32 h | 6 | ⬜ | ⬜ |
-| [WP-2.5](./ei-ai-phase-1-tasks.md#wp-25--architecture-rules-in-ci--16-h) · Architecture rules in CI | DO · L | 7/7 | 16/16 h | 3 | 🔎 2026-09-15 | 🟡 local half red by name; the GitHub half needs a push |
+| [WP-2.5](./ei-ai-phase-1-tasks.md#wp-25--architecture-rules-in-ci--16-h) · Architecture rules in CI | DO · L | 7/7 | 16/16 h | 3 | 🔎 2026-09-15 | ✅ passed 2026-09-15 · run #9 green, #10 red on purpose at stage 4 alone |
 | [WP-3.1](./ei-ai-phase-1-tasks.md#wp-31--identity--56-h) · Identity | B2 | 0/12 | 0/56 h | 4 | ⬜ | ⬜ |
 | [WP-3.2](./ei-ai-phase-1-tasks.md#wp-32--authorisation--40-h) · Authorisation | B2 | 0/8 | 0/40 h | 9 | ⬜ | ⬜ |
 | [WP-3.3](./ei-ai-phase-1-tasks.md#wp-33--workspaces-upload-storage--40-h) · Workspaces, upload, storage | L | 0/9 | 0/40 h | 5 | ⬜ | ⬜ |
@@ -289,13 +289,13 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 
 | ID | Task | Lane | h | W | Status | Note |
 | --- | --- | --- | --- | --- | --- | --- |
-| T-2.5-01 | dependency-cruiser installed, baseline config, CI stage 4 wired | DO | 4 | 3 | 🔎 | 2026-09-15 · `dependency-cruiser` 18.3.1 at the root; 27 modules, 38 dependencies cruised, zero violations. Baseline `no-circular` **proven able to fail** on a temporary cycle, exit 1. Stage 4 live in `ci.yml`; the run itself needs a push |
+| T-2.5-01 | dependency-cruiser installed, baseline config, CI stage 4 wired | DO | 4 | 3 | 🔎 | 2026-09-15 · `dependency-cruiser` 18.3.1 at the root; 27 modules, 38 dependencies cruised, zero violations. **Run #9 green on `dev`** — stage 4 ran for the first time, three stages skipped now rather than four. Baseline `no-circular` proven able to fail on a temporary cycle, exit 1 |
 | T-2.5-02 | Rule 1 — only retrieval/hybrid-search.repository.ts may query chunks | L | 3 | 8 | 🔎 | 2026-09-15 · ESLint, not the cruiser — a table name is source text, not an edge. **16 files reached**; all three query shapes refused (builder incl. `chunks as c`, raw string, `sql` template), the permitted file accepted, and `` `indexed ${n} chunks` `` not flagged. Blocker `T-2.3-02` dropped |
 | T-2.5-03 | Rule 2 — only governance/execution.gateway.ts may import… | L | 2 | 4 | 🔎 | 2026-09-15 · `connectors-only-via-governance`. **Both directions proven**: an importer in `modules/admin` is refused by name, exit 1; the same import from `governance/execution.gateway.ts` is accepted, exit 0 |
 | T-2.5-04 | Rule 3 — no cross-module service imports; only through ports/ | L | 3 | 4 | 🔎 | 2026-09-15 · `no-cross-module-service`, read as "no module imports another module's `*.service.ts`" — the literal wording is unsatisfiable, see the note. **Both directions proven**: `admin` → `identity/users.service.ts` refused, exit 1; the same import from inside `identity` accepted, exit 0 |
 | T-2.5-05 | Rule 4 — apps/web imports packages/shared-types only, never apps/api | DO | 2 | 4 | 🔎 | 2026-09-15 · `web-not-to-api`. An `import type` from web into `apps/api/src/database/schema.ts` is refused by name, exit 1. Negative half only — `packages/shared-types` does not exist, see the note. Blocker `T-3.6-04` dropped |
 | T-2.5-06 | Rule 5 — a provider SDK may only be imported under… | DO | 2 | 4 | 🔎 | 2026-09-15 · `provider-sdk-only-in-adapter`. `@anthropic-ai/sdk` from a module refused by name, exit 1; from `adapters/model-provider/` accepted, exit 0; **a different unresolvable module from the same file accepted** — the rule reads the SDK name, not the failure to resolve |
-| T-2.5-07 | Deliberate-violation test documented, and one violation committed then… | L 0 · DO 0 | 0 | — | 🔎 | 2026-09-15 · `docs/ops/architecture-rules.md` — a probe per rule, and the two that pass for the wrong reason. Local half of the proving command red by name, exit 1; **the committed-then-reverted half needs a push** |
+| T-2.5-07 | Deliberate-violation test documented, and one violation committed then… | L 0 · DO 0 | 0 | — | 🔎 | 2026-09-15 · `docs/ops/architecture-rules.md` — a probe per rule, and the two that pass for the wrong reason. **Run #10 red on `8f88b6c`: stage 4 alone failed, at step `Run pnpm arch`; stages 1, 2, 3, 5, 6 and 6b all green.** Reverted by `5964015`, which restores the tree to `78c3cd3` exactly |
 
 #### G3 · The product path
 
