@@ -352,7 +352,7 @@ Four dependencies were also **loosened** while building the graph, because the p
 | T-2.1-03 | **S-3** — `approval_requests.decided_at`, and the corrected partial index `(expires_at) WHERE decided_at IS NULL` | L | 2 | The index is created; `\d+ approval_requests` shows the predicate with no subquery |
 | T-2.1-04 | `tools` — `UNIQUE (id, classification)` and `tools_no_write_in_v1` (`classification = 'read' OR enabled = FALSE`) | L | 3 | Enabling a `write` tool is refused by the database |
 | T-2.1-05 | **S-4 · FR-44** — `pre_authorisations.classification` + composite FK to `tools(id, classification)` + `CHECK (classification = 'read')` | L | 3 | Inserting a pre-authorisation for a write tool raises; the detail-doc command returns ERROR |
-| T-2.1-06 | **S-5** — `reject_mutation()` plus triggers on `audit_events` and `approval_decisions`; the v1 rules removed | L | 3 | `UPDATE audit_events …` raises an exception, **not** `UPDATE 0` |
+| T-2.1-06 | **S-5** — `reject_mutation()` plus triggers on `audit_events` and `approval_decisions`. ~~the v1 rules removed~~ — **corrected 2026-09-15: no rule was ever created here**, `pg_rules` in `public` returns 0; the clause described the v1 codebase | L | 3 | `UPDATE audit_events …` raises an exception, **not** `UPDATE 0` |
 
 ### WP-2.2 · Egress default-deny — 24 h
 

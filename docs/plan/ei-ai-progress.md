@@ -160,7 +160,7 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 | [WP-1.1](./ei-ai-phase-1-tasks.md#wp-11--repo-toolchain-compose-stack-dev-container--53-h) · Repo, toolchain, Compose stack, Dev Container | DO · L | 15/15 | 53/53 h | 1 | ✅ 2026-09-15 | ✅ passed 2026-09-14 |
 | [WP-1.2](./ei-ai-phase-1-tasks.md#wp-12--schema-migrations-seed--44-h) · Schema, migrations, seed | B2 · L | 11/11 | 44/44 h | 3 | ✅ 2026-09-15 | ✅ passed 2026-09-14 |
 | [WP-1.3](./ei-ai-phase-1-tasks.md#wp-13--base-ci--stages-13-5-6--24-h) · Base CI — stages 1–3, 5, 6 | DO · L | 6/7 | 24/27 h | 1 | ✅ 2026-09-15 | ✅ run #3 green, #2 red on purpose |
-| [WP-2.1](./ei-ai-phase-1-tasks.md#wp-21--invariant-database-constraints--16-h) · Invariant database constraints | L | 1/6 | 3/16 h | 4 | 🟡 | ⬜ |
+| [WP-2.1](./ei-ai-phase-1-tasks.md#wp-21--invariant-database-constraints--16-h) · Invariant database constraints | L | 6/6 | 16/16 h | 4 | 🔎 2026-09-15 | ✅ passed 2026-09-15 |
 | [WP-2.2](./ei-ai-phase-1-tasks.md#wp-22--egress-default-deny--24-h) · Egress default-deny | DO · L | 5/6 | 19/24 h | 1 | ✅ 2026-09-15 | ✅ passed 2026-09-15 · CI stage 6b green |
 | [WP-2.3](./ei-ai-phase-1-tasks.md#wp-23--retrieval-with-the-permission-predicate--48-h) · Retrieval with the permission predicate | L | 0/11 | 0/48 h | 3 | ⬜ | ⬜ |
 | [WP-2.4](./ei-ai-phase-1-tasks.md#wp-24--audit-append-only--32-h) · Audit, append-only | B2 | 0/8 | 0/32 h | 6 | ⬜ | ⬜ |
@@ -234,16 +234,16 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 
 #### G2 · Safety invariants
 
-**WP-2.1 · Invariant database constraints — 0/6 tasks · 0/16 h**
+**WP-2.1 · Invariant database constraints — 6/6 · 16/16 h · 🔎 awaiting review**
 
 | ID | Task | Lane | h | W | Status | Note |
 | --- | --- | --- | --- | --- | --- | --- |
 | T-2.1-01 | S-1 — immutable_unaccent(text) as IMMUTABLE PARALLEL SAFE, and the… | L | 3 | 4 | ✅ | reviewed 2026-09-15 · 2026-09-14 · run early inside WP-1.2 (deviation); `immutable_unaccent` in `001`, generated column proven on a real row |
-| T-2.1-02 | S-2 — partial unique index pre_auth_one_active … WHERE revoked_at IS… | L | 2 | 5 | ⬜ | |
-| T-2.1-03 | S-3 — approval_requests.decided_at, and the corrected partial index… | L | 2 | 5 | ⬜ | |
-| T-2.1-04 | tools — UNIQUE (id, classification) and tools_no_write_in_v1… | L | 3 | 5 | ⬜ | |
-| T-2.1-05 | S-4 · FR-44 — pre_authorisations.classification + composite FK to… | L | 3 | 6 | ⬜ | |
-| T-2.1-06 | S-5 — reject_mutation() plus triggers on audit_events and… | L | 3 | 5 | ⬜ | |
+| T-2.1-02 | S-2 — partial unique index pre_auth_one_active … WHERE revoked_at IS… | L | 2 | 5 | 🔎 | 2026-09-15 · `008` · two active pre-auths for one tool → duplicate key error; a revoked one plus a new one is accepted |
+| T-2.1-03 | S-3 — approval_requests.decided_at, and the corrected partial index… | L | 2 | 5 | 🔎 | 2026-09-15 · **already done in WP-1.2** — `decided_at` and the subquery-free index were written with `005`/`007`; verified, no new SQL |
+| T-2.1-04 | tools — UNIQUE (id, classification) and tools_no_write_in_v1… | L | 3 | 5 | 🔎 | 2026-09-15 · `008` · enabling a write tool → check violation; `UNIQUE (id, classification)` present as the composite FK's parent |
+| T-2.1-05 | S-4 · FR-44 — pre_authorisations.classification + composite FK to… | L | 3 | 6 | 🔎 | 2026-09-15 · `008` · **FR-44 refused by the database** — both the CHECK and the composite FK proven separately, and reclassifying a pre-authorised tool is refused |
+| T-2.1-06 | S-5 — reject_mutation() plus triggers on audit_events and… | L | 3 | 5 | 🔎 | 2026-09-15 · `008` · `UPDATE`/`DELETE audit_events` raise `append-only table: …`, not `UPDATE 0`. No v1 rule existed to remove |
 
 **WP-2.2 · Egress default-deny — 5/6 · 19/24 h · ✅ closed 2026-09-15** — `T-2.2-05` deferred to after `T-3.2-02`
 

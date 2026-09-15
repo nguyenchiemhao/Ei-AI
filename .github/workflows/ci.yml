@@ -107,6 +107,12 @@ jobs:
         run: pnpm --filter @ei-ai/api migrate:verify
       # Forward-only means there is no `down` to test. The customer's real path is an older
       # release's database migrated to head — which needs a release, and there is none yet.
+      # The invariants need a migrated database and nothing else, and this job already has one.
+      # Testcontainers would pull T-5.4-01 forward out of G5 for no gain.
+      - name: Database invariants refuse
+        env:
+          PSQL: psql postgresql://postgres:ci@localhost:5432/eiai
+        run: bash infra/scripts/verify-invariants.sh
       - name: Previous release tag to head
         run: |
           tag=$(git tag --sort=-v:refname | head -1)
