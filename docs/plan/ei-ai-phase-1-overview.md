@@ -8,7 +8,7 @@
 | Date | 2026-09-10 · approved 2026-09-12 |
 | Covers | Weeks 1–3 · FR-01, 02, 04, 05, 09, 10, 11, 45, 58, 61, 62, 64, 65, 66 · skeleton of FR-21, FR-75 |
 | Budget in the top-level plan | 15 pw / 3 weeks |
-| Measured bottom-up | **87 person-days ≈ 17 pw** — §6 says what to do about the difference |
+| Measured bottom-up | **87.125 person-days ≈ 17 pw** — §6 says what to do about the difference |
 | Milestone | `docker compose up` → log in → upload `.md` → search → cited passages, **no generated text** |
 
 ---
@@ -44,14 +44,14 @@ The measurement lane (**G4**) sits outside the ladder: it blocks nobody and is b
 
 | Group | Name | pd | Lanes | Can it be cut? |
 | --- | --- | --- | --- | --- |
-| **G1** | Foundation that blocks everything | 15 | DevOps, Lead | **No** — nothing else starts |
+| **G1** | Foundation that blocks everything | 15.125 | DevOps, Lead | **No** — nothing else starts |
 | **G2** | Safety invariants — cheap now, structural later | 17 | Lead, Backend 2, DevOps | **No** — scope may narrow, the invariant may not |
 | **G3** | The product path — the vertical slice | 35 | Lead, Backend 2, Frontend | Partly — see G5 |
 | **G4** | Measurement — the numbers that can change the plan | 10 | ML | No, but it never blocks code |
 | **G5** | Pre-agreed slack — week 4 can absorb it | 10 | all | **Yes, first** |
-| | **Total** | **87** | | |
+| | **Total** | **87.125** | | |
 
-### G1 · Foundation that blocks everything — 15 pd
+### G1 · Foundation that blocks everything — 15.125 pd
 
 **Contains:** the pnpm monorepo and pinned Dockerfiles; the Compose stack with the two-network egress split; the Dev Container; zod-validated config that refuses to boot on a missing variable; **every table in the database, for every phase**, as numbered forward-only SQL; the base CI pipeline (lint, typecheck, unit, build, migrate).
 

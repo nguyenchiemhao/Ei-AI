@@ -6,7 +6,7 @@
 | --- | --- |
 | Version | 1.0 — **approved 2026-09-12** |
 | Date | 2026-09-10 · approved 2026-09-12 |
-| Contents | **152 tasks · 696 hours · 87 person-days** across 20 packages |
+| Contents | **153 tasks · 697 hours · 87.125 person-days** across 20 packages |
 | Pairs with | [Overview](./ei-ai-phase-1-overview.md) · [Detail](./ei-ai-phase-1-detail.md) |
 
 **How to read it.** Ids are `T-<package>-<nn>` and are stable — a dropped task keeps its id retired rather than reused. Lanes: `L` tech lead / backend · `B2` second backend · `FE` frontend · `ML` Python/ML · `DO` DevOps. Hours are working hours at 8 h per person-day; **every package's task hours sum exactly to its person-day figure in the detail document**, so the three layers cannot drift without the arithmetic showing it.
@@ -19,7 +19,7 @@
 
 | Group | Package | Tasks | Hours | pd | Lanes |
 | --- | --- | --- | --- | --- | --- |
-| **G1** | WP-1.1 Repo, toolchain, Compose, Dev Container | 14 | 52 | 6.5 | DO 36 · L 16 |
+| **G1** | WP-1.1 Repo, toolchain, Compose, Dev Container | 15 | 53 | 6.625 | DO 37 · L 16 |
 | | WP-1.2 Schema, migrations, seed | 11 | 44 | 5.5 | L 32 · B2 12 |
 | | WP-1.3 Base CI — stages 1–3, 5, 6 | 6 | 24 | 3 | DO 16 · L 8 |
 | **G2** | WP-2.1 Invariant database constraints | 6 | 16 | 2 | L 16 |
@@ -39,7 +39,7 @@
 | | WP-5.3 Document detail API and screen | 2 | 16 | 2 | L 8 · FE 8 |
 | | WP-5.4 CI stages 7–9 | 3 | 16 | 2 | DO 16 |
 | | WP-5.5 Contract tests, wireframes, accessibility | 3 | 16 | 2 | FE 12 · B2 4 |
-| | **Total** | **152** | **696** | **87** | |
+| | **Total** | **153** | **697** | **87.125** | |
 
 ### 1.1 Startable on day 1, with nothing blocking them
 
@@ -283,7 +283,7 @@ Four dependencies were also **loosened** while building the graph, because the p
 
 ## 3. G1 · Foundation that blocks everything
 
-### WP-1.1 · Repo, toolchain, Compose stack, Dev Container — 52 h
+### WP-1.1 · Repo, toolchain, Compose stack, Dev Container — 53 h
 
 *Package depends on: E-4 (Docker usable from Ubuntu).*
 
@@ -302,6 +302,7 @@ Four dependencies were also **loosened** while building the graph, because the p
 | T-1.1-11 | Compose: `uploads` volume (rw in api/worker, ro in parser) and `node_modules` named volumes; **one root `.env`** via `--env-file`, wrapped in `pnpm dev` (**C-4, C-5**) | DO | 4 | `docker compose config` shows one env source; `/workspace/node_modules` is a volume, not a bind mount |
 | T-1.1-12 | `.devcontainer/devcontainer.json` with in-container `typescript.tsdk`, `runServices: [api, postgres, redis]`, port 9229 forwarded, and `launch.json` with `remoteRoot: /workspace` | DO | 4 | Opening the folder in the container gives working autocomplete; a breakpoint in a controller is hit |
 | T-1.1-13 | `ingress` — nginx on `backend` + a new `ingress` network, the only way in, upstreams re-resolved through Docker DNS. **Added at the WP-1.1 gate:** Docker silently drops published ports on an `internal: true` network, so `web` and `api` are otherwise unreachable | DO | 2 | `curl localhost:4173` and `curl localhost:4180/health` answer from the host while `ip route` in `api` still shows no default route |
+| T-1.1-15 | Database reachable from the host for a desktop client — an nginx `stream` block on `ingress`, published on **loopback only**. **Added at the WP-1.2 gate (Q-10):** postgres is on the internal network, where Docker silently drops published ports | DO | 1 | A client on the host opens `127.0.0.1:5433` and lists the schema; `ss -tlnp` shows the bind on 127.0.0.1, not 0.0.0.0 |
 | T-1.1-14 | `llamacpp` service under the `dev-local` profile, pinned by digest, with the model file documented. **Added at the WP-1.1 gate:** [detail §10](./ei-ai-phase-1-detail.md) requires both profiles to start and no task created it | DO | 2 | `docker compose --profile dev-local up -d` starts it; the default profile does not |
 
 ### WP-1.2 · Schema, migrations, seed — 44 h

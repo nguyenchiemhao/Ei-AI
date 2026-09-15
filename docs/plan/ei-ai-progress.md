@@ -9,7 +9,7 @@
 | Phase in flight | **Phase 1 · Foundation** — WP-1.1 · WP-1.2 ✅ closed, WP-2.1 · WP-2.2 🟡 |
 | Blocking decisions | **none open** — D-1, D-2 closed; Q-07…Q-09 closed at the WP-1.1 gate; Q-10, Q-11 opened at the WP-1.2 gate |
 | Code written | WP-1.1 the stack boots; WP-1.2 the schema migrates and seeds; T-2.1-01 and T-2.2-02/03 borrowed |
-| Phase 1 progress | **28 / 152 tasks · 105 / 696 h** — all 28 closed at their gates |
+| Phase 1 progress | **29 / 153 tasks · 106 / 697 h** — all 29 closed at their gates |
 
 **Authorities.** [Implementation plan](./ei-ai-implementation-plan.md) — phases, gates, dependencies · [Phase 1 · Overview](./ei-ai-phase-1-overview.md) — priority groups and the pre-agreed cut · [Phase 1 · Detail](./ei-ai-phase-1-detail.md) — 20 packages, one proving command each · [Phase 1 · Tasks](./ei-ai-phase-1-tasks.md) — the 149 tasks and their "Done when" · [Development environment](./ei-ai-dev-environment.md) — the machine and the stack.
 
@@ -91,8 +91,8 @@ Copied from [plan §10](./ei-ai-implementation-plan.md) and [overview §9](./ei-
 | Q-03 | Hardware budget and tier. **Do not buy before the trajectory numbers exist** | week 16 | ⬜ Open |
 | ~~Q-07~~ | ~~The ingress service is scope no Phase 1 task names~~ | — | ✅ **Closed 2026-09-14: its own id, `T-1.1-13`** |
 | ~~Q-08~~ | ~~`task-order.py` cited but never committed~~ | — | ✅ **Closed 2026-09-14: discarded.** The wave table is maintained by hand and Tasks §2 no longer cites it |
-| **Q-10** | The database is reachable from the host on `127.0.0.1:5433`, tunnelled through `ingress` with an nginx `stream` block, so a desktop client can open it. No task names this. Does it grow `T-1.1-13`, earn its own id, or move behind an opt-in profile? | before the Phase 1 gate | ⬜ Open |
-| **Q-11** | `write_snapshots` was given a shape — target system's own `target_kind`/`target_id`, `before_state` verbatim, one snapshot per step — from the undo feature's intent rather than from a design. Confirm or replace it when FR-54's undo path is actually designed | Phase 3 · milestone 3B | ⬜ Open |
+| ~~Q-10~~ | ~~The host tunnel to the database that no task names~~ | — | ✅ **Closed 2026-09-15: its own id, `T-1.1-15`** |
+| **Q-11** | **Deferred to FR-54's design, 2026-09-15.** `write_snapshots` was given a shape — target system's own `target_kind`/`target_id`, `before_state` verbatim, one snapshot per step — from the undo feature's intent rather than from a design. Confirm or replace it when FR-54's undo path is actually designed | Phase 3 · milestone 3B | ⬜ Open |
 | ~~Q-09~~ | ~~No task creates the `llamacpp` service the `dev-local` gate line needs~~ | — | ✅ **Closed 2026-09-14: `T-1.1-14`.** `compose.gpu.yml` stays removed — the GPU reservation belongs on the service |
 
 ### 3.1 What the public-repository decision commits us to
@@ -143,12 +143,12 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 
 | Group | Name | Packages | Tasks | Hours | Done | Cuttable |
 | --- | --- | --- | --- | --- | --- | --- |
-| **G1** | Foundation that blocks everything | 3 | 31 | 120 h | 83 % closed | No — nothing else starts |
+| **G1** | Foundation that blocks everything | 3 | 32 | 121 h | 84 % closed | No — nothing else starts |
 | **G2** | Safety invariants | 5 | 38 | 136 h | 5 % | No — scope may narrow, the invariant may not |
 | **G3** | The product path | 6 | 56 | 280 h | 0 % | Partly — cut from G5 first |
 | **G4** | Measurement | 1 | 11 | 80 h | 0 % | No, but it never blocks code |
 | **G5** | Pre-agreed slack | 5 | 16 | 80 h | 0 % | Yes, first |
-| | **Total** | **20** | **152** | **696 h** | **18 %** | |
+| | **Total** | **20** | **153** | **697 h** | **19 %** | |
 
 ### 4.2 Roll-up by package
 
@@ -156,7 +156,7 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 
 | Package | Lane | Tasks | Hours | W | Status | Proving command passed |
 | --- | --- | --- | --- | --- | --- | --- |
-| [WP-1.1](./ei-ai-phase-1-tasks.md#wp-11--repo-toolchain-compose-stack-dev-container--52-h) · Repo, toolchain, Compose stack, Dev Container | DO · L | 14/14 | 52/52 h | 1 | ✅ 2026-09-14 | ✅ passed 2026-09-14 |
+| [WP-1.1](./ei-ai-phase-1-tasks.md#wp-11--repo-toolchain-compose-stack-dev-container--53-h) · Repo, toolchain, Compose stack, Dev Container | DO · L | 15/15 | 53/53 h | 1 | ✅ 2026-09-15 | ✅ passed 2026-09-14 |
 | [WP-1.2](./ei-ai-phase-1-tasks.md#wp-12--schema-migrations-seed--44-h) · Schema, migrations, seed | B2 · L | 11/11 | 44/44 h | 3 | ✅ 2026-09-15 | ✅ passed 2026-09-14 |
 | [WP-1.3](./ei-ai-phase-1-tasks.md#wp-13--base-ci--stages-13-5-6--24-h) · Base CI — stages 1–3, 5, 6 | DO · L | 0/6 | 0/24 h | 1 | ⬜ | ⬜ |
 | [WP-2.1](./ei-ai-phase-1-tasks.md#wp-21--invariant-database-constraints--16-h) · Invariant database constraints | L | 1/6 | 3/16 h | 4 | 🟡 | ⬜ |
@@ -183,7 +183,7 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 
 #### G1 · Foundation that blocks everything
 
-**WP-1.1 · Repo, toolchain, Compose stack, Dev Container — 14/14 · 52/52 h · ✅ closed 2026-09-14**
+**WP-1.1 · Repo, toolchain, Compose stack, Dev Container — 15/15 · 53/53 h · ✅ closed 2026-09-14, T-1.1-15 added 2026-09-15**
 
 | ID | Task | Lane | h | W | Status | Note |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -200,6 +200,7 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 | T-1.1-11 | Compose: uploads volume (rw in api/worker, ro in parser) and… | DO | 4 | 1 | ✅ | reviewed 2026-09-14 · 2026-09-14 · one root `.env` via `--env-file`; node_modules are named volumes |
 | T-1.1-12 | .devcontainer/devcontainer.json with in-container typescript.tsdk… | DO | 4 | 1 | ✅ | reviewed 2026-09-14 · autocomplete and breakpoint confirmed by hand in VS Code |
 | T-1.1-13 | ingress — nginx, the only way in; added at the WP-1.1 gate | DO | 2 | 2 | ✅ | reviewed 2026-09-14 · 4173 and 4180 answer from the host, api still has no default route |
+| T-1.1-15 | host tunnel to the database on loopback; added at the WP-1.2 gate (Q-10) | DO | 1 | 2 | ✅ | reviewed 2026-09-15 · a desktop client lists the schema on 127.0.0.1:5433; the bind is loopback, not 0.0.0.0 |
 | T-1.1-14 | llamacpp under the dev-local profile; added at the WP-1.1 gate | DO | 2 | 2 | ✅ | reviewed 2026-09-14 · `--profile dev-local` starts it healthy, `/health` → 200 from inside; the default profile excludes it; no default route |
 
 **WP-1.2 · Schema, migrations, seed — 11/11 · 44/44 h · ✅ closed 2026-09-15**
