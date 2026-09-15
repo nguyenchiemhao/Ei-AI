@@ -35,13 +35,16 @@ jobs:
       - uses: ./.github/actions/pnpm
       - run: pnpm -r test:coverage
 
-  # Stage 4 · WP-2.5 · dependency-cruiser, the five architecture rules
+  # Stage 4 · WP-2.5 · the five architecture rules. Four are import-graph rules and belong to
+  # dependency-cruiser; rule 1 is a source-text rule and rides here as a second command.
   architecture:
     name: 4 · Architecture rules
     runs-on: ubuntu-latest
-    if: false
     steps:
-      - run: echo "not implemented until T-2.5-01"
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/pnpm
+      - run: pnpm arch
+      - run: pnpm --filter @ei-ai/api arch:chunks
 
   # Stage 5
   build:

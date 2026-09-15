@@ -16,7 +16,8 @@
     "seed": "node dist/database/seed.js",
     "codegen": "kysely-codegen --dialect postgres --url $DATABASE_URL --out-file src/database/schema.ts --camel-case false",
     "migrate:verify": "node dist/database/migrate.js --verify",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "arch:chunks": "eslint --no-config-lookup --config eslint.architecture.config.mjs src"
   },
   "dependencies": {
     "@nestjs/common": "11.0.5",

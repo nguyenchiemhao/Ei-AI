@@ -14,10 +14,12 @@
     "dev": "docker compose -f infra/compose/docker-compose.yml up -d",
     "dev:down": "docker compose -f infra/compose/docker-compose.yml down",
     "dev:logs": "docker compose -f infra/compose/docker-compose.yml logs -f",
-    "dev:config": "docker compose -f infra/compose/docker-compose.yml config"
+    "dev:config": "docker compose -f infra/compose/docker-compose.yml config",
+    "arch": "depcruise --config .dependency-cruiser.cjs apps/api/src apps/web/src"
   },
   "devDependencies": {
-    "prettier": "3.4.2"
+    "prettier": "3.4.2",
+    "dependency-cruiser": "18.3.1"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
