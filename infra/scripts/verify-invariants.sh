@@ -9,10 +9,18 @@ failures=0
 
 # A statement that silently affects nothing is the v1 failure mode this package exists to kill,
 # so success here means an error was raised — never "UPDATE 0".
+# Every check builds its own rows. Selecting from seeded tables instead made the whole suite
+# depend on `seed` having run: against a migrated-but-unseeded database the inserts matched
+# nothing, touched no constraint, and reported that the invariants had stopped holding.
+FIXTURES="
+  INSERT INTO users (email, display_name, password_hash, system_role)
+    VALUES ('probe@invariants.local','Probe','x','Administrator');
+"
+
 expect_error() {
   local name=$1 sql=$2
   local out
-  out=$($PSQL -v ON_ERROR_STOP=1 -c "BEGIN; $sql ROLLBACK;" 2>&1)
+  out=$($PSQL -v ON_ERROR_STOP=1 -c "BEGIN; $FIXTURES $sql ROLLBACK;" 2>&1)
   if printf '%s' "$out" | grep -q '^ERROR:'; then
     printf '  ok    %-46s %s\n' "$name" "$(printf '%s' "$out" | grep -m1 '^ERROR:' | cut -c1-58)"
   else
@@ -43,9 +51,9 @@ expect_error "S-2 · two active pre-auths for one tool" "
   INSERT INTO tools (name, description, input_schema, classification, enabled, min_system_role)
     VALUES ('probe_read','probe','{}'::jsonb,'read',TRUE,'Member');
   INSERT INTO pre_authorisations (tool_id, classification, created_by, justification)
-    SELECT t.id,'read',u.id,'one' FROM tools t, users u WHERE t.name='probe_read' LIMIT 1;
+    SELECT t.id,'read',u.id,'one' FROM tools t, users u WHERE t.name='probe_read' AND u.email='probe@invariants.local' LIMIT 1;
   INSERT INTO pre_authorisations (tool_id, classification, created_by, justification)
-    SELECT t.id,'read',u.id,'two' FROM tools t, users u WHERE t.name='probe_read' LIMIT 1;"
+    SELECT t.id,'read',u.id,'two' FROM tools t, users u WHERE t.name='probe_read' AND u.email='probe@invariants.local' LIMIT 1;"
 
 expect_error "BR-05 · enabling a write tool" "
   INSERT INTO tools (name, description, input_schema, classification, enabled, min_system_role)
@@ -55,7 +63,7 @@ expect_error "S-4 · FR-44 · pre-auth for a write tool" "
   INSERT INTO tools (name, description, input_schema, classification, enabled, min_system_role)
     VALUES ('probe_w2','probe','{}'::jsonb,'write',FALSE,'Administrator');
   INSERT INTO pre_authorisations (tool_id, classification, created_by, justification)
-    SELECT t.id,'write',u.id,'should be refused' FROM tools t, users u WHERE t.name='probe_w2' LIMIT 1;"
+    SELECT t.id,'write',u.id,'should be refused' FROM tools t, users u WHERE t.name='probe_w2' AND u.email='probe@invariants.local' LIMIT 1;"
 
 # The CHECK above refuses classification='write' outright, so the composite key is proven
 # separately: a 'read' pre-authorisation pointing at a write tool has no (id,'read') row to
@@ -64,7 +72,7 @@ expect_error "S-4 · FK · read pre-auth on a write tool" "
   INSERT INTO tools (name, description, input_schema, classification, enabled, min_system_role)
     VALUES ('probe_w3','probe','{}'::jsonb,'write',FALSE,'Administrator');
   INSERT INTO pre_authorisations (tool_id, classification, created_by, justification)
-    SELECT t.id,'read',u.id,'no matching parent' FROM tools t, users u WHERE t.name='probe_w3' LIMIT 1;"
+    SELECT t.id,'read',u.id,'no matching parent' FROM tools t, users u WHERE t.name='probe_w3' AND u.email='probe@invariants.local' LIMIT 1;"
 
 # Disabled on purpose: an enabled tool would trip tools_no_write_in_v1 first and the check would
 # pass without the foreign key ever being consulted.
@@ -72,7 +80,7 @@ expect_error "S-4 · reclassifying a pre-authorised tool" "
   INSERT INTO tools (name, description, input_schema, classification, enabled, min_system_role)
     VALUES ('probe_r2','probe','{}'::jsonb,'read',FALSE,'Member');
   INSERT INTO pre_authorisations (tool_id, classification, created_by, justification)
-    SELECT t.id,'read',u.id,'held' FROM tools t, users u WHERE t.name='probe_r2' LIMIT 1;
+    SELECT t.id,'read',u.id,'held' FROM tools t, users u WHERE t.name='probe_r2' AND u.email='probe@invariants.local' LIMIT 1;
   UPDATE tools SET classification='write' WHERE name='probe_r2';"
 
 expect_error "S-5 · UPDATE audit_events" "

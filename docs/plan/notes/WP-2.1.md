@@ -19,12 +19,16 @@ Opened 2026-09-15. Authorities: [Detail §1.1](../ei-ai-phase-1-detail.md) — t
 
 ## Interpretations
 
-- none yet
+- 2026-09-15 — the four remaining defects land in a single `008_invariants.sql`. They are one set — S-2, BR-05, S-4 and S-5 are the promises the product is sold on — and they go in together or not at all. Migrations being forward-only, this is also the only place they *can* go: `001`–`007` are applied and checksummed.
+- 2026-09-15 — the composite foreign key keeps `ON UPDATE NO ACTION`, so a tool holding a pre-authorisation cannot be reclassified to `write` until that row is revoked. Cascading would silently convert a valid pre-authorisation into one for a write tool, which is the exact state FR-44 exists to make impossible.
+- 2026-09-15 — the invariants are checked in CI's **stage 6**, which already has a migrated Postgres service container. Testcontainers would pull `T-5.4-01` forward out of G5 and buy nothing.
+- 2026-09-15 — `T-2.1-03` closes as already done: `decided_at` and the subquery-free index were written with `005` and `007` in WP-1.2, because those files could not be authored sensibly without them.
 
 ## Deviations
 
-- none yet
+- 2026-09-15 — `T-2.1-06`'s clause "and the v1 rules removed" is struck from the task text rather than implemented. `pg_rules` in `public` returns 0: no rule was ever created in this schema, and the clause describes the v1 codebase.
 
 ## Tradeoffs
 
-- none yet
+- 2026-09-15 — each check builds its own fixtures inside its transaction rather than selecting from seeded rows. The seeded version was shorter and read better, and it failed on CI: stage 6 migrates but never seeds, so the inserts matched nothing, touched no constraint, and reported that four invariants had stopped holding. The same mechanism could as easily have reported that a missing constraint still held.
+- 2026-09-15 — two probes exercise S-4 separately, one for the CHECK and one for the foreign key, instead of one covering both. The single check passed while never consulting the key: `tools_no_write_in_v1` fired first on an enabled tool, so the foreign key could have been absent entirely and the suite would still have been green.
