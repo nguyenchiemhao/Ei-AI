@@ -6,7 +6,7 @@
 | --- | --- |
 | Version | 1.0 — **approved 2026-09-12** |
 | Date | 2026-09-10 · approved 2026-09-12 |
-| Contents | **151 tasks · 692 hours · 86.5 person-days** across 20 packages |
+| Contents | **152 tasks · 696 hours · 87 person-days** across 20 packages |
 | Pairs with | [Overview](./ei-ai-phase-1-overview.md) · [Detail](./ei-ai-phase-1-detail.md) |
 
 **How to read it.** Ids are `T-<package>-<nn>` and are stable — a dropped task keeps its id retired rather than reused. Lanes: `L` tech lead / backend · `B2` second backend · `FE` frontend · `ML` Python/ML · `DO` DevOps. Hours are working hours at 8 h per person-day; **every package's task hours sum exactly to its person-day figure in the detail document**, so the three layers cannot drift without the arithmetic showing it.
@@ -20,7 +20,7 @@
 | Group | Package | Tasks | Hours | pd | Lanes |
 | --- | --- | --- | --- | --- | --- |
 | **G1** | WP-1.1 Repo, toolchain, Compose, Dev Container | 14 | 52 | 6.5 | DO 36 · L 16 |
-| | WP-1.2 Schema, migrations, seed | 10 | 40 | 5 | L 32 · B2 8 |
+| | WP-1.2 Schema, migrations, seed | 11 | 44 | 5.5 | L 32 · B2 12 |
 | | WP-1.3 Base CI — stages 1–3, 5, 6 | 6 | 24 | 3 | DO 16 · L 8 |
 | **G2** | WP-2.1 Invariant database constraints | 6 | 16 | 2 | L 16 |
 | | WP-2.2 Egress default-deny | 6 | 24 | 3 | DO 16 · L 8 |
@@ -39,7 +39,7 @@
 | | WP-5.3 Document detail API and screen | 2 | 16 | 2 | L 8 · FE 8 |
 | | WP-5.4 CI stages 7–9 | 3 | 16 | 2 | DO 16 |
 | | WP-5.5 Contract tests, wireframes, accessibility | 3 | 16 | 2 | FE 12 · B2 4 |
-| | **Total** | **151** | **692** | **86.5** | |
+| | **Total** | **152** | **696** | **87** | |
 
 ### 1.1 Startable on day 1, with nothing blocking them
 
@@ -304,22 +304,23 @@ Four dependencies were also **loosened** while building the graph, because the p
 | T-1.1-13 | `ingress` — nginx on `backend` + a new `ingress` network, the only way in, upstreams re-resolved through Docker DNS. **Added at the WP-1.1 gate:** Docker silently drops published ports on an `internal: true` network, so `web` and `api` are otherwise unreachable | DO | 2 | `curl localhost:4173` and `curl localhost:4180/health` answer from the host while `ip route` in `api` still shows no default route |
 | T-1.1-14 | `llamacpp` service under the `dev-local` profile, pinned by digest, with the model file documented. **Added at the WP-1.1 gate:** [detail §10](./ei-ai-phase-1-detail.md) requires both profiles to start and no task created it | DO | 2 | `docker compose --profile dev-local up -d` starts it; the default profile does not |
 
-### WP-1.2 · Schema, migrations, seed — 40 h
+### WP-1.2 · Schema, migrations, seed — 44 h
 
 *Package depends on: T-1.1-03, T-1.1-08.*
 
 | ID | Task | Lane | h | Done when |
 | --- | --- | --- | --- | --- |
-| T-1.2-01 | `001_extensions.sql` — `vector`, `unaccent`, `pg_trgm`, `pgcrypto`; **`immutable_unaccent()`**; all five ENUM types | L | 4 | `\dx` and `\dT` list every extension and enum |
+| T-1.2-01 | `001_extensions.sql` — `vector`, `unaccent`, `pg_trgm`, `pgcrypto`; all five ENUM types. **`immutable_unaccent()` belongs to `T-2.1-01`**, which writes into this same file because `chunks` in `003` needs the function and migrations run in file order | L | 4 | `\dx` and `\dT` list every extension and enum |
 | T-1.2-02 | `002_identity.sql` — `users`, `refresh_tokens` (family, single-use, revocation), `login_attempts`, `group_mappings` | L | 4 | Tables present with their FKs and unique constraints |
 | T-1.2-03 | `003_workspaces.sql` part A — `workspaces`, `workspace_members`, `documents`, `document_grants` | L | 4 | Present; `documents.current_version_id` FK deferred to part B |
 | T-1.2-04 | `003_workspaces.sql` part B — `document_versions`, `pages`, `chunks` with `halfvec(1024)` and the generated `text_search` column | L | 5 | `\d chunks` shows the generated column; inserting a row populates `text_search`. **Depends on T-2.1-01** |
 | T-1.2-05 | `004_agent.sql` — `conversations`, `turns`, `agent_steps`, `answers`, `claims`, `citations` | L | 4 | All present, with `agent_steps` unique on `(turn_id, seq)` |
 | T-1.2-06 | `005_tools_governance.sql` — `tools`, `mcp_servers`, `pre_authorisations`, `approval_requests`, `approval_decisions`, `write_snapshots` | L | 5 | All present; constraints belong to WP-2.1 |
 | T-1.2-07 | `006_audit_egress.sql` — `audit_events`, `allowlist_entries`, `egress_records`, `model_provider_settings` | L | 3 | All present |
-| T-1.2-08 | `007_indexes.sql` — HNSW on `chunks.embedding halfvec_cosine_ops`, GIN on `text_search`, plus the eight from design §6.2 | L | 3 | `\di` lists all ten; `EXPLAIN` on a vector search picks the HNSW index |
+| T-1.2-08 | `007_indexes.sql` — HNSW on `chunks.embedding halfvec_cosine_ops`, GIN on `text_search`, plus the seven remaining from design §6.2 | L | 3 | `\di` lists all nine; `EXPLAIN` on a vector search picks the HNSW index. `agent_steps_turn_seq` is **not** among them — `UNIQUE (turn_id, seq)` already builds it |
 | T-1.2-09 | Migration runner — numbered, forward-only, applied-migrations ledger, `migrate` / `migrate:fresh` scripts | B2 | 4 | `migrate:fresh` on an empty database reaches head with no manual step |
 | T-1.2-10 | `kysely-codegen` wiring, `database/db.ts`, `transaction.ts` helper | B2 | 4 | Generated types compile; a query against a wrong column name fails typecheck |
+| T-1.2-11 | `infra/scripts/seed.ts` — 1 administrator, 3 sample users covering the other roles, 2 workspaces, 20 sample `.md` documents, and the `search_documents` tool enabled and classified `read`. **Added when WP-1.2 was opened:** [detail §2](./ei-ai-phase-1-detail.md) specifies the seed and its proving command runs it, but no task created it | B2 | 4 | `pnpm --filter api seed` on a freshly migrated database exits 0 and is idempotent on a second run |
 
 ### WP-1.3 · Base CI — stages 1–3, 5, 6 — 24 h
 

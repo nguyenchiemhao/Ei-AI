@@ -152,6 +152,7 @@ services:
     ports:
       - "4180:3000"
       - "4173:5173"
+      - "127.0.0.1:5433:5432"
     depends_on: [api, web]
     # Both networks, like squid: the only way in, as squid is the only way out.
     networks: [backend, ingress]

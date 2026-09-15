@@ -4,12 +4,12 @@
 
 | Field | Value |
 | --- | --- |
-| Version | 0.5 |
-| Updated | 2026-09-14 |
-| Phase in flight | **Phase 1 · Foundation** — WP-1.1 ✅ closed, WP-2.2 🟡 |
-| Blocking decisions | **none open** — D-1, D-2 closed; Q-07…Q-09 opened and closed at the WP-1.1 gate |
-| Code written | WP-1.1 · the stack boots; WP-2.2 borrowed T-2.2-02 and T-2.2-03 |
-| Phase 1 progress | **16 / 151 tasks · 58 / 692 h** — WP-1.1 closed at its gate 2026-09-14 |
+| Version | 0.7 |
+| Updated | 2026-09-15 |
+| Phase in flight | **Phase 1 · Foundation** — WP-1.1 · WP-1.2 ✅ closed, WP-2.1 · WP-2.2 🟡 |
+| Blocking decisions | **none open** — D-1, D-2 closed; Q-07…Q-09 closed at the WP-1.1 gate; Q-10, Q-11 opened at the WP-1.2 gate |
+| Code written | WP-1.1 the stack boots; WP-1.2 the schema migrates and seeds; T-2.1-01 and T-2.2-02/03 borrowed |
+| Phase 1 progress | **28 / 152 tasks · 105 / 696 h** — all 28 closed at their gates |
 
 **Authorities.** [Implementation plan](./ei-ai-implementation-plan.md) — phases, gates, dependencies · [Phase 1 · Overview](./ei-ai-phase-1-overview.md) — priority groups and the pre-agreed cut · [Phase 1 · Detail](./ei-ai-phase-1-detail.md) — 20 packages, one proving command each · [Phase 1 · Tasks](./ei-ai-phase-1-tasks.md) — the 149 tasks and their "Done when" · [Development environment](./ei-ai-dev-environment.md) — the machine and the stack.
 
@@ -91,6 +91,8 @@ Copied from [plan §10](./ei-ai-implementation-plan.md) and [overview §9](./ei-
 | Q-03 | Hardware budget and tier. **Do not buy before the trajectory numbers exist** | week 16 | ⬜ Open |
 | ~~Q-07~~ | ~~The ingress service is scope no Phase 1 task names~~ | — | ✅ **Closed 2026-09-14: its own id, `T-1.1-13`** |
 | ~~Q-08~~ | ~~`task-order.py` cited but never committed~~ | — | ✅ **Closed 2026-09-14: discarded.** The wave table is maintained by hand and Tasks §2 no longer cites it |
+| **Q-10** | The database is reachable from the host on `127.0.0.1:5433`, tunnelled through `ingress` with an nginx `stream` block, so a desktop client can open it. No task names this. Does it grow `T-1.1-13`, earn its own id, or move behind an opt-in profile? | before the Phase 1 gate | ⬜ Open |
+| **Q-11** | `write_snapshots` was given a shape — target system's own `target_kind`/`target_id`, `before_state` verbatim, one snapshot per step — from the undo feature's intent rather than from a design. Confirm or replace it when FR-54's undo path is actually designed | Phase 3 · milestone 3B | ⬜ Open |
 | ~~Q-09~~ | ~~No task creates the `llamacpp` service the `dev-local` gate line needs~~ | — | ✅ **Closed 2026-09-14: `T-1.1-14`.** `compose.gpu.yml` stays removed — the GPU reservation belongs on the service |
 
 ### 3.1 What the public-repository decision commits us to
@@ -141,12 +143,12 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 
 | Group | Name | Packages | Tasks | Hours | Done | Cuttable |
 | --- | --- | --- | --- | --- | --- | --- |
-| **G1** | Foundation that blocks everything | 3 | 30 | 116 h | 47 % closed | No — nothing else starts |
+| **G1** | Foundation that blocks everything | 3 | 31 | 120 h | 83 % closed | No — nothing else starts |
 | **G2** | Safety invariants | 5 | 38 | 136 h | 5 % | No — scope may narrow, the invariant may not |
 | **G3** | The product path | 6 | 56 | 280 h | 0 % | Partly — cut from G5 first |
 | **G4** | Measurement | 1 | 11 | 80 h | 0 % | No, but it never blocks code |
 | **G5** | Pre-agreed slack | 5 | 16 | 80 h | 0 % | Yes, first |
-| | **Total** | **20** | **151** | **692 h** | **9 %** | |
+| | **Total** | **20** | **152** | **696 h** | **18 %** | |
 
 ### 4.2 Roll-up by package
 
@@ -155,9 +157,9 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 | Package | Lane | Tasks | Hours | W | Status | Proving command passed |
 | --- | --- | --- | --- | --- | --- | --- |
 | [WP-1.1](./ei-ai-phase-1-tasks.md#wp-11--repo-toolchain-compose-stack-dev-container--52-h) · Repo, toolchain, Compose stack, Dev Container | DO · L | 14/14 | 52/52 h | 1 | ✅ 2026-09-14 | ✅ passed 2026-09-14 |
-| [WP-1.2](./ei-ai-phase-1-tasks.md#wp-12--schema-migrations-seed--40-h) · Schema, migrations, seed | B2 · L | 0/10 | 0/40 h | 3 | ⬜ | ⬜ |
+| [WP-1.2](./ei-ai-phase-1-tasks.md#wp-12--schema-migrations-seed--44-h) · Schema, migrations, seed | B2 · L | 11/11 | 44/44 h | 3 | ✅ 2026-09-15 | ✅ passed 2026-09-14 |
 | [WP-1.3](./ei-ai-phase-1-tasks.md#wp-13--base-ci--stages-13-5-6--24-h) · Base CI — stages 1–3, 5, 6 | DO · L | 0/6 | 0/24 h | 1 | ⬜ | ⬜ |
-| [WP-2.1](./ei-ai-phase-1-tasks.md#wp-21--invariant-database-constraints--16-h) · Invariant database constraints | L | 0/6 | 0/16 h | 4 | ⬜ | ⬜ |
+| [WP-2.1](./ei-ai-phase-1-tasks.md#wp-21--invariant-database-constraints--16-h) · Invariant database constraints | L | 1/6 | 3/16 h | 4 | 🟡 | ⬜ |
 | [WP-2.2](./ei-ai-phase-1-tasks.md#wp-22--egress-default-deny--24-h) · Egress default-deny | DO · L | 2/6 | 6/24 h | 1 | 🟡 | ⬜ |
 | [WP-2.3](./ei-ai-phase-1-tasks.md#wp-23--retrieval-with-the-permission-predicate--48-h) · Retrieval with the permission predicate | L | 0/11 | 0/48 h | 3 | ⬜ | ⬜ |
 | [WP-2.4](./ei-ai-phase-1-tasks.md#wp-24--audit-append-only--32-h) · Audit, append-only | B2 | 0/8 | 0/32 h | 6 | ⬜ | ⬜ |
@@ -200,20 +202,21 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 | T-1.1-13 | ingress — nginx, the only way in; added at the WP-1.1 gate | DO | 2 | 2 | ✅ | reviewed 2026-09-14 · 4173 and 4180 answer from the host, api still has no default route |
 | T-1.1-14 | llamacpp under the dev-local profile; added at the WP-1.1 gate | DO | 2 | 2 | ✅ | reviewed 2026-09-14 · `--profile dev-local` starts it healthy, `/health` → 200 from inside; the default profile excludes it; no default route |
 
-**WP-1.2 · Schema, migrations, seed — 0/10 tasks · 0/40 h**
+**WP-1.2 · Schema, migrations, seed — 11/11 · 44/44 h · ✅ closed 2026-09-15**
 
 | ID | Task | Lane | h | W | Status | Note |
 | --- | --- | --- | --- | --- | --- | --- |
-| T-1.2-01 | 001_extensions.sql — vector, unaccent, pg_trgm, pgcrypto… | L | 4 | 3 | ⬜ | |
-| T-1.2-02 | 002_identity.sql — users, refresh_tokens (family, single-use… | L | 4 | 4 | ⬜ | |
-| T-1.2-03 | 003_workspaces.sql part A — workspaces, workspace_members, documents… | L | 4 | 4 | ⬜ | |
-| T-1.2-04 | 003_workspaces.sql part B — document_versions, pages, chunks with… | L | 5 | 5 | ⬜ | |
-| T-1.2-05 | 004_agent.sql — conversations, turns, agent_steps, answers, claims… | L | 4 | 4 | ⬜ | |
-| T-1.2-06 | 005_tools_governance.sql — tools, mcp_servers, pre_authorisations… | L | 5 | 4 | ⬜ | |
-| T-1.2-07 | 006_audit_egress.sql — audit_events, allowlist_entries, egress_records… | L | 3 | 4 | ⬜ | |
-| T-1.2-08 | 007_indexes.sql — HNSW on chunks.embedding halfvec_cosine_ops, GIN on… | L | 3 | 6 | ⬜ | |
-| T-1.2-09 | Migration runner — numbered, forward-only, applied-migrations ledger… | B2 | 4 | 3 | ⬜ | |
-| T-1.2-10 | kysely-codegen wiring, database/db.ts, transaction.ts helper | B2 | 4 | 5 | ⬜ | |
+| T-1.2-01 | 001_extensions.sql — vector, unaccent, pg_trgm, pgcrypto… | L | 4 | 3 | ✅ | reviewed 2026-09-15 · 2026-09-14 · `\dx` lists 4 extensions, `\dT` lists all 5 enums |
+| T-1.2-02 | 002_identity.sql — users, refresh_tokens (family, single-use… | L | 4 | 4 | ✅ | reviewed 2026-09-15 · 2026-09-14 · users, refresh_tokens, login_attempts, group_mappings with their FKs and uniques |
+| T-1.2-03 | 003_workspaces.sql part A — workspaces, workspace_members, documents… | L | 4 | 4 | ✅ | reviewed 2026-09-15 · 2026-09-14 · part A present; `current_version_id` FK added in part B |
+| T-1.2-04 | 003_workspaces.sql part B — document_versions, pages, chunks with… | L | 5 | 5 | ✅ | reviewed 2026-09-15 · 2026-09-14 · a real chunk row generates an unaccented tsvector from Vietnamese text |
+| T-1.2-05 | 004_agent.sql — conversations, turns, agent_steps, answers, claims… | L | 4 | 4 | ✅ | reviewed 2026-09-15 · 2026-09-14 · present, `agent_steps` unique on (turn_id, seq) |
+| T-1.2-06 | 005_tools_governance.sql — tools, mcp_servers, pre_authorisations… | L | 5 | 4 | ✅ | reviewed 2026-09-15 · 2026-09-14 · present incl. `write_snapshots`; constraints stay with WP-2.1 |
+| T-1.2-07 | 006_audit_egress.sql — audit_events, allowlist_entries, egress_records… | L | 3 | 4 | ✅ | reviewed 2026-09-15 · 2026-09-14 · present |
+| T-1.2-08 | 007_indexes.sql — HNSW on chunks.embedding halfvec_cosine_ops, GIN on… | L | 3 | 6 | ✅ | reviewed 2026-09-15 · 2026-09-14 · **nine** indexes, not ten — `agent_steps_turn_seq` dropped as a duplicate of the UNIQUE |
+| T-1.2-09 | Migration runner — numbered, forward-only, applied-migrations ledger… | B2 | 4 | 3 | ✅ | reviewed 2026-09-15 · 2026-09-14 · empty → head with no manual step; 4 unit tests on the forward-only guard |
+| T-1.2-11 | infra seed — 1 admin, 3 users, 2 workspaces, 20 documents, search_documents | B2 | 4 | 6 | ✅ | reviewed 2026-09-15 · 2026-09-14 · seeds 4 users, 2 workspaces, 20 documents, 1 tool; identical counts on a second run |
+| T-1.2-10 | kysely-codegen wiring, database/db.ts, transaction.ts helper | B2 | 4 | 5 | ✅ | reviewed 2026-09-15 · 2026-09-14 · 28 tables introspected; a query on `emial` fails typecheck |
 
 **WP-1.3 · Base CI — stages 1–3, 5, 6 — 0/6 tasks · 0/24 h**
 
@@ -232,7 +235,7 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 
 | ID | Task | Lane | h | W | Status | Note |
 | --- | --- | --- | --- | --- | --- | --- |
-| T-2.1-01 | S-1 — immutable_unaccent(text) as IMMUTABLE PARALLEL SAFE, and the… | L | 3 | 4 | ⬜ | |
+| T-2.1-01 | S-1 — immutable_unaccent(text) as IMMUTABLE PARALLEL SAFE, and the… | L | 3 | 4 | ✅ | reviewed 2026-09-15 · 2026-09-14 · run early inside WP-1.2 (deviation); `immutable_unaccent` in `001`, generated column proven on a real row |
 | T-2.1-02 | S-2 — partial unique index pre_auth_one_active … WHERE revoked_at IS… | L | 2 | 5 | ⬜ | |
 | T-2.1-03 | S-3 — approval_requests.decided_at, and the corrected partial index… | L | 2 | 5 | ⬜ | |
 | T-2.1-04 | tools — UNIQUE (id, classification) and tools_no_write_in_v1… | L | 3 | 5 | ⬜ | |
@@ -633,6 +636,8 @@ Quoted from [Detail §10](./ei-ai-phase-1-detail.md), where each line carries th
 
 | Date | Change |
 | --- | --- |
+| 2026-09-15 | **WP-1.2 closed at its gate.** 12 rows reviewed and moved to ✅, the schema inspected by hand through a desktop client. Diary promoted: three rules added to CLAUDE.md, Q-10 and Q-11 opened here. |
+| 2026-09-14 | **WP-1.2 executed and proved.** 27 tables migrate from empty to head and seed with no manual step; the eleven tables that had no DDL anywhere were written into design §6.1.1 first. `T-1.2-11` added for the seed no task owned; `T-2.1-01` borrowed. |
 | 2026-09-14 | **WP-1.1 closed at its gate.** 14 rows reviewed and moved to ✅; Dev Container confirmed by hand; ingress accepted provisionally. Diary promoted: four rules added to CLAUDE.md, Q-07…Q-09 opened here. |
 | 2026-09-14 | **WP-1.1 executed and proved**, with T-2.2-02/03 borrowed from WP-2.2. Rows sit at 🔎. Findings: the images contradict their tags (PG 17.6 under a `pg17` tag, Squid 6.13 under a `6.6` tag), and the C-1 check was a false green until `iproute2` was installed. |
 | 2026-09-12 | **D-2 decided: option D** — single operator, wave order, no date commitment. §3.2 records what stays in force and what does not. E-4 re-verified; E-6 moot. |

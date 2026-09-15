@@ -32,8 +32,26 @@ Opened 2026-09-14. Authorities: [Detail §2](../ei-ai-phase-1-detail.md) · [Tas
 
 ## Deviations
 
-- none yet
+- 2026-09-14 — the seed lives at `apps/api/src/database/seed.ts`, not `infra/scripts/seed.ts` as [detail §7](../ei-ai-phase-1-detail.md) draws it. It is written against the Kysely types generated from the live schema, so it has to compile inside the api package; a copy under `infra/` would be outside `rootDir` and could not import them.
+- 2026-09-14 — `T-2.1-01` is executed inside this package: `chunks` cannot be created without `immutable_unaccent()`, and WP-2.1's own header says so. Its 3 h stay accounted to WP-2.1.
 
 ## Tradeoffs
 
 - none yet
+
+---
+
+## Gate · closed 2026-09-15
+
+Reviewed and accepted: 11 tasks of WP-1.2 plus `T-2.1-01`, borrowed. The schema was inspected
+by hand through a desktop client on `127.0.0.1:5433`.
+
+**Promoted to [CLAUDE.md](../../../CLAUDE.md)** — three rules, in force from the next package:
+a deferral must name what it defers to; the order of work and the order of proof need not match;
+a locked network changes the development loop, not only production.
+
+**Promoted to [Progress §3](../ei-ai-progress.md)** — Q-10, the host tunnel to the database that
+no task names; Q-11, `write_snapshots`' provisional shape.
+
+The other four opening questions were answered inside the package and stay in **Interpretations**.
+Nothing else moved.

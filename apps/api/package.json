@@ -10,7 +10,11 @@
     "start:worker": "node dist/worker.main.js",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "migrate": "node dist/database/migrate.js",
+    "migrate:fresh": "node dist/database/migrate.js --fresh",
+    "seed": "node dist/database/seed.js",
+    "codegen": "kysely-codegen --dialect postgres --url $DATABASE_URL --out-file src/database/schema.ts --camel-case false"
   },
   "dependencies": {
     "@nestjs/common": "11.0.5",
@@ -18,7 +22,9 @@
     "@nestjs/platform-express": "11.0.5",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.1",
-    "zod": "3.24.1"
+    "zod": "3.24.1",
+    "pg": "8.13.1",
+    "kysely": "0.27.5"
   },
   "devDependencies": {
     "@ei-ai/eslint-config": "workspace:*",
@@ -28,6 +34,8 @@
     "@types/node": "22.10.7",
     "eslint": "9.18.0",
     "typescript": "5.7.3",
-    "vitest": "2.1.8"
+    "vitest": "2.1.8",
+    "@types/pg": "8.11.10",
+    "kysely-codegen": "0.17.0"
   }
 }

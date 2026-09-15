@@ -30,7 +30,7 @@ Stop here if anything on either list would change the order of work or the shape
 
 ## 2. Plan — the hard stop
 
-Present, in one message: task order, files each task touches, the assumptions taken, and the proving command that will close the package. Then stop. Nothing is written until the plan is approved.
+Present, in one message: task order, files each task touches, the assumptions taken, the proving command that will close the package, and which "Done when" you expect to need hands or to be deferred (step 4). Then stop. Nothing is written until the plan is approved.
 
 Once approved, the plan does not reopen per task. A task that turns out to be two is split in Tasks first, with `a`/`b` suffixes, then in Progress — never silently absorbed.
 
@@ -45,6 +45,22 @@ Record diary entries in `docs/plan/notes/<WP>.md` as they happen, one dated line
 ## 4. Prove
 
 Run the package's proving command from Detail verbatim and paste its output. Every task ticked is not a closed package; the proving command is.
+
+Then hand over the **verification list** — three parts, no others:
+
+| Part | What goes in it |
+| --- | --- |
+| **Proved here** | Each "Done when" a command demonstrated, with the command and the output that showed it |
+| **Needs your hands** | What no command reaches: a GUI, an external service, a genuinely clean machine, or a judgement about whether something *reads* right. One row each — the steps to run, and what a pass looks like |
+| **Skipped on purpose** | What was not checked, why, the risk that leaves open, and **the task or gate that will cover it** |
+
+Three rules for the list:
+
+- A "Done when" in the second part keeps its row at 🔎 until a person has run it. The package's own proof does not close it.
+- Nothing enters the third part because it was awkward. It enters only when a later task or gate re-runs it, and that task is named.
+- A check that could pass for the wrong reason belongs in the first part only once you have confirmed it can still fail — see `## Proving` in [CLAUDE.md](../../../CLAUDE.md).
+
+Say in the **plan** (step 2) which "Done when" you already expect to land in the second and third parts, so nobody discovers at the gate that the package needs an afternoon of clicking.
 
 ## 5. Close — the gate
 

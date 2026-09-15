@@ -12,6 +12,8 @@
 
 **Keep a diary, under four headings and no others.** In that same `docs/plan/notes/<WP>.md`, one dated line per entry. **Interpretations** — an ambiguity closed by choosing. **Deviations** — a deliberate departure from the plan. **Tradeoffs** — the alternative considered and dropped. **Open questions** — what nobody has answered yet. The diary carries what a diff cannot: why this and not that.
 
+**A deferral must name what it defers to.** "Unchanged", "as before", "keeps its verified shape" — each is a pointer, and a pointer with no target is a hole the reader only finds when they try to build. Design §6.1 deferred eleven tables this way, `users` and `workspace_members` among them, and nobody noticed until WP-1.2 opened. Name the document and section, or write the thing down.
+
 **Promote at the gate, never mid-package.** When a package closes, confirmed interpretations, deviations and tradeoffs become rules in this file; open questions become rows in [Progress §3](docs/plan/ei-ai-progress.md). Nothing else moves. A rule added at a gate applies from the next package — the package that produced it is judged by the rules it started under.
 
 ## Git
@@ -42,9 +44,17 @@ A body is the exception. Add one only when a decision needs a "why" the diff can
 
 **Pin what your pin drags in.** A pinned package with an unpinned transitive dependency lets the resolver walk backwards through every release without terminating. Pin them together, in the same line.
 
+**Say what the machine did not prove.** A package's proof ends with three lists, not one: what a command demonstrated, **what needs the reader's hands** — the exact steps and what a pass looks like — and **what was skipped on purpose**, each with the risk that leaves open. A "Done when" only a person can check is not a lesser test; it is the one that gets quietly dropped.
+
+**The order of work and the order of proof need not match.** `T-2.1-01` had to run before `chunks` existed, and its "Done when" could only be shown after the task that depended on it. When they diverge, say which later task demonstrates the earlier one, so the proof is deferred rather than forgotten.
+
+**Skip because something later covers it, never because it is awkward.** A check may be deferred only by naming the task or gate that will run it. Cost is a reason to reschedule a check, never a reason to stop counting it.
+
 ## Packages
 
 **A proving command that needs another package's task pulls it forward, it does not wait.** Run the task early, record it as a deviation, and leave its hours with the package that owns it. Scope moves between packages only through the task document.
+
+**A locked network changes the development loop, not only production.** Containers on the internal network cannot reach a package registry, so a new dependency is a `package.json` edit, an image rebuild, and the `node_modules` volume dropped so it repopulates. There is no shortcut, and that is the constraint working as intended.
 
 **Scope the plan never named is provisional until the gate.** When the work needs something no task describes, build the smallest version that keeps the invariants, record it as an open question, and let the gate decide whether it grows an existing task or earns an id.
 

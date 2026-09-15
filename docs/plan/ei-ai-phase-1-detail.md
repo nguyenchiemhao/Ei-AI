@@ -7,7 +7,7 @@
 | Version | 1.0 — **approved 2026-09-12** |
 | Date | 2026-09-10 · approved 2026-09-12 |
 | Pairs with | [Phase 1 · Overview](./ei-ai-phase-1-overview.md) |
-| Work packages | 20, across 5 groups, 86.5 person-days |
+| Work packages | 20, across 5 groups, 87 person-days |
 
 **Reading key.** Lanes: `L` tech lead / backend · `B2` second backend · `FE` frontend · `ML` Python/ML · `DO` DevOps. Package ids are `WP-<group>.<n>`, stable across revisions of this draft — if a package is dropped, its id is retired rather than reused.
 
@@ -45,7 +45,7 @@ Design §6.3 says migrations are **forward-only**; §11.2 stage 6 says "test mig
 
 ---
 
-## 2. G1 · Foundation that blocks everything — 14.5 pd
+## 2. G1 · Foundation that blocks everything — 15 pd
 
 ### WP-1.1 · Repo, toolchain, Compose stack, Dev Container · 6.5 pd · DO 4.5 · L 2
 
@@ -73,7 +73,7 @@ docker compose exec api sh -c 'getent hosts postgres redis infinity | wc -l'   #
 
 **Watch for.** The `internal: true` network is the easy thing to get subtly wrong: api must still reach `postgres`, `redis` and `infinity` and nothing else. Prove both directions on the day it is written, not at the gate. Infinity downloads its model weights on first boot — do that **before** the network is locked, or allowlist `huggingface.co` deliberately and record why.
 
-### WP-1.2 · Schema, migrations, seed · 5 pd · L 4 · B2 1
+### WP-1.2 · Schema, migrations, seed · 5.5 pd · L 4 · B2 1.5
 
 **Every table from every phase**, plain numbered forward-only SQL.
 
