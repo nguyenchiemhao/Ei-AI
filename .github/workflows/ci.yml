@@ -1,18 +1,32 @@
 name: CI
 
 # A push that never becomes a pull request is still checked: dev is where work lands.
+# paths-ignore sits on `push` alone. On `pull_request` it would make branch protection (Q-12)
+# unimplementable: a docs-only PR's required checks never start, so they never report, and the
+# pull request can never merge.
 on:
   pull_request:
   push:
     branches: [main, dev]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   # Stage 1
   lint:
     name: 1 · Lint and format
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.1
       - uses: ./.github/actions/pnpm
       - run: pnpm -r lint
       - run: pnpm format:check
@@ -21,8 +35,9 @@ jobs:
   typecheck:
     name: 2 · Typecheck
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.1
       - uses: ./.github/actions/pnpm
       - run: pnpm -r typecheck
 
@@ -30,8 +45,9 @@ jobs:
   unit:
     name: 3 · Unit tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.1
       - uses: ./.github/actions/pnpm
       - run: pnpm -r test:coverage
 
@@ -40,8 +56,9 @@ jobs:
   architecture:
     name: 4 · Architecture rules
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.1
       - uses: ./.github/actions/pnpm
       - run: pnpm arch
       - run: pnpm --filter @ei-ai/api arch:chunks
@@ -49,9 +66,11 @@ jobs:
   # Stage 5
   build:
     name: 5 · Build images
+    needs: [lint, typecheck, unit, architecture]
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.1
         with:
           fetch-depth: 0
       - name: Free disk before building
@@ -87,7 +106,9 @@ jobs:
   # Stage 6
   migrations:
     name: 6 · Migrations
+    needs: [lint, typecheck, unit, architecture]
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       postgres:
         image: pgvector/pgvector@sha256:40b404964359299eefdd5f8518facf1886c562848cf4de13b6eaf91cb70c2b87
@@ -101,7 +122,7 @@ jobs:
     env:
       DATABASE_URL: postgresql://postgres:ci@localhost:5432/eiai
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.1
         with:
           fetch-depth: 0
       - uses: ./.github/actions/pnpm
@@ -130,10 +151,11 @@ jobs:
   # check rides alongside stage 6 rather than depending on work already agreed as droppable.
   egress:
     name: 6b · Egress default-deny
+    needs: [lint, typecheck, unit, architecture]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.1
       - name: Bring up only what the boundary needs
         run: |
           cp .env.example .env

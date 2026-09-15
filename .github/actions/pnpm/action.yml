@@ -4,7 +4,7 @@ description: Node and pnpm at the versions the images are pinned to, with the st
 runs:
   using: composite
   steps:
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
       with:
         node-version: 22.13.1
     # The corepack bundled with Node 22.13.1 cannot verify current npm signing keys and
@@ -14,7 +14,7 @@ runs:
     - id: store
       shell: bash
       run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
-    - uses: actions/cache@v4
+    - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
       with:
         path: ${{ steps.store.outputs.path }}
         key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
