@@ -29,8 +29,13 @@ assert_ip_present() {
 
 default_routes() { $COMPOSE exec -T api sh -c 'ip route | grep -c default' 2>/dev/null | tr -d '\r'; }
 
+# Only that internal DNS works at all, against services this invocation actually runs. Whether
+# every backend service resolves is T-1.1-10's check, proven at the WP-1.1 gate; asserting it
+# here would make the egress script fail whenever the stack is brought up in part, as CI does.
+RESOLVE_NAMES="${RESOLVE_NAMES:-postgres redis}"
+
 resolvable_names() {
-  $COMPOSE exec -T api sh -c 'getent hosts postgres redis infinity | wc -l' 2>/dev/null | tr -d '\r'
+  $COMPOSE exec -T api sh -c "getent hosts $RESOLVE_NAMES | wc -l" 2>/dev/null | tr -d '\r'
 }
 
 # Node's fetch, not curl: undici ignores HTTP_PROXY unless a ProxyAgent is set (C-1), so this is
@@ -64,7 +69,7 @@ proxied_https_denied() {
 echo "egress verification"
 assert_ip_present
 check "api has no default route"            "0"       "$(default_routes)"
-check "backend names resolve"               "3"       "$(resolvable_names)"
+check "internal DNS resolves"               "$(echo $RESOLVE_NAMES | wc -w)" "$(resolvable_names)"
 check "direct egress with proxy env removed" "BLOCKED" "$(direct_egress)"
 check "proxied http refused by squid"        "403"     "$(proxied_http_egress)"
 check "proxied https denied at CONNECT"      "DENIED"  "$(proxied_https_denied)"

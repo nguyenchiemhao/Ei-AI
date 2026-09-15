@@ -47,12 +47,21 @@ Then validate and reload, in that order. `squid -k parse` on a bad file leaves t
 configuration untouched:
 
 ```bash
-docker compose exec squid squid -k parse        # validate before reloading
-docker compose exec squid squid -k reconfigure
+docker compose exec squid squid -f /etc/squid/eiai/squid.conf -k parse
+docker compose exec squid squid -f /etc/squid/eiai/squid.conf -k reconfigure
 bash infra/scripts/verify-egress.sh             # must now fail — the boundary moved
 ```
 
 Removing the lines and reloading closes it again.
+
+## Why the directory is mounted, not the files
+
+Compose mounts `infra/squid/` at `/etc/squid/eiai`, and Squid is pointed at
+`-f /etc/squid/eiai/squid.conf`. Mounting the two files individually pins their inodes, so any
+edit that writes a new file and renames it — `git checkout`, `sed -i`, most editors — leaves the
+container reading the old content. The reload then reports success while the destination you
+just removed is **still permitted**: the boundary fails open, and nothing says so. This was
+observed, not theorised.
 
 ## What is not here yet
 

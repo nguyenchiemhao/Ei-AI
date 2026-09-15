@@ -20,12 +20,15 @@ Opened 2026-09-15. Authorities: [Detail §3](../ei-ai-phase-1-detail.md) · [Tas
 
 ## Interpretations
 
-- none yet
+- 2026-09-15 — the proving command runs Node's `fetch` inside `api` plus a throwaway `curlimages/curl` container on the backend network, rather than `curl` inside `api`. `curl` is not in `node:*-slim`, so the command as written in detail §3 prints `BLOCKED` from `command not found` — and `fetch` is the path the product itself takes, which is what C-1 is about.
+- 2026-09-15 — the network check rides in CI as **stage 6b** rather than a tenth stage or stage 7. Design §11.2 numbers nine stages and none is a network stage; stage 7 belongs to G5, the pre-agreed cut, and an invariant in G2 must not depend on it.
+- 2026-09-15 — `verify-egress.sh` asserts only that internal DNS resolves the services the invocation actually runs (`RESOLVE_NAMES`, default `postgres redis`). Whether every backend service resolves is `T-1.1-10`'s check, closed at the WP-1.1 gate; asserting it here made the script fail on CI purely because the job starts `api` and `squid` alone.
 
 ## Deviations
 
-- none yet
+- 2026-09-15 — Compose mounts `infra/squid/` as a **directory** at `/etc/squid/eiai` and Squid runs with `-f /etc/squid/eiai/squid.conf`, instead of bind-mounting the two config files. **A single-file bind mount pins an inode:** an edit that writes a new file and renames it — `git checkout`, `sed -i`, most editors — leaves the container reading the old content, so a reload reports success while a destination just removed is still permitted. Observed directly: with a clean `allowlist.conf` on disk the proxy still logged `TCP_MISS/200` for `example.com`. The boundary failed open and nothing reported it.
+- 2026-09-15 — `T-2.2-05` is not built; the allowlist routes answer `501` until `T-3.2-02` provides a guard over an authenticated principal.
 
 ## Tradeoffs
 
-- none yet
+- 2026-09-15 — the https path is judged by Squid's own log verdict rather than by curl's status code, dropping the simpler single-check design. A denied `CONNECT` never yields an origin status, so curl reports `000` whether the refusal worked or the proxy was unreachable — a code that cannot distinguish success from failure is not worth asserting on.

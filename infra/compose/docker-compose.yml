@@ -140,13 +140,17 @@ services:
 
   squid:
     image: ubuntu/squid:6.6-24.04_beta@sha256:6a097f68bae708cedbabd6188d68c7e2e7a38cedd05a176e1cc0ba29e3bbe029
+    # The directory is mounted, not the two files. A single-file bind mount pins an inode, and
+    # any edit that writes a new file and renames it — git checkout, sed -i, most editors —
+    # leaves the container reading the old content. A reload then appears to succeed while the
+    # destination you just removed is still permitted: the boundary fails open, silently.
+    command: ['-f', '/etc/squid/eiai/squid.conf', '-NYC']
     volumes:
-      - ../squid/squid.conf:/etc/squid/squid.conf:ro
-      - ../squid/allowlist.conf:/etc/squid/allowlist.conf:ro
+      - ../squid:/etc/squid/eiai:ro
       # FR-46 reconciles egress against this log, so it outlives the container.
       - squid-logs:/var/log/squid
     healthcheck:
-      test: ['CMD-SHELL', 'squid -k check || exit 1']
+      test: ['CMD-SHELL', 'squid -f /etc/squid/eiai/squid.conf -k check || exit 1']
       interval: 10s
       timeout: 5s
       retries: 5
