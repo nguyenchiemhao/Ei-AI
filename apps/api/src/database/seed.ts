@@ -111,6 +111,17 @@ async function seedSearchTool(client: Client): Promise<void> {
   );
 }
 
+// One destination, recorded but not enabled. T-5.2-01 generates allowlist.conf from this table;
+// until then the row documents intent and the file is the thing Squid actually reads.
+async function seedAllowlistEntry(client: Client, adminId: string): Promise<void> {
+  await client.query(
+    `INSERT INTO allowlist_entries (host, port, protocol, purpose, enabled, created_by)
+     VALUES ('api.anthropic.com', 443, 'https', 'Model provider, Phase 2B onward', FALSE, $1)
+     ON CONFLICT (host, port, protocol) DO NOTHING`,
+    [adminId],
+  );
+}
+
 export async function seed(): Promise<void> {
   const client = new Client({ connectionString: process.env.DATABASE_URL });
   await client.connect();
@@ -122,10 +133,11 @@ export async function seed(): Promise<void> {
     await seedMemberships(client, workspaceIds, users);
     await seedDocuments(client, workspaceIds[0]!, adminId);
     await seedSearchTool(client);
+    await seedAllowlistEntry(client, adminId);
     await client.query('COMMIT');
     process.stdout.write(
       `seeded ${USERS.length} users, ${workspaceIds.length} workspaces, ` +
-        `${SAMPLE_DOCUMENT_COUNT} documents, 1 tool\n`,
+        `${SAMPLE_DOCUMENT_COUNT} documents, 1 tool, 1 allowlist entry\n`,
     );
   } catch (error) {
     await client.query('ROLLBACK');

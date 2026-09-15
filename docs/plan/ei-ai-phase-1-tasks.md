@@ -361,10 +361,10 @@ Four dependencies were also **loosened** while building the graph, because the p
 | ID | Task | Lane | h | Done when |
 | --- | --- | --- | --- | --- |
 | T-2.2-01 | `squid.conf` — **custom log format name (C-3)**, `include /etc/squid/allowlist.conf`, `Safe_ports`/`CONNECT` acls, `http_access deny all` last | DO | 5 | `squid -k parse` reports no error; the container starts and stays up |
-| T-2.2-02 | Squid service on a **pinned stable** tag, joined to both networks, with a log volume | DO | 4 | `docker compose ps` shows it running; the access log file exists and grows |
+| T-2.2-02 | Squid service on a **pinned stable** tag, joined to both networks, with a log volume | DO | 4 | `docker compose ps` shows it running; the access log file exists and grows, **and survives `docker compose down`** |
 | T-2.2-03 | `allowlist.conf` ships **empty**, with a README stating that empty means deny and is the intended default | DO | 2 | The file is committed empty; a fresh clone denies everything |
 | T-2.2-04 | Network verification script — no default route, service names resolve, **direct egress blocked with the proxy env removed** | DO | 5 | `infra/scripts/verify-egress.sh` exits 0 on a correct stack and non-zero when a default route exists |
-| T-2.2-05 | `allowlist_entries` repository and `GET`/`POST /egress/allowlist`, Administrator only, zod DTOs | L | 5 | A Member receives 403; an Administrator can list and add an entry |
+| T-2.2-05 | `allowlist_entries` repository and `GET`/`POST /egress/allowlist`, Administrator only, zod DTOs. **Deferred 2026-09-15 — runs after `T-3.2-02`:** the "Done when" needs an authenticated principal to carry a role, and no authentication exists until WP-3.1. Until then the routes answer `501` | L | 5 | A Member receives 403; an Administrator can list and add an entry |
 | T-2.2-06 | Seed one destination, document the manual reload step, and wire the network test into CI | L | 3 | The verification script runs in CI and fails the build if egress opens |
 
 ### WP-2.3 · Retrieval with the permission predicate — 48 h

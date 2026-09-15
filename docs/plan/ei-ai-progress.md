@@ -161,7 +161,7 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 | [WP-1.2](./ei-ai-phase-1-tasks.md#wp-12--schema-migrations-seed--44-h) · Schema, migrations, seed | B2 · L | 11/11 | 44/44 h | 3 | ✅ 2026-09-15 | ✅ passed 2026-09-14 |
 | [WP-1.3](./ei-ai-phase-1-tasks.md#wp-13--base-ci--stages-13-5-6--24-h) · Base CI — stages 1–3, 5, 6 | DO · L | 6/7 | 24/27 h | 1 | ✅ 2026-09-15 | ✅ run #3 green, #2 red on purpose |
 | [WP-2.1](./ei-ai-phase-1-tasks.md#wp-21--invariant-database-constraints--16-h) · Invariant database constraints | L | 1/6 | 3/16 h | 4 | 🟡 | ⬜ |
-| [WP-2.2](./ei-ai-phase-1-tasks.md#wp-22--egress-default-deny--24-h) · Egress default-deny | DO · L | 2/6 | 6/24 h | 1 | 🟡 | ⬜ |
+| [WP-2.2](./ei-ai-phase-1-tasks.md#wp-22--egress-default-deny--24-h) · Egress default-deny | DO · L | 5/6 | 19/24 h | 1 | 🔎 2026-09-15 | ✅ passed 2026-09-15 |
 | [WP-2.3](./ei-ai-phase-1-tasks.md#wp-23--retrieval-with-the-permission-predicate--48-h) · Retrieval with the permission predicate | L | 0/11 | 0/48 h | 3 | ⬜ | ⬜ |
 | [WP-2.4](./ei-ai-phase-1-tasks.md#wp-24--audit-append-only--32-h) · Audit, append-only | B2 | 0/8 | 0/32 h | 6 | ⬜ | ⬜ |
 | [WP-2.5](./ei-ai-phase-1-tasks.md#wp-25--architecture-rules-in-ci--16-h) · Architecture rules in CI | DO · L | 0/7 | 0/16 h | 3 | ⬜ | ⬜ |
@@ -245,16 +245,16 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 | T-2.1-05 | S-4 · FR-44 — pre_authorisations.classification + composite FK to… | L | 3 | 6 | ⬜ | |
 | T-2.1-06 | S-5 — reject_mutation() plus triggers on audit_events and… | L | 3 | 5 | ⬜ | |
 
-**WP-2.2 · Egress default-deny — 0/6 tasks · 0/24 h**
+**WP-2.2 · Egress default-deny — 5/6 · 19/24 h · 🔎 awaiting review** — `T-2.2-05` deferred
 
 | ID | Task | Lane | h | W | Status | Note |
 | --- | --- | --- | --- | --- | --- | --- |
-| T-2.2-01 | squid.conf — custom log format name (C-3), include… | DO | 5 | 2 | ⬜ | |
-| T-2.2-02 | Squid service on a pinned stable tag, joined to both networks, with a… | DO | 4 | 1 | ✅ | reviewed 2026-09-14 · 2026-09-14 · run early inside WP-1.1 (deviation); squid healthy, pinned by digest. **Image carries Squid 6.13**, not 6.6 |
+| T-2.2-01 | squid.conf — custom log format name (C-3), include… | DO | 5 | 2 | 🔎 | 2026-09-15 · `squid -k parse` clean; logformat named `eiai` (C-3) live in the log, `%ssl::>sni` dropped |
+| T-2.2-02 | Squid service on a pinned stable tag, joined to both networks, with a… | DO | 4 | 1 | 🔎 | 2026-09-15 · reworked after being sent back: `squid-logs` named volume, so the access log outlives `docker compose down` |
 | T-2.2-03 | allowlist.conf ships empty, with a README stating that empty means deny… | DO | 2 | 1 | ✅ | reviewed 2026-09-14 · 2026-09-14 · run early inside WP-1.1 (deviation); `allowlist.conf` ships empty with its README |
-| T-2.2-04 | Network verification script — no default route, service names resolve… | DO | 5 | 3 | ⬜ | |
-| T-2.2-05 | allowlist_entries repository and GET/POST /egress/allowlist… | L | 5 | 5 | ⬜ | |
-| T-2.2-06 | Seed one destination, document the manual reload step, and wire the… | L | 3 | 6 | ⬜ | |
+| T-2.2-04 | Network verification script — no default route, service names resolve… | DO | 5 | 3 | 🔎 | 2026-09-15 · `verify-egress.sh` 5/5 ok; **proven able to fail** — allowing example.com made it exit 1 |
+| T-2.2-05 | allowlist_entries repository and GET/POST /egress/allowlist… | L | 5 | 5 | ⏭ | **deferred to after `T-3.2-02`** — the Done when needs an authenticated principal, and no authentication exists until WP-3.1. Routes answer 501 |
+| T-2.2-06 | Seed one destination, document the manual reload step, and wire the… | L | 3 | 6 | 🔎 | 2026-09-15 · stage **6b** in CI, seed writes one `allowlist_entries` row, README documents parse-then-reload |
 
 **WP-2.3 · Retrieval with the permission predicate — 0/11 tasks · 0/48 h**
 

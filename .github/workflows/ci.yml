@@ -116,6 +116,27 @@ jobs:
           fi
           echo "would migrate the database of $tag to head"
 
+  # Stage 6b · the network invariant. Design §11.2 numbers nine stages and none of them is a
+  # network stage; the only plausible host, stage 7, belongs to G5 — the pre-agreed cut — so the
+  # check rides alongside stage 6 rather than depending on work already agreed as droppable.
+  egress:
+    name: 6b · Egress default-deny
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bring up only what the boundary needs
+        run: |
+          cp .env.example .env
+          sed -i "s|^JWT_SECRET=.*|JWT_SECRET=$(openssl rand -base64 48 | tr -d '\n')|" .env
+          docker compose -f infra/compose/docker-compose.yml up -d --build api squid
+      - run: bash infra/scripts/verify-egress.sh
+      - name: Squid log on failure
+        if: failure()
+        run: docker compose -f infra/compose/docker-compose.yml exec -T squid tail -50 /var/log/squid/access.log
+      - if: always()
+        run: docker compose -f infra/compose/docker-compose.yml down -v
+
   # Stage 7 · WP-5.4 · Testcontainers integration suite
   integration:
     name: 7 · Integration
