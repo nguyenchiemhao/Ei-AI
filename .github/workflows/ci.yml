@@ -168,6 +168,59 @@ jobs:
       - if: always()
         run: docker compose -f infra/compose/docker-compose.yml down -v
 
+  # Stage 6c · WP-3.1 · the two identity scenarios Detail names as that package's proving
+  # command. It rides beside stage 6 for the reason 6b does: its natural host, stage 7, belongs
+  # to WP-5.4 in G5 — the pre-agreed cut — and a G3 package must not close on work already
+  # agreed as the first thing to drop. The suite drives `dist/main.js`, so it tests what ships.
+  identity:
+    name: 6c · Identity end to end
+    needs: [lint, typecheck, unit, architecture]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: pgvector/pgvector@sha256:40b404964359299eefdd5f8518facf1886c562848cf4de13b6eaf91cb70c2b87
+        env:
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: eiai
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d eiai"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7.4-alpine@sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:ci@localhost:5432/eiai
+      REDIS_URL: redis://localhost:6379
+      JWT_SECRET: ci-secret-for-integration-only-not-a-real-key
+      EMBEDDING_BASE_URL: http://localhost:7997
+      EMBEDDING_MODEL: BAAI/bge-m3
+      RERANK_MODEL: BAAI/bge-reranker-v2-m3
+      API_BASE_URL: http://127.0.0.1:3000
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.1
+      - uses: ./.github/actions/pnpm
+      - run: pnpm --filter @ei-ai/api build
+      - run: pnpm --filter @ei-ai/api migrate
+      - name: Start the built application
+        run: |
+          node apps/api/dist/main.js &
+          echo $! > /tmp/api.pid
+          for i in $(seq 1 30); do
+            curl -sf "$API_BASE_URL/health" >/dev/null && exit 0
+            sleep 2
+          done
+          echo "::error::the application never became healthy"
+          exit 1
+      - run: pnpm --filter @ei-ai/api test:integration
+      - if: always()
+        run: kill "$(cat /tmp/api.pid)" 2>/dev/null || true
+
   # Stage 7 · WP-5.4 · Testcontainers integration suite
   integration:
     name: 7 · Integration

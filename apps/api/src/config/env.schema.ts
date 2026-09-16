@@ -2,6 +2,14 @@ import { z } from 'zod';
 
 const featureStatus = z.enum(['available', 'coming_soon', 'disabled']);
 
+// `z.coerce.boolean()` reads every non-empty string as true, so a variable written `false` in
+// the file arrives as `true` in the process. The accepted spellings are named instead.
+const booleanFlag = (fallback: boolean) =>
+  z
+    .enum(['true', 'false', '1', '0'])
+    .default(fallback ? 'true' : 'false')
+    .transform((value) => value === 'true' || value === '1');
+
 // Every variable the API reads. Phase 1 keeps generation credentials optional
 // because no code path calls a model provider; week 7 tightens ANTHROPIC_API_KEY.
 export const envSchema = z.object({
@@ -38,13 +46,46 @@ export const envSchema = z.object({
   APPROVAL_EXPIRY_MS: z.coerce.number().int().positive().default(900000),
 
   JWT_SECRET: z.string().min(32),
-  ACCESS_TOKEN_TTL: z.string().default('15m'),
-  REFRESH_TOKEN_TTL: z.string().default('8h'),
+  // Validated shape rather than any string: the JWT library types its lifetime as a template
+  // literal, and a bad value should fail at boot rather than at the first login.
+  ACCESS_TOKEN_TTL: z
+    .string()
+    .regex(/^\d+[smhd]$/)
+    .default('15m'),
+  REFRESH_TOKEN_TTL: z
+    .string()
+    .regex(/^\d+[smhd]$/)
+    .default('8h'),
 
-  TOOL_SEARCH_DOCUMENTS_ENABLED: z.coerce.boolean().default(true),
-  TOOL_READ_DOCUMENT_PAGE_ENABLED: z.coerce.boolean().default(true),
-  TOOL_LIST_WORKSPACE_DOCUMENTS_ENABLED: z.coerce.boolean().default(true),
-  TOOL_WEB_SEARCH_ENABLED: z.coerce.boolean().default(false),
+  // FR-58 calls the password policy "configurable" and names no number; FR-65's are the ones
+  // Detail §WP-3.1 writes down. A security threshold is a thing a customer changes, and
+  // changing it should not mean editing code.
+  PASSWORD_MIN_LENGTH: z.coerce.number().int().min(8).default(12),
+  LOGIN_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(10),
+  LOGIN_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(900000),
+  LOCKOUT_THRESHOLD: z.coerce.number().int().positive().default(10),
+  // Neither Detail nor FR-65 says how long a lockout lasts, only that one happens. The window
+  // matches the rate limit's, so a locked account and a rate-limited one clear together.
+  LOCKOUT_DURATION_MS: z.coerce.number().int().positive().default(900000),
+
+  // The API document is a development affordance, off unless a deployment asks for it. The
+  // dev .env.example turns it on; a customer's own .env leaves the surface closed.
+  API_DOCS_ENABLED: booleanFlag(false),
+
+  // Optional, and deliberately without a default: set it and the seed gives the administrator a
+  // real Argon2id hash, leave it and the account keeps a placeholder nobody can log in with.
+  // A public repository must never ship a working credential.
+  // `.env.example` ships the key with an empty value, so an empty string means "not set"
+  // rather than "the password is the empty string".
+  SEED_ADMIN_PASSWORD: z
+    .string()
+    .optional()
+    .transform((value) => (value && value.length > 0 ? value : undefined)),
+
+  TOOL_SEARCH_DOCUMENTS_ENABLED: booleanFlag(true),
+  TOOL_READ_DOCUMENT_PAGE_ENABLED: booleanFlag(true),
+  TOOL_LIST_WORKSPACE_DOCUMENTS_ENABLED: booleanFlag(true),
+  TOOL_WEB_SEARCH_ENABLED: booleanFlag(false),
 
   FEATURE_AGENT_LOOP: featureStatus.default('coming_soon'),
   FEATURE_VERIFIED_ANSWERS: featureStatus.default('coming_soon'),

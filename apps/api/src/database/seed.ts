@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Client } from 'pg';
+import { loadConfig } from '../config/configuration';
+import { PasswordService } from '../modules/identity/password.service';
 
 const SAMPLE_DOCUMENT_COUNT = 20;
 
@@ -12,8 +14,24 @@ const USERS = [
   { email: 'member@ei-ai.local', name: 'Member', role: 'Member' },
 ];
 
+const ADMIN_EMAIL = 'admin@ei-ai.local';
+
 // A recognisable placeholder, not a usable credential: the seed never invents a real password.
 const PLACEHOLDER_HASH = '$argon2id$v=19$m=65536,t=3,p=4$c2VlZC1wbGFjZWhvbGRlcg$c2VlZA';
+
+// Hashing goes through the application's own PasswordService so the seed cannot drift from the
+// parameters and the policy the running system applies. Written as its own statement rather than
+// folded into the upsert, so a later run without the variable leaves a good hash alone instead of
+// resetting it to the placeholder. The password itself is never written to stdout.
+async function setAdminPasswordIfAsked(client: Client): Promise<boolean> {
+  const config = loadConfig();
+  if (!config.SEED_ADMIN_PASSWORD) {
+    return false;
+  }
+  const hash = await new PasswordService(config).hash(config.SEED_ADMIN_PASSWORD);
+  await client.query('UPDATE users SET password_hash = $1 WHERE email = $2', [hash, ADMIN_EMAIL]);
+  return true;
+}
 
 async function seedUsers(client: Client): Promise<Map<string, string>> {
   const ids = new Map<string, string>();
@@ -128,7 +146,8 @@ export async function seed(): Promise<void> {
   try {
     await client.query('BEGIN');
     const users = await seedUsers(client);
-    const adminId = users.get('admin@ei-ai.local')!;
+    const adminId = users.get(ADMIN_EMAIL)!;
+    const credentialGiven = await setAdminPasswordIfAsked(client);
     const workspaceIds = await seedWorkspaces(client, adminId);
     await seedMemberships(client, workspaceIds, users);
     await seedDocuments(client, workspaceIds[0]!, adminId);
@@ -137,7 +156,8 @@ export async function seed(): Promise<void> {
     await client.query('COMMIT');
     process.stdout.write(
       `seeded ${USERS.length} users, ${workspaceIds.length} workspaces, ` +
-        `${SAMPLE_DOCUMENT_COUNT} documents, 1 tool, 1 allowlist entry\n`,
+        `${SAMPLE_DOCUMENT_COUNT} documents, 1 tool, 1 allowlist entry; ` +
+        `${ADMIN_EMAIL} password ${credentialGiven ? 'set' : 'left untouched'}\n`,
     );
   } catch (error) {
     await client.query('ROLLBACK');

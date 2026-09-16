@@ -39,4 +39,29 @@ describe('envSchema', () => {
 
     expect(result.success).toBe(false);
   });
+
+  // The flag that keeps web search off in v1 was read as `true` when the file said `false`,
+  // because z.coerce.boolean() treats every non-empty string as true.
+  it('reads a flag written "false" as false, not as true', () => {
+    const parsed = envSchema.parse({ ...valid, TOOL_WEB_SEARCH_ENABLED: 'false' });
+
+    expect(parsed.TOOL_WEB_SEARCH_ENABLED).toBe(false);
+  });
+
+  it('accepts 1 and 0 as well as true and false', () => {
+    expect(envSchema.parse({ ...valid, API_DOCS_ENABLED: '1' }).API_DOCS_ENABLED).toBe(true);
+    expect(envSchema.parse({ ...valid, API_DOCS_ENABLED: '0' }).API_DOCS_ENABLED).toBe(false);
+  });
+
+  it('refuses a spelling it does not recognise rather than guessing', () => {
+    expect(envSchema.safeParse({ ...valid, API_DOCS_ENABLED: 'yes' }).success).toBe(false);
+  });
+
+  it('keeps the documented defaults when a flag is absent', () => {
+    const parsed = envSchema.parse(valid);
+
+    expect(parsed.TOOL_WEB_SEARCH_ENABLED).toBe(false);
+    expect(parsed.TOOL_SEARCH_DOCUMENTS_ENABLED).toBe(true);
+    expect(parsed.API_DOCS_ENABLED).toBe(false);
+  });
 });
