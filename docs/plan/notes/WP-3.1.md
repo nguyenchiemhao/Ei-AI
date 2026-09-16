@@ -121,3 +121,37 @@ Opened 2026-09-15. Authorities: [Detail §WP-3.1](../ei-ai-phase-1-detail.md) ·
 
 - ~~2026-09-16 — nobody can log in: the seed writes an unusable placeholder and no task creates a usable account, while the Phase 1 milestone begins with logging in.~~ · **Answered 2026-09-16:** the seed takes an optional `SEED_ADMIN_PASSWORD`. Built here as provisional scope — `T-1.2-11` belongs to WP-1.2, which is closed — so **the gate decides whether it grows `T-1.2-11` or earns an id**, following the precedent of `T-1.1-13`, `T-1.1-14` and `T-1.1-15`.
 - 2026-09-16 — Swagger is scope no document names. Does it grow `T-3.1-01` (the `common/` HTTP edge), earn an id of its own, or move to WP-5.5 beside `T-5.5-01`'s contract tests, which an OpenAPI document would make nearly free? · **raised at the operator's request, decide at the gate**
+
+---
+
+## Gate · closed 2026-09-16
+
+Reviewed and accepted: all twelve tasks. CI run #18 green end to end, with the new job `6c`
+carrying the package's proving command — login → refresh → replay token 1 → the family dead,
+and eleven failed logins ending in `AUTH_ACCOUNT_LOCKED`.
+
+The package's lasting lesson is that almost every defect worth the name was found by running
+something rather than by reading it. The interceptor the task named could not satisfy the task's
+own "Done when", and only a `curl` at an unmatched route showed it. A compile error shipped
+under 44 green tests. A fixture that set `used_at` but not `revoked_at` — a shape rotation never
+produces — hid a check-order defect that would have left FR-64's reuse detection dead for ever.
+Reading the uncovered lines found a test whose name described a mechanism it never reached. And
+a gate that passed on one run and failed on the next was our own fixture ageing, narrowed down
+by the job's **duration** rather than its message: seventeen seconds against eighteen, so it was
+failing fast, not timing out.
+
+A review pass over the finished twelve found one more: `POST /auth/logout` acted on a refresh
+cookie without checking whose it was.
+
+**Not proved here:** nothing connects `users.status = 'disabled'` to the revocation list — the
+mechanism works and its trigger is Phase 2, so disabling an account in the database today kills
+no token. A 500 rendered as problem+json is covered by unit test and was never provoked over
+HTTP. An unparsable stored hash is distinguishable by timing (32 ms against 18 ms); today only
+the seed writes one, because `PasswordService` is the sole writer of real hashes.
+
+**Promoted to [CLAUDE.md](../../../CLAUDE.md)** — three rules, in force from the next package:
+a fixture built once at module scope ages with the file; what runs the tests is not what runs
+the code; coverage's worth is the list, not the number.
+
+**Promoted to [Progress §3](../ei-ai-progress.md)** — `Q-14` the five error codes §7.4 does not
+name, `Q-15` three pieces of scope no task names, `Q-16` a locked account can still refresh.

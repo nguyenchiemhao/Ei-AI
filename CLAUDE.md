@@ -64,6 +64,12 @@ A body is the exception. Add one only when a decision needs a "why" the diff can
 
 **A rule that fires is not yet a rule that discriminates.** WP-2.5's provider-SDK rule went red on `@anthropic-ai/sdk` — and would have gone red on any package that is not installed, which is every package in an empty tree. The control is the near miss that must be **accepted**: a different unresolvable import from the same file. A prohibition that cannot tell its subject from a lookalike gets switched off the first time the lookalike is legitimate.
 
+**A fixture built once at module scope ages with the file, not with the test.** `revocation.service.spec.ts` created its `Principal` at import and asserted a TTL within five seconds of it. That is generous on a laptop and not on a runner transforming fourteen files while Argon2id tests fight over two cores: CI stage 3 failed on one run and passed on the next with no change to any test. Build the fixture inside the test, and measure against the object the test just made, so a delay moves both sides of the comparison together.
+
+**What runs the tests is not what runs the code.** Vitest transpiles with esbuild, which neither typechecks nor emits `design:paramtypes` — so a real compile error shipped while 44 tests passed, and a Nest application booted inside the suite gave every controller `undefined` for each dependency. Neither failure is visible from the test result. Run the typechecker separately, and when a test needs the framework's runtime behaviour, drive the built artefact rather than a re-transpiled copy of the source.
+
+**Coverage's worth is the list, not the number.** Reading the uncovered 5 % of WP-3.1 found a `catch` no test had ever entered — under a test whose name claimed it did, passing because the input it used parses fine and never throws — and a method with no unit test at all, which the integration suite exercised where the gate could not see it. Chase the lines the report names; the percentage is only how it points at them.
+
 ## Packages
 
 **Forward-only means a new file, never an edit.** The plan described later constraints as belonging "inside" migrations already written, which the checksum guard refuses and the discipline forbids. Work that arrives after a migration is applied arrives as the next number.
