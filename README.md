@@ -166,6 +166,69 @@ every outbound request is refused and logged as `TCP_DENIED`. See
 
 ---
 
+## The database: migrations and seed
+
+Both commands run compiled JavaScript from `apps/api/dist`, so the api container must have
+built once. Inside the dev stack the watcher has already done that; on a clean machine run
+`pnpm --filter @ei-ai/api build` first.
+
+```bash
+cd infra/compose
+docker compose exec api pnpm --filter @ei-ai/api migrate          # apply what is pending
+docker compose exec api pnpm --filter @ei-ai/api migrate:verify   # apply, then check the count
+docker compose exec api pnpm --filter @ei-ai/api seed             # sample data, idempotent
+```
+
+`migrate` prints one line per file — `+` applied, `=` already there. `migrate:verify` adds a
+count and fails if the ledger and the files on disk disagree, which is what CI stage 6 runs.
+
+### There is no rollback, and that is deliberate
+
+Migrations are **forward-only**. There is no `down`, no `migrate:undo`, and the runner will
+refuse a file whose contents changed after it was applied — it stores a checksum per file and
+compares on every run. A schema change therefore arrives as **the next numbered file**, never
+as an edit to one already applied.
+
+To undo something, write the migration that undoes it:
+
+```bash
+# wrong — the runner refuses this, and any database that already ran 008 would never see it
+vim apps/api/src/database/migrations/008_invariants.sql
+
+# right
+vim apps/api/src/database/migrations/009_drop_the_thing_008_added.sql
+```
+
+**In development**, when you want the schema gone rather than corrected, there is a reset —
+it is destructive and there is no undo:
+
+```bash
+docker compose exec api pnpm --filter @ei-ai/api migrate:fresh    # DROP SCHEMA public CASCADE
+```
+
+That drops every table, view and row in `public` and replays every migration from empty. It
+is for a development database you are willing to lose. **In production the equivalent is a
+restore from backup**, which is why `migrate:fresh` is not wired into any script that runs
+by itself.
+
+### Logging in
+
+The seed writes an unusable placeholder hash, so none of the four seeded accounts can log in.
+That is the safe default for a customer install. To make the administrator usable on your own
+machine, set `SEED_ADMIN_PASSWORD` in `.env` and run the seed again:
+
+```bash
+openssl rand -base64 18                        # put the result in .env
+docker compose exec api pnpm --filter @ei-ai/api seed
+# → "… admin@ei-ai.local password set"
+```
+
+Running the seed later **without** the variable prints `password left untouched` and leaves the
+password you set alone. Then log in as `admin@ei-ai.local` at
+[/docs](http://127.0.0.1:4180/docs), the OpenAPI page, which is on while `API_DOCS_ENABLED=true`.
+
+---
+
 ## Development
 
 ### Lint, typecheck, test
