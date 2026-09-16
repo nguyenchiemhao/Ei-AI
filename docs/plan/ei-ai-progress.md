@@ -166,7 +166,7 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 | [WP-2.3](./ei-ai-phase-1-tasks.md#wp-23--retrieval-with-the-permission-predicate--48-h) · Retrieval with the permission predicate | L | 0/11 | 0/48 h | 3 | ⬜ | ⬜ |
 | [WP-2.4](./ei-ai-phase-1-tasks.md#wp-24--audit-append-only--32-h) · Audit, append-only | B2 | 0/8 | 0/32 h | 6 | ⬜ | ⬜ |
 | [WP-2.5](./ei-ai-phase-1-tasks.md#wp-25--architecture-rules-in-ci--16-h) · Architecture rules in CI | DO · L | 7/7 | 16/16 h | 3 | ✅ 2026-09-15 | ✅ passed 2026-09-15 · run #9 green, #10 red on purpose at stage 4 alone |
-| [WP-3.1](./ei-ai-phase-1-tasks.md#wp-31--identity--56-h) · Identity | B2 | 0/12 | 0/56 h | 4 | ⬜ | ⬜ |
+| [WP-3.1](./ei-ai-phase-1-tasks.md#wp-31--identity--56-h) · Identity | B2 | 12/12 | 56/56 h | 4 | 🔎 2026-09-16 | 🟡 both gate scenarios green locally; CI job `6c` needs a push |
 | [WP-3.2](./ei-ai-phase-1-tasks.md#wp-32--authorisation--40-h) · Authorisation | B2 | 0/8 | 0/40 h | 9 | ⬜ | ⬜ |
 | [WP-3.3](./ei-ai-phase-1-tasks.md#wp-33--workspaces-upload-storage--40-h) · Workspaces, upload, storage | L | 0/9 | 0/40 h | 5 | ⬜ | ⬜ |
 | [WP-3.4](./ei-ai-phase-1-tasks.md#wp-34--markdown-ingestion-pipeline--56-h) · Markdown ingestion pipeline | B2 · L | 0/11 | 0/56 h | 2 | ⬜ | ⬜ |
@@ -218,7 +218,7 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 | T-1.2-07 | 006_audit_egress.sql — audit_events, allowlist_entries, egress_records… | L | 3 | 4 | ✅ | reviewed 2026-09-15 · 2026-09-14 · present |
 | T-1.2-08 | 007_indexes.sql — HNSW on chunks.embedding halfvec_cosine_ops, GIN on… | L | 3 | 6 | ✅ | reviewed 2026-09-15 · 2026-09-14 · **nine** indexes, not ten — `agent_steps_turn_seq` dropped as a duplicate of the UNIQUE |
 | T-1.2-09 | Migration runner — numbered, forward-only, applied-migrations ledger… | B2 | 4 | 3 | ✅ | reviewed 2026-09-15 · 2026-09-14 · empty → head with no manual step; 4 unit tests on the forward-only guard |
-| T-1.2-11 | infra seed — 1 admin, 3 users, 2 workspaces, 20 documents, search_documents | B2 | 4 | 6 | ✅ | reviewed 2026-09-15 · 2026-09-14 · seeds 4 users, 2 workspaces, 20 documents, 1 tool; identical counts on a second run |
+| T-1.2-11 | infra seed — 1 admin, 3 users, 2 workspaces, 20 documents, search_documents | B2 | 4 | 6 | ✅ | reviewed 2026-09-15 · 2026-09-14 · seeds 4 users, 2 workspaces, 20 documents, 1 tool; identical counts on a second run. **Extended 2026-09-16** with an optional `SEED_ADMIN_PASSWORD` — provisional scope, see the WP-3.1 note |
 | T-1.2-10 | kysely-codegen wiring, database/db.ts, transaction.ts helper | B2 | 4 | 5 | ✅ | reviewed 2026-09-15 · 2026-09-14 · 28 tables introspected; a query on `emial` fails typecheck |
 
 **WP-1.3 · Base CI — stages 1–3, 5, 6 — 7/7 · 27/27 h · ✅ closed 2026-09-15, `T-1.3-07` run after the gate**
@@ -300,22 +300,22 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 
 #### G3 · The product path
 
-**WP-3.1 · Identity — 0/12 tasks · 0/56 h**
+**WP-3.1 · Identity — 12/12 · 56/56 h · 🔎 finished 2026-09-16**
 
 | ID | Task | Lane | h | W | Status | Note |
 | --- | --- | --- | --- | --- | --- | --- |
-| T-3.1-01 | common/ — problem-json.filter.ts, zod-validation.pipe.ts… | B2 | 5 | 4 | ⬜ | |
-| T-3.1-02 | users repository, Argon2id hashing, configurable password policy | B2 | 4 | 6 | ⬜ | |
-| T-3.1-03 | POST /auth/login with AUTH_INVALID_CREDENTIALS, timing-safe on unknown… | B2 | 4 | 7 | ⬜ | |
-| T-3.1-04 | Access token — 15 minutes, issue and verify, JwtAuthGuard | B2 | 6 | 8 | ⬜ | |
-| T-3.1-05 | refresh_tokens — family_id, single use, rotation on every refresh | B2 | 7 | 9 | ⬜ | |
-| T-3.1-06 | POST /auth/refresh with the HttpOnly, SameSite=Strict cookie | B2 | 4 | 10 | ⬜ | |
-| T-3.1-07 | Reuse detection — a used refresh token revokes the whole family… | B2 | 6 | 11 | ⬜ | |
-| T-3.1-08 | login_attempts and the rate limit — 10 per account per 15 minutes | B2 | 4 | 8 | ⬜ | |
-| T-3.1-09 | Lockout after 10 consecutive failures → AUTH_ACCOUNT_LOCKED (423); a… | B2 | 4 | 9 | ⬜ | |
-| T-3.1-10 | Redis revocation list, checked in the guard — a disabled account loses… | B2 | 5 | 9 | ⬜ | |
-| T-3.1-11 | POST /auth/logout — clears the cookie, revokes the family | B2 | 3 | 12 | ⬜ | |
-| T-3.1-12 | Integration tests — the two gate scenarios: replay-revokes-family, and… | B2 | 4 | 12 | ⬜ | |
+| T-3.1-01 | common/ — problem-json.filter.ts, zod-validation.pipe.ts… | B2 | 5 | 4 | 🔎 | 2026-09-16 · proved through the running container, not only in unit tests: `GET /nope` → `application/problem+json` with `code: NOT_FOUND`; `X-Correlation-Id` generated when absent and echoed when sent, **on matched and unmatched routes alike**. The interceptor the task names could not do the second, and the unit tests never noticed — see the note. 21 unit tests, lint, typecheck, format and stage 4 all green (`arch` now crawls 36 modules, up from 27) |
+| T-3.1-02 | users repository, Argon2id hashing, configurable password policy | B2 | 4 | 6 | 🔎 | 2026-09-16 · proved against the real `users` table: a password under the configured minimum is refused by name; two users with the **same** password store **different** `$argon2id$` hashes; `findByEmail` matches case-insensitively; the seed's unusable placeholder verifies to `false` rather than throwing. `@node-rs/argon2` chosen over `argon2` 0.41 — see the note. Coverage 92.59 % on the service |
+| T-3.1-03 | POST /auth/login with AUTH_INVALID_CREDENTIALS, timing-safe on unknown… | B2 | 4 | 7 | 🔎 | 2026-09-16 · through the real endpoint: wrong password, unknown email and a seeded unusable hash return **byte-identical** 401 bodies. Timing measured over 12 samples each — unknown email 21.6 ms median against wrong password 17.9 ms, overlapping ranges. An unparsable stored hash sits at 32.0 ms and is distinguishable; see the note |
+| T-3.1-04 | Access token — 15 minutes, issue and verify, JwtAuthGuard | B2 | 6 | 8 | 🔎 | 2026-09-16 · the real endpoint issues HS256 with `sub`/`role`/`jti` and `exp − iat = 900`. Guard: expired → **`AUTH_TOKEN_EXPIRED`**, forged signature and missing or non-bearer header → `AUTH_INVALID_CREDENTIALS`, valid → principal on the request. `AUTH_TOKEN_EXPIRED` is an addition — §7.4 names no code for it. Proven **over HTTP** in the review pass: a token never used and genuinely past `exp` → 401 `AUTH_TOKEN_EXPIRED`. **Guard proven over HTTP at `T-3.1-11`**: no header, a non-Bearer header and a garbage token are each refused 401 `AUTH_INVALID_CREDENTIALS` on a real route |
+| T-3.1-05 | refresh_tokens — family_id, single use, rotation on every refresh | B2 | 7 | 9 | 🔎 | 2026-09-16 · against the real table: rotation issues a new token in the **same family**, marks the old one `used_at` + `revoked_reason='rotated'` + `replaced_by`, and only the SHA-256 is stored. Replaying a rotated token → `AUTH_TOKEN_REUSE`; a revoked-but-never-used one → `AUTH_INVALID_CREDENTIALS`. A check-order defect found only by running against the table — see the note |
+| T-3.1-06 | POST /auth/refresh with the HttpOnly, SameSite=Strict cookie | B2 | 4 | 10 | 🔎 | 2026-09-16 · through the real endpoints: `Set-Cookie: ei_refresh=…; Max-Age=28800; Path=/auth; HttpOnly; SameSite=Strict`. The refresh token is in **no** response body — login and refresh both return only `accessToken` and the profile — and appears **0 times** in the api log. Refresh rotates the cookie and issues a new access token; replaying the old cookie → 401 `AUTH_TOKEN_REUSE` |
+| T-3.1-07 | Reuse detection — a used refresh token revokes the whole family… | B2 | 6 | 11 | 🔎 | 2026-09-16 · the gate scenario over HTTP: login → refresh → replay token 1 → **401 `AUTH_TOKEN_REUSE`**, and **token 2 is then dead too** (401). Family rows read `['rotated','reuse_detected']`, all revoked; Redis holds the user entry as a timestamp with an 881 s TTL. The victim **logs in again immediately** — a boolean flag would have locked them out for the whole window |
+| T-3.1-08 | login_attempts and the rate limit — 10 per account per 15 minutes | B2 | 4 | 8 | 🔎 | 2026-09-16 · **re-proved after `T-3.1-09` changed what the eleventh attempt returns.** Nine failures plus one success — ten attempts, no consecutive-failure streak — then attempts 11–19 all **429 `RATE_LIMITED`**, never 423: the two mechanisms are distinct rather than one wearing the other's mask. Also proven: a **correct** password returns 429 while limited, exactly 10 rows reach `login_attempts` (a refused attempt is not recorded), and the IP arrives from `X-Forwarded-For` |
+| T-3.1-09 | Lockout after 10 consecutive failures → AUTH_ACCOUNT_LOCKED (423); a… | B2 | 4 | 9 | 🔎 | 2026-09-16 · eleven failed logins through the real endpoint: 1–10 → 401, **11th → 423 `AUTH_ACCOUNT_LOCKED`**, and the **correct** password while locked also 423. Nine failures then a correct password → **200**, the lock never engaging. Lockout is tested before the rate limit: both trip at once and Detail gives that attempt to 423 |
+| T-3.1-10 | Redis revocation list, checked in the guard — a disabled account loses… | B2 | 5 | 9 | 🔎 | 2026-09-16 · against real Redis: a valid token is admitted, `revokeUser` makes the **same token** refused, `restoreUser` admits it again, and `revokeToken` refuses one token alone. Both keys carry a 900 s TTL — one access-token lifetime — so an entry expires once no live token could still carry it. **Proven over HTTP at `T-3.1-11`**: after logout the same access token is refused on a real route |
+| T-3.1-11 | POST /auth/logout — clears the cookie, revokes the family | B2 | 3 | 12 | 🔎 | 2026-09-16 · logout → **204**, cookie cleared with `Expires: 01 Jan 1970`; afterwards the refresh cookie is dead and the **access token is refused too**. Blast radius checked: `revoked_reason: logout`, exactly one `revoked:jti` key (879 s), and **no user key** — logout ends one session, reuse detection ends them all. **The review pass found it acting on a cookie it never verified**; it now requires the cookie's owner to match the bearer token, checked with two real users |
+| T-3.1-12 | Integration tests — the two gate scenarios: replay-revokes-family, and… | B2 | 4 | 12 | 🔎 | 2026-09-16 · both scenarios green against the **built** `dist/main.js`, each building its own user. **Proven able to fail**: pointed at a port with nothing on it, the suite goes red rather than quietly passing. New CI job **`6c`** on Postgres and Redis service containers, the Redis digest the same one compose pins. Runs in `stage 7`'s place — see the note |
 
 **WP-3.2 · Authorisation — 0/8 tasks · 0/40 h**
 
