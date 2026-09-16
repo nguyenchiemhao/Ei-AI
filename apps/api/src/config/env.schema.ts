@@ -43,6 +43,10 @@ export const envSchema = z.object({
   LOCAL_GENERATION_BASE_URL: z.string().url().optional(),
   LOCAL_GENERATION_MODEL: z.string().optional(),
 
+  // Where LocalFsAdapter writes. The compose stack mounts the `uploads` volume here; a test
+  // points it at a temporary directory instead.
+  UPLOADS_DIR: z.string().min(1).default('/workspace/uploads'),
+
   APPROVAL_EXPIRY_MS: z.coerce.number().int().positive().default(900000),
 
   JWT_SECRET: z.string().min(32),

@@ -17,6 +17,9 @@ const TYPE_BASE = 'https://ei-ai.local/errors/';
 const FRAMEWORK_CODES: Readonly<Record<number, ErrorCode>> = {
   400: 'VALIDATION_FAILED',
   404: 'NOT_FOUND',
+  // Multer aborts an oversized upload and Nest turns that into a bare 413. In this system 413
+  // means one thing, and §7.4 already names it.
+  413: 'DOC_TOO_LARGE',
 };
 
 function typeUriOf(code: ErrorCode): string {
