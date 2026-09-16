@@ -333,19 +333,19 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 | T-3.2-07 | Negative tests — Reader cannot upload, Editor cannot change membership | B2 | 3 | 14 | ⬜ | |
 | T-3.2-08 | Deliberate-loosening check — remove one guard, confirm the matrix test… | B2 | 3 | 13 | ⬜ | |
 
-**WP-3.3 · Workspaces, upload, storage — 0/9 tasks · 0/40 h**
+**WP-3.3 · Workspaces, upload, storage — 9/9 · 40/40 h · 🔎 finished 2026-09-16**
 
 | ID | Task | Lane | h | W | Status | Note |
 | --- | --- | --- | --- | --- | --- | --- |
-| T-3.3-01 | Workspaces repository and CRUD, with archive semantics (retained, out… | L | 6 | 5 | ⬜ | |
-| T-3.3-02 | Membership endpoints — add, remove, change role | L | 5 | 6 | ⬜ | |
-| T-3.3-03 | StoragePort + LocalFsAdapter, sha256 keying under the uploads volume | L | 5 | 6 | ⬜ | |
-| T-3.3-04 | Multipart upload endpoint, 200 MB limit → DOC_TOO_LARGE | L | 6 | 7 | ⬜ | |
-| T-3.3-05 | Content-type sniffing by file signature vs extension →… | L | 6 | 8 | ⬜ | |
-| T-3.3-06 | Format allowlist — the 10 supported formats → DOC_UNSUPPORTED_FORMAT | L | 3 | 9 | ⬜ | |
-| T-3.3-07 | documents + document_versions creation, dv_content_unique dedupe… | L | 5 | 8 | ⬜ | |
-| T-3.3-08 | Download endpoint — Content-Disposition: attachment… | L | 2 | 9 | ⬜ | |
-| T-3.3-09 | Tests — ELF-in-pdf, oversize, duplicate, unsupported format | L | 2 | 10 | ⬜ | |
+| T-3.3-01 | Workspaces repository and CRUD, with archive semantics (retained, out… | L | 6 | 5 | 🔎 | 2026-09-16 · through the real endpoints: create → 201 and the creator is **Owner** in `workspace_members`; a second workspace with the same name → **409 `WORKSPACE_NAME_TAKEN`**, not a 500; archive → `status: archived` and **the workspace still lists** (FR-61 retains it). Empty PATCH → 400; no token → 401. The "no candidates in search" half is deferred to **`T-2.3-06`** |
+| T-3.3-02 | Membership endpoints — add, remove, change role | L | 5 | 6 | 🔎 | 2026-09-16 · with two real users: an Owner adds an Editor (201); that **Editor is refused 403** both adding a member and reading the list; the **sole Owner cannot remove or demote themselves** (409 `WORKSPACE_LAST_OWNER`), but can after promoting another; a non-member and an unknown user id both give 404 rather than a foreign-key error. Owner-only lives in the service until **`T-3.2-06`**; "every change is audited" is deferred to **`T-2.4-05`** |
+| T-3.3-03 | StoragePort + LocalFsAdapter, sha256 keying under the uploads volume | L | 5 | 6 | 🔎 | 2026-09-16 · against the real `uploads` volume: the same bytes twice give the same key and the file count goes **0 → 1 → 1**, so the second upload adds no file. Key is `<sha[0:2]>/<sha>`; the digest is computed **while streaming** to a temporary file, since the key cannot be known until the last byte; `tmp/` is left empty on both a fresh write and a duplicate. The project's first `ports/` seam. **One unexplained `test:coverage` failure** seen once and not reproduced in eight runs — see the note |
+| T-3.3-04 | Multipart upload endpoint, 200 MB limit → DOC_TOO_LARGE | L | 6 | 7 | 🔎 | 2026-09-16 · **a real 201 MB body streamed to the endpoint → 413 `DOC_TOO_LARGE`, `detail` "Tài liệu vượt quá 200 MB", `limitBytes: 209715200`** — the limit is stated, not merely enforced. Two layers: a declared `Content-Length` over the limit is refused before any body arrives, and the byte counter catches a request that declares nothing. A valid upload → 201, and the same bytes twice give one storage key |
+| T-3.3-05 | Content-type sniffing by file signature vs extension →… | L | 6 | 8 | 🔎 | 2026-09-16 · **the package's proving command: a real ELF binary — `/bin/ls`, 151 344 bytes, header `7f 45 4c 46` — renamed `.pdf` → 415 `DOC_CONTENT_MISMATCH`.** Discrimination checked rather than assumed: a genuine PDF and a genuine Markdown are accepted, and a `.md` carrying NUL bytes is refused. Signatures hand-written for the ten formats; TXT/MD/CSV have none and are checked for being text |
+| T-3.3-06 | Format allowlist — the 10 supported formats → DOC_UNSUPPORTED_FORMAT | L | 3 | 9 | 🔎 | 2026-09-16 · through the endpoint: `.exe`, `.zip`, `.html` and a file with no extension all → **415 `DOC_UNSUPPORTED_FORMAT`**, the detail carrying the whole list — `PDF, DOCX, XLSX, PPTX, TXT, MD, CSV, PNG, JPG, TIFF`. `.pdf`, `.md`, `.csv`, `.tif` accepted. A unit test asserts the table still holds exactly ten ids, so an eleventh cannot arrive unnoticed |
+| T-3.3-07 | documents + document_versions creation, dv_content_unique dedupe… | L | 5 | 8 | 🔎 | 2026-09-16 · same filename + same bytes → **409 `DOC_DUPLICATE_CONTENT`**; same filename + different bytes → **v2 of the same document**, `current_version_id` following. **The constraint is shown to be the mechanism**: the duplicate insert is refused by `dv_content_unique` by name, and inside a rolled-back transaction that dropped it the identical insert succeeds |
+| T-3.3-08 | Download endpoint — Content-Disposition: attachment… | L | 2 | 9 | 🔎 | 2026-09-16 · `Content-Disposition: attachment`, `X-Content-Type-Options: nosniff`, body byte-identical to what was uploaded. Tested with a `.csv` containing `<script>` — a format the allowlist admits — rather than by opening the allowlist to HTML. **Found and fixed on the way: busboy decodes a multipart filename as latin-1, so `hợp đồng.csv` was being stored as `há»£p Äá»ng.csv`** |
+| T-3.3-09 | Tests — ELF-in-pdf, oversize, duplicate, unsupported format | L | 2 | 10 | 🔎 | 2026-09-16 · four scenarios green against the built `dist/main.js` in the existing **`6c`** job — ELF-in-pdf, unsupported format, oversize, duplicate content. The oversize case goes through `node:http` because `fetch` refuses to send a body that contradicts its own `Content-Length`. The suite deletes the rows it creates |
 
 **WP-3.4 · Markdown ingestion pipeline — 0/11 tasks · 0/56 h**
 
