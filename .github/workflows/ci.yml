@@ -49,7 +49,14 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.1
       - uses: ./.github/actions/pnpm
-      - run: pnpm -r test:coverage
+      # The tail is echoed as a workflow error so a failure is readable from the run summary
+      # rather than only from the job log, which needs repository admin to download.
+      - run: |
+          set -o pipefail
+          pnpm -r test:coverage 2>&1 | tee /tmp/unit.log || {
+            echo "::error::$(tail -c 1800 /tmp/unit.log | tr '\n' '~')"
+            exit 1
+          }
 
   # Stage 4 · WP-2.5 · the five architecture rules. Four are import-graph rules and belong to
   # dependency-cruiser; rule 1 is a source-text rule and rides here as a second command.
