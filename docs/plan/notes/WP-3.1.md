@@ -24,6 +24,8 @@ Opened 2026-09-15. Authorities: [Detail §WP-3.1](../ei-ai-phase-1-detail.md) ·
 
 ## Contradictions found while running
 
+- 2026-09-16 — **stage 3 failed on CI run #17 and passed on #18 with no change to any test.** A gate that passes half the time is worse than one that is red. The cause was a test of mine: `revocation.service.spec.ts` built its `Principal` **once at module load**, and the TTL assertion allowed five seconds between that moment and the assertion running — comfortable locally, not on a loaded runner transforming fourteen files while Argon2id tests compete for two cores. What narrowed it was the duration rather than the message: 17 s against 18 s, near identical, so the job was not timing out, it was failing fast. The principal is now built per test and the assertion measures against the object the test just made, so any delay moves both sides together. Six consecutive local runs, green.
+
 - 2026-09-16 — **reading the uncovered 5 % found a test that passed for a reason other than the one its name gives.** `password.service.spec.ts` had "returns false for the seed placeholder rather than throwing", and the `catch` in `verify` showed as uncovered: the placeholder is well formed enough for argon2 to **parse**, so it simply does not match and nothing is ever thrown. The catch is real — an empty string, a bcrypt hash and a truncated argon2 hash all raise `Decoding failed` — and no test reached it. Both cases are now named and asserted separately.
 - 2026-09-16 — `AuthService.activeUser`, the refresh path's only look at `users`, had **no unit test at all**. The integration suite exercises it on every refresh, and that never reaches stage 3's report, so the method looked covered from the outside while the gate saw none of it. `login.dto.ts` sat at 0 % for the same shape of reason: nothing in the unit suite imported the schema the pipe enforces.
 
@@ -33,6 +35,8 @@ Opened 2026-09-15. Authorities: [Detail §WP-3.1](../ei-ai-phase-1-detail.md) ·
 - 2026-09-16 — **`T-3.1-08`'s "Done when" and the package's own proving command disagree about the eleventh attempt.** The task gives it to the rate limit; [Detail §WP-3.1](../ei-ai-phase-1-detail.md) says "lockout after 10 consecutive failures, the 11th returning `AUTH_ACCOUNT_LOCKED` (423)", and the proving command asserts 423. Ten consecutive failures trip both thresholds at the same instant, and as first written the endpoint answered 429 there — which would have **failed this package's own proving command**. Resolved by testing the lockout first. The rate limit keeps a subject of its own: ten attempts that include a success never lock, and answered 429 on attempts 11–19.
 
 ## Interpretations
+
+- 2026-09-16 — the unit stage now echoes the tail of a failed run as a `::error::` annotation. Job logs need repository admin to download, which this session does not have, so a red stage was `Process completed with exit code 1` and nothing else. Keeping it turns a failure into something readable from the run summary by anyone.
 
 - 2026-09-16 — **an expired access token and a revoked one both answer 401, and the first probe of `T-3.1-04` could not tell them apart.** It logged out with the token and then presented it again, so the second call failed because logout had listed it, not because it had aged — the probe would have read the same whichever mechanism fired. Re-run with a token never used and genuinely past `exp`: 401 `AUTH_TOKEN_EXPIRED`.
 
