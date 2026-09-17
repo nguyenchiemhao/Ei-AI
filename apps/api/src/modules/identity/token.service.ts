@@ -59,7 +59,7 @@ export class TokenService {
         error instanceof Error && error.name === EXPIRED
           ? 'AUTH_TOKEN_EXPIRED'
           : 'AUTH_INVALID_CREDENTIALS',
-        'Access token không hợp lệ',
+        'Access token is not valid',
       );
     }
   }

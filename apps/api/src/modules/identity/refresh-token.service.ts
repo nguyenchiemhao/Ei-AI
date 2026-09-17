@@ -82,20 +82,23 @@ export class RefreshTokenService {
     }
     await this.tokens.revokeFamily(token.familyId, 'reuse_detected');
     await this.revocations.revokeUser(token.userId);
-    throw new AppException('AUTH_TOKEN_REUSE', 'Refresh token đã được dùng; phiên đã bị thu hồi');
+    throw new AppException(
+      'AUTH_TOKEN_REUSE',
+      'Refresh token was already used; the session has been revoked',
+    );
   }
 
   private refuseUnusable(
     token: RefreshTokenRecord | undefined,
   ): asserts token is RefreshTokenRecord {
     if (!token) {
-      throw new AppException('AUTH_INVALID_CREDENTIALS', 'Refresh token không hợp lệ');
+      throw new AppException('AUTH_INVALID_CREDENTIALS', 'Refresh token is not valid');
     }
     if (token.revokedAt !== null) {
-      throw new AppException('AUTH_INVALID_CREDENTIALS', 'Refresh token không hợp lệ');
+      throw new AppException('AUTH_INVALID_CREDENTIALS', 'Refresh token is not valid');
     }
     if (token.expiresAt.getTime() <= Date.now()) {
-      throw new AppException('AUTH_TOKEN_EXPIRED', 'Refresh token đã hết hạn');
+      throw new AppException('AUTH_TOKEN_EXPIRED', 'Refresh token has expired');
     }
   }
 

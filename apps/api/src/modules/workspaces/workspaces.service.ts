@@ -45,7 +45,10 @@ export class WorkspacesService {
       });
     } catch (error) {
       if (isNameClash(error)) {
-        throw new AppException('WORKSPACE_NAME_TAKEN', `Tên "${request.name}" đã được dùng`);
+        throw new AppException(
+          'WORKSPACE_NAME_TAKEN',
+          `The name "${request.name}" is already taken`,
+        );
       }
       throw error;
     }
@@ -58,7 +61,7 @@ export class WorkspacesService {
   async read(id: string): Promise<WorkspaceView> {
     const workspace = await this.workspaces.findById(id);
     if (!workspace) {
-      throw new AppException('NOT_FOUND', 'Workspace không tồn tại');
+      throw new AppException('NOT_FOUND', 'Workspace does not exist');
     }
     return workspace;
   }
@@ -68,7 +71,7 @@ export class WorkspacesService {
   async update(id: string, changes: UpdateWorkspaceRequest): Promise<WorkspaceView> {
     const updated = await this.workspaces.update(id, changes);
     if (!updated) {
-      throw new AppException('NOT_FOUND', 'Workspace không tồn tại');
+      throw new AppException('NOT_FOUND', 'Workspace does not exist');
     }
     return updated;
   }

@@ -123,7 +123,7 @@ export class UploadService {
         if (isDuplicateContent(error)) {
           throw new AppException(
             'DOC_DUPLICATE_CONTENT',
-            'Nội dung này đã là một phiên bản của tài liệu; không tạo phiên bản trùng',
+            'This content is already a version of the document; no duplicate version is created',
             { documentId: document.id, sha256: stored.sha256 },
           );
         }
@@ -158,7 +158,7 @@ export class UploadService {
   private async assertMayUpload(workspaceId: string, callerId: string): Promise<void> {
     const role = await this.members.findRole(workspaceId, callerId);
     if (role === undefined || !MAY_UPLOAD.has(role)) {
-      throw new AppException('AUTHZ_WORKSPACE_FORBIDDEN', 'Chỉ Editor hoặc Owner mới tải lên được');
+      throw new AppException('AUTHZ_WORKSPACE_FORBIDDEN', 'Only an Editor or Owner may upload');
     }
   }
 
@@ -170,7 +170,7 @@ export class UploadService {
     if (!format) {
       throw new AppException(
         'DOC_UNSUPPORTED_FORMAT',
-        `Định dạng không được hỗ trợ. Các định dạng nhận được: ${describeSupportedFormats()}`,
+        `Unsupported format. Accepted formats: ${describeSupportedFormats()}`,
         { supportedFormats: describeSupportedFormats() },
       );
     }
@@ -189,7 +189,7 @@ export class UploadService {
     }
     throw new AppException(
       'DOC_CONTENT_MISMATCH',
-      `Nội dung tệp không khớp định dạng ${format.id.toUpperCase()} mà phần mở rộng khai báo`,
+      `File contents do not match the ${format.id.toUpperCase()} format its extension declares`,
       { declaredFormat: format.id },
     );
   }

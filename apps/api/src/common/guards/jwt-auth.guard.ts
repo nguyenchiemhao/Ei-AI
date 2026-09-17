@@ -11,7 +11,7 @@ function bearerTokenOf(request: AuthenticatedRequest): string {
   const header = Array.isArray(raw) ? raw[0] : raw;
   const matched = header ? BEARER.exec(header.trim()) : null;
   if (!matched?.[1]) {
-    throw new AppException('AUTH_INVALID_CREDENTIALS', 'Thiếu access token');
+    throw new AppException('AUTH_INVALID_CREDENTIALS', 'Missing access token');
   }
   return matched[1];
 }
@@ -29,7 +29,7 @@ export class JwtAuthGuard implements CanActivate {
     const principal = await this.tokens.verifyAccessToken(bearerTokenOf(request));
 
     if (await this.revocations.isRevoked(principal)) {
-      throw new AppException('AUTH_INVALID_CREDENTIALS', 'Phiên đã bị thu hồi');
+      throw new AppException('AUTH_INVALID_CREDENTIALS', 'Session has been revoked');
     }
     request.principal = principal;
     return true;

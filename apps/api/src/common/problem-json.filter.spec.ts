@@ -47,7 +47,7 @@ describe('ProblemJsonFilter', () => {
     expect(headers.get('Content-Type')).toBe('application/problem+json');
     expect(sent.body).toMatchObject({
       type: 'https://ei-ai.local/errors/auth-invalid-credentials',
-      title: 'Email hoặc mật khẩu không đúng',
+      title: 'Email or password is incorrect',
       status: 401,
       code: 'AUTH_INVALID_CREDENTIALS',
       detail: 'no such account',
@@ -82,7 +82,7 @@ describe('ProblemJsonFilter', () => {
     filter.catch(new Error('relation "users" does not exist'), host);
 
     expect(sent.status).toBe(500);
-    expect(sent.body).toMatchObject({ code: 'INTERNAL_ERROR', detail: 'Lỗi không mong đợi' });
+    expect(sent.body).toMatchObject({ code: 'INTERNAL_ERROR', detail: 'Unexpected error' });
     expect(JSON.stringify(sent.body)).not.toContain('relation');
   });
 

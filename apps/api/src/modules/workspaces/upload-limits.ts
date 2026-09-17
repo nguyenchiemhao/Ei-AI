@@ -6,7 +6,7 @@ export const MAX_UPLOAD_BYTES = 209_715_200;
 export const MAX_UPLOAD_MB = MAX_UPLOAD_BYTES / 1024 / 1024;
 
 export function describeLimit(): string {
-  return `Tài liệu vượt quá ${MAX_UPLOAD_MB} MB`;
+  return `Document exceeds ${MAX_UPLOAD_MB} MB`;
 }
 
 // A declared length above the limit is refused before a single byte of the body is read. It is

@@ -18,9 +18,13 @@ export class PasswordService {
   assertMeetsPolicy(password: string): void {
     const minimum = this.config.PASSWORD_MIN_LENGTH;
     if (password.length < minimum) {
-      throw new AppException('VALIDATION_FAILED', `Mật khẩu phải có ít nhất ${minimum} ký tự`, {
-        errors: [{ path: 'password', message: `minimum length is ${minimum}` }],
-      });
+      throw new AppException(
+        'VALIDATION_FAILED',
+        `Password must be at least ${minimum} characters`,
+        {
+          errors: [{ path: 'password', message: `minimum length is ${minimum}` }],
+        },
+      );
     }
   }
 

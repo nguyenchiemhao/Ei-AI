@@ -43,7 +43,7 @@ export class AuthService {
 
     if (!succeeded || !user) {
       await this.lockIfExhausted(email, user);
-      throw new AppException('AUTH_INVALID_CREDENTIALS', 'Email hoặc mật khẩu không đúng');
+      throw new AppException('AUTH_INVALID_CREDENTIALS', 'Email or password is incorrect');
     }
     await this.clearLock(user);
     return user;
@@ -51,7 +51,7 @@ export class AuthService {
 
   private refuseIfLocked(user: UserRecord | undefined): void {
     if (user?.lockedUntil && user.lockedUntil.getTime() > Date.now()) {
-      throw new AppException('AUTH_ACCOUNT_LOCKED', 'Tài khoản đã bị khoá, hãy thử lại sau');
+      throw new AppException('AUTH_ACCOUNT_LOCKED', 'Account is locked; try again later');
     }
   }
 
@@ -62,7 +62,7 @@ export class AuthService {
     const since = new Date(Date.now() - this.config.LOGIN_RATE_LIMIT_WINDOW_MS);
     const recent = await this.attempts.countSince(email, since);
     if (recent >= this.config.LOGIN_RATE_LIMIT_MAX) {
-      throw new AppException('RATE_LIMITED', 'Quá nhiều lần đăng nhập, hãy thử lại sau');
+      throw new AppException('RATE_LIMITED', 'Too many login attempts; try again later');
     }
   }
 
@@ -92,7 +92,7 @@ export class AuthService {
   async activeUser(userId: string): Promise<UserRecord> {
     const user = await this.users.findById(userId);
     if (!user || user.status !== ACTIVE) {
-      throw new AppException('AUTH_INVALID_CREDENTIALS', 'Tài khoản không khả dụng');
+      throw new AppException('AUTH_INVALID_CREDENTIALS', 'Account is not available');
     }
     return user;
   }

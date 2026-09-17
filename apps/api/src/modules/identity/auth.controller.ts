@@ -43,17 +43,20 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(200)
-  @ApiOperation({ summary: 'Đăng nhập bằng email và mật khẩu local' })
+  @ApiOperation({ summary: 'Log in with a local email and password' })
   @ApiZodBody(loginSchema)
-  @ApiResponse({ status: 200, description: 'Access token 15 phút; refresh token đặt trong cookie' })
+  @ApiResponse({
+    status: 200,
+    description: 'Access token valid for 15 minutes; the refresh token is set as a cookie',
+  })
   @ApiResponse({
     status: 401,
     description:
-      'AUTH_INVALID_CREDENTIALS — giống hệt nhau cho email sai, mật khẩu sai và tài khoản bị vô hiệu',
+      'AUTH_INVALID_CREDENTIALS — byte-identical for an unknown email, a wrong password and a disabled account',
   })
   @ApiResponse({ status: 400, description: 'VALIDATION_FAILED' })
-  @ApiResponse({ status: 423, description: 'AUTH_ACCOUNT_LOCKED — sau 10 lần sai liên tiếp' })
-  @ApiResponse({ status: 429, description: 'RATE_LIMITED — quá 10 lần trong 15 phút' })
+  @ApiResponse({ status: 423, description: 'AUTH_ACCOUNT_LOCKED — after 10 consecutive failures' })
+  @ApiResponse({ status: 429, description: 'RATE_LIMITED — more than 10 attempts in 15 minutes' })
   async login(
     @Body(new ZodValidationPipe(loginSchema)) body: LoginRequest,
     @Req() request: RequestLike,
@@ -69,11 +72,16 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(200)
-  @ApiOperation({ summary: 'Đổi refresh token lấy access token mới; token cũ chết ngay' })
-  @ApiResponse({ status: 200, description: 'Access token mới; cookie được xoay sang token mới' })
+  @ApiOperation({
+    summary: 'Exchange the refresh token for a new access token; the old one dies at once',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'A new access token; the cookie is rotated to the new refresh token',
+  })
   @ApiResponse({
     status: 401,
-    description: 'AUTH_INVALID_CREDENTIALS, AUTH_TOKEN_REUSE hoặc AUTH_TOKEN_EXPIRED',
+    description: 'AUTH_INVALID_CREDENTIALS, AUTH_TOKEN_REUSE or AUTH_TOKEN_EXPIRED',
   })
   async refresh(
     @Req() request: CookieRequest,
@@ -81,7 +89,7 @@ export class AuthController {
   ): Promise<AuthenticatedUser> {
     const presented = request.cookies?.[REFRESH_COOKIE];
     if (!presented) {
-      throw new AppException('AUTH_INVALID_CREDENTIALS', 'Thiếu refresh token');
+      throw new AppException('AUTH_INVALID_CREDENTIALS', 'Missing refresh token');
     }
     const rotated = await this.refreshTokens.rotate(presented);
     const user = await this.auth.activeUser(rotated.userId);
@@ -93,9 +101,11 @@ export class AuthController {
   @HttpCode(204)
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Kết thúc phiên: thu hồi cả họ refresh token và access token đang cầm' })
-  @ApiResponse({ status: 204, description: 'Phiên đã kết thúc; cookie bị xoá' })
-  @ApiResponse({ status: 401, description: 'AUTH_INVALID_CREDENTIALS hoặc AUTH_TOKEN_EXPIRED' })
+  @ApiOperation({
+    summary: 'End the session: revoke the whole refresh-token family and the access token in hand',
+  })
+  @ApiResponse({ status: 204, description: 'Session ended; the cookie is cleared' })
+  @ApiResponse({ status: 401, description: 'AUTH_INVALID_CREDENTIALS or AUTH_TOKEN_EXPIRED' })
   async logout(
     @Req() request: CookieRequest & AuthenticatedRequest,
     @Res({ passthrough: true }) response: CookieResponse,

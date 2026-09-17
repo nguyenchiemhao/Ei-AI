@@ -46,7 +46,7 @@ export class MembershipsService {
         );
       } catch (error) {
         if (isUnknownUser(error)) {
-          throw new AppException('NOT_FOUND', 'Người dùng không tồn tại');
+          throw new AppException('NOT_FOUND', 'User does not exist');
         }
         throw error;
       }
@@ -59,7 +59,7 @@ export class MembershipsService {
       await this.assertOwnerRemains(workspaceId, userId, undefined, tx);
       const removed = await this.members.remove(workspaceId, userId, tx);
       if (removed === 0) {
-        throw new AppException('NOT_FOUND', 'Người dùng không phải thành viên của workspace này');
+        throw new AppException('NOT_FOUND', 'User is not a member of this workspace');
       }
     });
   }
@@ -67,7 +67,7 @@ export class MembershipsService {
   private async assertOwner(workspaceId: string, callerId: string, tx?: Tx): Promise<void> {
     const role = await this.members.findRole(workspaceId, callerId, tx);
     if (role !== 'Owner') {
-      throw new AppException('AUTHZ_WORKSPACE_FORBIDDEN', 'Chỉ Owner mới thay đổi được thành viên');
+      throw new AppException('AUTHZ_WORKSPACE_FORBIDDEN', 'Only an Owner may change membership');
     }
   }
 
@@ -86,7 +86,7 @@ export class MembershipsService {
     if ((await this.members.countOwners(workspaceId, tx)) <= 1) {
       throw new AppException(
         'WORKSPACE_LAST_OWNER',
-        'Không thể gỡ hoặc hạ quyền Owner cuối cùng của workspace',
+        'The last Owner of a workspace cannot be removed or demoted',
       );
     }
   }

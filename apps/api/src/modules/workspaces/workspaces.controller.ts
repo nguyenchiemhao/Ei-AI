@@ -39,7 +39,7 @@ import { WorkspacesService } from './workspaces.service';
 
 function principalOf(request: AuthenticatedRequest): Principal {
   if (!request.principal) {
-    throw new AppException('AUTH_INVALID_CREDENTIALS', 'Thiếu access token');
+    throw new AppException('AUTH_INVALID_CREDENTIALS', 'Missing access token');
   }
   return request.principal;
 }
@@ -56,15 +56,18 @@ export class WorkspacesController {
   ) {}
 
   @Get()
-  @ApiOperation({ summary: 'Workspace mà người gọi là thành viên, kể cả đã lưu trữ' })
+  @ApiOperation({ summary: 'Workspaces the caller belongs to, archived ones included' })
   list(@Req() request: AuthenticatedRequest): Promise<WorkspaceView[]> {
     return this.workspaces.listFor(principalOf(request).userId);
   }
 
   @Post()
-  @ApiOperation({ summary: 'Tạo workspace; người tạo trở thành Owner' })
+  @ApiOperation({ summary: 'Create a workspace; the creator becomes its Owner' })
   @ApiZodBody(createWorkspaceSchema)
-  @ApiResponse({ status: 409, description: 'WORKSPACE_NAME_TAKEN — tên là duy nhất toàn hệ thống' })
+  @ApiResponse({
+    status: 409,
+    description: 'WORKSPACE_NAME_TAKEN — the name is unique system-wide',
+  })
   create(
     @Body(new ZodValidationPipe(createWorkspaceSchema)) body: CreateWorkspaceRequest,
     @Req() request: AuthenticatedRequest,
@@ -79,7 +82,7 @@ export class WorkspacesController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Đổi tên, mô tả, hoặc lưu trữ / bỏ lưu trữ' })
+  @ApiOperation({ summary: 'Rename, describe, archive or unarchive' })
   @ApiZodBody(updateWorkspaceSchema)
   update(
     @Param('id') id: string,
@@ -89,7 +92,7 @@ export class WorkspacesController {
   }
 
   @Get(':id/members')
-  @ApiOperation({ summary: 'Thành viên của workspace; chỉ Owner đọc được' })
+  @ApiOperation({ summary: 'Members of the workspace; Owner only' })
   @ApiResponse({ status: 403, description: 'AUTHZ_WORKSPACE_FORBIDDEN' })
   listMembers(
     @Param('id') id: string,
@@ -99,7 +102,7 @@ export class WorkspacesController {
   }
 
   @Post(':id/members')
-  @ApiOperation({ summary: 'Thêm thành viên hoặc đổi vai trò; chỉ Owner' })
+  @ApiOperation({ summary: 'Add a member or change a role; Owner only' })
   @ApiZodBody(memberSchema)
   @ApiResponse({ status: 403, description: 'AUTHZ_WORKSPACE_FORBIDDEN' })
   @ApiResponse({ status: 409, description: 'WORKSPACE_LAST_OWNER' })
@@ -113,7 +116,7 @@ export class WorkspacesController {
 
   @Delete(':id/members/:userId')
   @HttpCode(204)
-  @ApiOperation({ summary: 'Gỡ thành viên; chỉ Owner' })
+  @ApiOperation({ summary: 'Remove a member; Owner only' })
   @ApiResponse({ status: 409, description: 'WORKSPACE_LAST_OWNER' })
   removeMember(
     @Param('id') id: string,
@@ -128,17 +131,17 @@ export class WorkspacesController {
   @UseFilters(UploadLimitFilter)
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
-  @ApiOperation({ summary: `Tải tài liệu lên, tối đa ${MAX_UPLOAD_MB} MB` })
-  @ApiResponse({ status: 201, description: 'Đã lưu; khoá lưu trữ suy ra từ nội dung' })
-  @ApiResponse({ status: 403, description: 'AUTHZ_WORKSPACE_FORBIDDEN — cần Editor hoặc Owner' })
-  @ApiResponse({ status: 413, description: 'DOC_TOO_LARGE — có nêu giới hạn trong phản hồi' })
+  @ApiOperation({ summary: `Upload a document, up to ${MAX_UPLOAD_MB} MB` })
+  @ApiResponse({ status: 201, description: 'Stored; the storage key is derived from the content' })
+  @ApiResponse({ status: 403, description: 'AUTHZ_WORKSPACE_FORBIDDEN — Editor or Owner required' })
+  @ApiResponse({ status: 413, description: 'DOC_TOO_LARGE — the response states the limit' })
   upload(
     @Param('id') id: string,
     @UploadedFile() file: MultipartFile | undefined,
     @Req() request: AuthenticatedRequest,
   ): Promise<unknown> {
     if (!file) {
-      throw new AppException('VALIDATION_FAILED', 'Thiếu phần "file" trong multipart');
+      throw new AppException('VALIDATION_FAILED', 'Missing the "file" part of the multipart body');
     }
     return this.uploads.store(id, principalOf(request).userId, file);
   }

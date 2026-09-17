@@ -27,20 +27,17 @@ export class DownloadsService {
   async current(documentId: string, callerId: string): Promise<DownloadableDocument> {
     const document = await this.documents.findById(documentId);
     if (!document) {
-      throw new AppException('NOT_FOUND', 'Tài liệu không tồn tại');
+      throw new AppException('NOT_FOUND', 'Document does not exist');
     }
     if ((await this.members.findRole(document.workspaceId, callerId)) === undefined) {
-      throw new AppException(
-        'AUTHZ_WORKSPACE_FORBIDDEN',
-        'Không phải thành viên của workspace này',
-      );
+      throw new AppException('AUTHZ_WORKSPACE_FORBIDDEN', 'Not a member of this workspace');
     }
     if (!document.currentVersionId) {
-      throw new AppException('NOT_FOUND', 'Tài liệu chưa có phiên bản nào');
+      throw new AppException('NOT_FOUND', 'Document has no versions yet');
     }
     const version = await this.versions.findById(document.currentVersionId);
     if (!version) {
-      throw new AppException('NOT_FOUND', 'Phiên bản hiện tại không tồn tại');
+      throw new AppException('NOT_FOUND', 'The current version does not exist');
     }
     return {
       filename: document.sourceFilename,

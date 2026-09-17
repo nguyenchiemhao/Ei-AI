@@ -20,9 +20,9 @@ export class DocumentsController {
 
   @Get(':id/download')
   @ApiOperation({
-    summary: 'Tải phiên bản hiện tại; luôn là tệp đính kèm, không bao giờ được render',
+    summary: 'Download the current version; always an attachment, never rendered',
   })
-  @ApiResponse({ status: 200, description: 'Nội dung tệp, Content-Disposition: attachment' })
+  @ApiResponse({ status: 200, description: 'The file contents, Content-Disposition: attachment' })
   @ApiResponse({ status: 403, description: 'AUTHZ_WORKSPACE_FORBIDDEN' })
   @ApiResponse({ status: 404, description: 'NOT_FOUND' })
   async download(
@@ -32,7 +32,7 @@ export class DocumentsController {
   ): Promise<StreamableFile> {
     const principal = request.principal;
     if (!principal) {
-      throw new AppException('AUTH_INVALID_CREDENTIALS', 'Thiếu access token');
+      throw new AppException('AUTH_INVALID_CREDENTIALS', 'Missing access token');
     }
     const document = await this.downloads.current(id, principal.userId);
 
