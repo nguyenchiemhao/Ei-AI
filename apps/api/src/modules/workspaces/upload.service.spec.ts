@@ -1,6 +1,7 @@
 import { mkdtemp, readdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import type { Readable } from 'node:stream';
 import { describe, expect, it, vi } from 'vitest';
 import type { AppException } from '../../common/app-exception';
 import type { Database } from '../../database/db';
@@ -30,7 +31,15 @@ async function incoming(contents = 'nội dung'): Promise<{ file: UploadedFile; 
 const TX = Symbol('tx');
 
 function serviceWith(role: WorkspaceRole | null, versionInsert?: ReturnType<typeof vi.fn>) {
-  const put = vi.fn().mockResolvedValue({ storageKey: 'ab/abc', sha256: 'abc', byteSize: 8 });
+  // The real adapter consumes the stream before `put` resolves; a double that resolves without
+  // reading leaves it opening a file `store`'s finally block has already removed, which surfaces
+  // as an uncaught ENOENT rather than as a failing test.
+  const put = vi.fn(async (source: Readable) => {
+    for await (const _chunk of source) {
+      void _chunk;
+    }
+    return { storageKey: 'ab/abc', sha256: 'abc', byteSize: 8 };
+  });
   const members = {
     findRole: vi.fn().mockResolvedValue(role ?? undefined),
   } as unknown as WorkspaceMembersRepository;

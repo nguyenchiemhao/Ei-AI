@@ -152,10 +152,13 @@ describe('AuthService.authenticate', () => {
 
     await login(service);
 
+    // The service reads its own clock between these two, so the window is bracketed rather than
+    // compared to one side of it: a millisecond ticking mid-call made this fail on CI.
+    const after = Date.now();
     const [email, since] = countSince.mock.calls[0] as [string, Date];
     expect(email).toBe('member@ei-ai.local');
-    expect(before - since.getTime()).toBeGreaterThanOrEqual(900000);
-    expect(before - since.getTime()).toBeLessThan(900000 + 5000);
+    expect(after - since.getTime()).toBeGreaterThanOrEqual(900000);
+    expect(before - since.getTime()).toBeLessThanOrEqual(900000);
   });
 
   it('locks the account once the failures reach the threshold', async () => {
