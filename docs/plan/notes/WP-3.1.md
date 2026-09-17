@@ -91,12 +91,12 @@ Opened 2026-09-15. Authorities: [Detail §WP-3.1](../ei-ai-phase-1-detail.md) ·
 
 - 2026-09-16 — **`*.repository.ts` joins `*.controller.ts` outside the unit coverage gate**, measured rather than assumed: with `users.repository.ts` counted the gate read **30.48 %** against a threshold of 80 %, the service itself sitting at 92.59 %. Every line of a repository is a query builder whose meaning is the SQL it produces against a real database; a unit test of one asserts that a mock was called. They are proved in the integration job instead — identity's in `6c` (`T-3.1-12`), retrieval's by the compiled-SQL and leakage specs (`T-2.3-08`, `T-2.3-09`). The gate still has a subject: it reports 92.59 %, not an empty scope.
 
-- 2026-09-15 — **`correlation-id.interceptor.ts` became `correlation-id.middleware.ts`.** `T-3.1-01` names an interceptor, and an interceptor cannot satisfy that task's own "Done when": Nest never runs one for a path the router does not match, so `GET /nope` came back as correct RFC 7807 with `code: NOT_FOUND` and **no `X-Correlation-Id` at all**, against design §7.1's "mọi request nhận `X-Correlation-Id`". Middleware runs before routing and covers both. Found by curling the running container, not by the unit tests, which passed throughout.
+- 2026-09-15 — **`correlation-id.interceptor.ts` became `correlation-id.middleware.ts`.** `T-3.1-01` names an interceptor, and an interceptor cannot satisfy that task's own "Done when": Nest never runs one for a path the router does not match, so `GET /nope` came back as correct RFC 7807 with `code: NOT_FOUND` and **no `X-Correlation-Id` at all**, against design §7.1's "every request receives an `X-Correlation-Id`". Middleware runs before routing and covers both. Found by curling the running container, not by the unit tests, which passed throughout.
 - 2026-09-15 — the global filter and the middleware are registered in `AppModule` (`APP_FILTER`, `configure()`) rather than in `main.ts`. A testing module built from `AppModule` — which `T-3.1-12` will build — gets nothing that `main.ts` wires, so the integration tests would have asserted a different error shape from the one the process actually serves.
 
 ## Interpretations
 
-- 2026-09-15 — error `title` is Vietnamese, taken from the "Nghĩa" column of design §7.4, because the one worked example in §7.3 has a Vietnamese title and the product's surface is Vietnamese. The `code` stays English and is what clients branch on.
+- 2026-09-15 — error `title` is Vietnamese, taken from the "Nghĩa" column of design §7.4, because the one worked example in §7.3 has a Vietnamese title and the product's surface is Vietnamese. The `code` stays English and is what clients branch on. · **Reversed 2026-09-17** at the operator's instruction: every title and detail is English, and design §7.4 was translated with them. `Q-18` carries the question this leaves open — which language the API speaks, and whether the answer is i18n rather than a language.
 - 2026-09-15 — `forRoutes('{*splat}')`, not `forRoutes('*')`: `@nestjs/platform-express` 11 resolves **express 5.0.1**, whose `path-to-regexp` rejects a bare `*`.
 
 ## Open questions
@@ -108,7 +108,7 @@ Opened 2026-09-15. Authorities: [Detail §WP-3.1](../ei-ai-phase-1-detail.md) ·
 
 ## Tradeoffs
 
-- 2026-09-16 — the password policy is a minimum length and nothing else. FR-58 says "chính sách mật khẩu cấu hình được" and names no rule; character-class requirements are scope no task describes, and current guidance prefers length over composition. The variable is there, so a customer who wants more has somewhere to put it.
+- 2026-09-16 — the password policy is a minimum length and nothing else. FR-58 says "a configurable password policy" and names no rule; character-class requirements are scope no task describes, and current guidance prefers length over composition. The variable is there, so a customer who wants more has somewhere to put it.
 
 ## Open questions
 
