@@ -70,6 +70,10 @@ A body is the exception. Add one only when a decision needs a "why" the diff can
 
 **Coverage's worth is the list, not the number.** Reading the uncovered 5 % of WP-3.1 found a `catch` no test had ever entered — under a test whose name claimed it did, passing because the input it used parses fine and never throws — and a method with no unit test at all, which the integration suite exercised where the gate could not see it. Chase the lines the report names; the percentage is only how it points at them.
 
+**A boundary that mangles Vietnamese looks correct in ASCII.** busboy decodes a multipart filename as latin-1, so `hợp đồng.csv` reached the handler as `há»£p Äá»ng.csv` and was stored that way. Every upload test until then had used an ASCII name, where latin-1 and UTF-8 agree byte for byte and nothing can go wrong — and for a product whose documents are Vietnamese, the broken case was every real filename. Drive a boundary with the text it will actually carry.
+
+**A size the client declares is a claim, not a measurement.** The 200 MB limit is applied twice: a guard refuses a `Content-Length` above the maximum before the body is read, and the service counts the bytes that actually land. A request that declares nothing — `Transfer-Encoding: chunked` — walks past the first check untouched. A limit enforced once, on a number the caller chose, is a limit the caller sets.
+
 ## Packages
 
 **Forward-only means a new file, never an edit.** The plan described later constraints as belonging "inside" migrations already written, which the checksum guard refuses and the discipline forbids. Work that arrives after a migration is applied arrives as the next number.
@@ -79,6 +83,8 @@ A body is the exception. Add one only when a decision needs a "why" the diff can
 **A locked network changes the development loop, not only production.** Containers on the internal network cannot reach a package registry, so a new dependency is a `package.json` edit, an image rebuild, and the `node_modules` volume dropped so it repopulates. There is no shortcut, and that is the constraint working as intended.
 
 **Scope the plan never named is provisional until the gate.** When the work needs something no task describes, build the smallest version that keeps the invariants, record it as an open question, and let the gate decide whether it grows an existing task or earns an id.
+
+**A library your build cannot load is not a candidate.** `file-type` is the obvious way to sniff a file signature and has been ESM-only since v17, while `apps/api` compiles to CommonJS — so the real offer was its last CommonJS release, from 2021, or nothing. Ten hand-written signatures, one per admitted format, are smaller than a library that recognises two hundred. Read the module format against the build's output format before weighing a dependency's features; this is the shape that bit at WP-3.1, where a package resolved a layout its peer no longer had and the application died at boot after `tsc` reported nothing.
 
 ## Code
 
@@ -93,3 +99,5 @@ A body is the exception. Add one only when a decision needs a "why" the diff can
 **Prefer reuse over a new variant**, and prefer extending over rewriting.
 
 **Changing a shared function is the last resort.** If the change would force edits at existing call sites, do not change it: add an optional parameter with a default that keeps current behaviour, or add a sibling function. When a shared function genuinely must change, read every call site first and say in your report which ones were checked.
+
+**A value the database already enforces is a constant, not configuration.** `document_versions.byte_size` carries a CHECK at 200 MB. A configured limit above it would let a file through the API only for the database to refuse it, and one below it is a second place to change. The identity thresholds became variables because nothing else enforced them; this one is enforced by the schema.

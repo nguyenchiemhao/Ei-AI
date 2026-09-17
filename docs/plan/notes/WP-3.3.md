@@ -62,3 +62,60 @@ Opened 2026-09-16. Authorities: [Detail §WP-3.3](../ei-ai-phase-1-detail.md) ·
 - 2026-09-16 — `UPLOADS_DIR` is a new configuration variable, defaulting to the path the compose stack mounts. The adapter needs a base directory, hard-coding the container's path would make the adapter untestable, and `T-1.1-04` made the schema the one place a variable is declared.
 - 2026-09-16 — the Owner rule is enforced in `MembershipsService` rather than by `WorkspaceRoleGuard`, which is `T-3.2-04`. `T-3.2-06` replaces it. A membership endpoint with no rule at all would be worse than one whose rule sits in the wrong layer, and pulling the guard forward would drag half of WP-3.2 into this package.
 - 2026-09-16 — the upload route carries its own `@Catch(PayloadTooLargeException)` filter. Multer aborts with "File too large" and Nest wraps it, so the response had the right code and a message that never said what the limit was — half of what `T-3.3-04` asks for. The filter re-raises it as `DOC_TOO_LARGE` with `limitBytes`.
+
+---
+
+## Gate · closed 2026-09-17
+
+Reviewed and accepted: all nine tasks. The proving command ran through the real endpoint — a real
+ELF binary, `/bin/ls` at 151 344 bytes, renamed `.pdf` and refused 415 `DOC_CONTENT_MISMATCH`, and
+a 201 MB body refused 413 `DOC_TOO_LARGE` with the limit stated in the response rather than merely
+applied.
+
+What the package kept teaching is that a boundary agrees with you in ASCII. busboy's latin-1
+filename decoding survived every test written until one used a Vietnamese name, and that is the
+only kind of name this product will ever carry. The same shape appeared in the limit: a check
+against a declared `Content-Length` looks like enforcement until a request declines to declare one.
+
+**Not proved here:** no CI run number is recorded against this package's own commits — the four
+scenarios of `T-3.3-09` were run locally against the built `dist/main.js` in the shape job `6c`
+runs them, and `gh` is not installed in this environment to read the run. Half of FR-02's limit,
+the 2 000 pages, cannot be enforced until the parser fills `page_count` in milestone 2A. The
+"every change is audited" and "no candidates in search" clauses of `T-3.3-02` and `T-3.3-01` are
+deferrals naming `T-2.4-05` and `T-2.3-06`. The Owner-only rule sits in `MembershipsService` until
+`WorkspaceRoleGuard` replaces it at `T-3.2-06`. DOCX, XLSX and PPTX are distinguished only by their
+extension — the shared `PK` signature says they are OOXML containers and nothing more, and opening
+the archive is parser work.
+
+**Promoted to [CLAUDE.md](../../../CLAUDE.md)** — four rules, in force from the next package: a
+boundary that mangles Vietnamese looks correct in ASCII; a size the client declares is a claim, not
+a measurement; a library your build cannot load is not a candidate; a value the database already
+enforces is a constant, not configuration. The fifth candidate — enforcing a rule in the wrong
+layer rather than not at all — was not promoted: "a deferral must name what it defers to" already
+covers it, and the deviation names `T-3.2-06`.
+
+**Promoted to [Progress §3](../ei-ai-progress.md)** — `Q-17`, the one unexplained `test:coverage`
+failure the package could not reproduce, carried out of the gate rather than closed at it.
+
+## After the gate
+
+- 2026-09-17 — **`Q-17` answered the day it was opened, by running the suite rather than reading it.** Thirty
+  runs of `pnpm test` produced two failures with two different causes, neither of which any single run explains.
+  `auth.service.spec.ts` asserted `before - since >= 900000` where `before` is `Date.now()` read **before** the
+  call and `since` is computed from the service's own later clock — an inequality that holds only while no
+  millisecond ticks during the call, and one run reported `899999`. It now brackets the call with `before` and
+  `after` and asserts both sides, which needs no slack at all. `upload.service.spec.ts` handed `StoragePort.put`
+  a double that resolved without reading its argument; `store` then removed the incoming file in its `finally`
+  while the unconsumed read stream was still opening it, and the ENOENT arrived on a stream with no error
+  listener — an **uncaught exception** that reddens the run while every test passes and names an unrelated test.
+  The double now drains the stream, as the real adapter does. Thirty consecutive green runs after the fix,
+  against two failures in the thirty before.
+- 2026-09-17 — two rules are candidates for the **next** gate, not this one, which is closed: an assertion that
+  compares against a clock must read that clock on both sides of the call; and a test double that does not honour
+  its port's contract invents a failure mode the real adapter does not have.
+- 2026-09-17 — every document under `docs/design`, `docs/plan` and `docs/plan/notes` is now English, and so are
+  Swagger's summaries, the 24 `error-codes` titles and the `AppException` details behind them. That reverses a
+  decision recorded at the WP-3.1 gate; `Q-18` carries it to the design. What stayed Vietnamese is what would
+  lose its subject in translation: the multipart filename in the busboy finding, the embedding and rerank probes
+  in the development-environment runbook, and the sample question and answer in design §7.3 — user data, not
+  interface text.
