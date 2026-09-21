@@ -11,6 +11,7 @@ import { ProblemJsonFilter } from './common/problem-json.filter';
 import { AdminModule } from './modules/admin/admin.module';
 import { IdentityModule } from './modules/identity/identity.module';
 import { IngestionModule } from './modules/ingestion/ingestion.module';
+import { RetrievalModule } from './modules/retrieval/retrieval.module';
 import { WorkspacesModule } from './modules/workspaces/workspaces.module';
 
 // The edge is wired here rather than in main.ts so a testing module built from AppModule gets
@@ -26,6 +27,7 @@ import { WorkspacesModule } from './modules/workspaces/workspaces.module';
     IdentityModule,
     WorkspacesModule,
     IngestionModule,
+    RetrievalModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: ProblemJsonFilter }],
 })

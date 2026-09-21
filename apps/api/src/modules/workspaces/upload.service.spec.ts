@@ -274,6 +274,14 @@ describe('UploadService', () => {
     await expect(service.store('w-1', 'u-1', file)).resolves.toMatchObject({ versionId: 'v-1' });
   });
 
+  it('logs a queue rejection that is not an Error without printing undefined', async () => {
+    const { service, enqueue } = serviceWith('Editor');
+    enqueue.mockRejectedValue('socket hang up');
+    const { file } = await incoming();
+
+    await expect(service.store('w-1', 'u-1', file)).resolves.toMatchObject({ versionId: 'v-1' });
+  });
+
   it('queues only after the version exists, never before', async () => {
     const order: string[] = [];
     const { service, enqueue, setCurrentVersion } = serviceWith('Editor');
