@@ -110,6 +110,10 @@ services:
       - worker-app-node-modules:/workspace/apps/api/node_modules
       - worker-dist:/workspace/apps/api/dist
       - uploads:/workspace/uploads
+      # Read-only: infinity already downloaded BGE-M3 here, and the chunker's token counter
+      # must use the tokenizer of the model actually being served. Egress denies by default,
+      # so nothing can fetch it at runtime.
+      - models:/models:ro
     depends_on:
       postgres:
         condition: service_healthy

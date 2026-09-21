@@ -35,7 +35,9 @@
     "cookie-parser": "1.4.7",
     "@nestjs/swagger": "11.4.7",
     "zod-to-json-schema": "3.24.6",
-    "multer": "1.4.5-lts.1"
+    "multer": "1.4.5-lts.1",
+    "bullmq": "6.3.8",
+    "@huggingface/tokenizers": "0.2.0"
   },
   "devDependencies": {
     "@ei-ai/eslint-config": "workspace:*",

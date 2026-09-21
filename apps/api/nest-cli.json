@@ -8,6 +8,10 @@
       {
         "include": "database/migrations/**/*.sql",
         "watchAssets": true
+      },
+      {
+        "include": "database/corpus/**/*.md",
+        "watchAssets": true
       }
     ]
   }

@@ -30,6 +30,7 @@ import {
   type WorkspaceView,
 } from './dto/workspace.dto';
 import { ContentLengthGuard } from './content-length.guard';
+import { DocumentsListingService } from './documents-listing.service';
 import { MembershipsService } from './memberships.service';
 import type { MembershipView } from './workspace-members.repository';
 import { UploadLimitFilter } from './upload-limit.filter';
@@ -53,6 +54,7 @@ export class WorkspacesController {
     private readonly workspaces: WorkspacesService,
     private readonly memberships: MembershipsService,
     private readonly uploads: UploadService,
+    private readonly documentsListing: DocumentsListingService,
   ) {}
 
   @Get()
@@ -124,6 +126,14 @@ export class WorkspacesController {
     @Req() request: AuthenticatedRequest,
   ): Promise<void> {
     return this.memberships.remove(id, userId, principalOf(request).userId);
+  }
+
+  @Get(':id/documents')
+  @ApiOperation({ summary: 'Documents in a workspace, with the ingestion state of each' })
+  @ApiResponse({ status: 200, description: 'Reader and above' })
+  @ApiResponse({ status: 403, description: 'AUTHZ_WORKSPACE_FORBIDDEN — not a member' })
+  listDocuments(@Param('id') id: string, @Req() request: AuthenticatedRequest): Promise<unknown[]> {
+    return this.documentsListing.list(id, principalOf(request).userId);
   }
 
   @Post(':id/documents')

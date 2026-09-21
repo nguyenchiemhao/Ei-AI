@@ -12,6 +12,22 @@ export interface DocumentRecord {
   currentVersionId: string | null;
 }
 
+export interface DocumentListing {
+  id: string;
+  title: string;
+  sourceFilename: string;
+  contentType: string;
+  createdAt: Date;
+  versionId: string | null;
+  versionNo: number | null;
+  status: string | null;
+  statusReason: string | null;
+  byteSize: number | null;
+  pageCount: number | null;
+  chunkerVersion: string | null;
+  indexedAt: Date | null;
+}
+
 export interface NewDocument {
   workspaceId: string;
   title: string;
@@ -95,6 +111,47 @@ export class DocumentsRepository {
       .set({ current_version_id: versionId })
       .where('id', '=', id)
       .execute();
+  }
+
+  // The list the documents screen reads, with each document's current version joined on so the
+  // ingestion state travels with the row rather than needing a request per document.
+  async listWithStatus(workspaceId: string, tx?: Tx): Promise<DocumentListing[]> {
+    const rows = await this.on(tx)
+      .selectFrom('documents')
+      .leftJoin('document_versions', 'document_versions.id', 'documents.current_version_id')
+      .select([
+        'documents.id as id',
+        'documents.title as title',
+        'documents.source_filename as source_filename',
+        'documents.content_type as content_type',
+        'documents.created_at as created_at',
+        'document_versions.id as version_id',
+        'document_versions.version_no as version_no',
+        'document_versions.status as status',
+        'document_versions.status_reason as status_reason',
+        'document_versions.byte_size as byte_size',
+        'document_versions.page_count as page_count',
+        'document_versions.chunker_version as chunker_version',
+        'document_versions.indexed_at as indexed_at',
+      ])
+      .where('documents.workspace_id', '=', workspaceId)
+      .orderBy('documents.source_filename')
+      .execute();
+    return rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      sourceFilename: row.source_filename,
+      contentType: row.content_type,
+      createdAt: row.created_at,
+      versionId: row.version_id,
+      versionNo: row.version_no,
+      status: row.status,
+      statusReason: row.status_reason,
+      byteSize: row.byte_size === null ? null : Number(row.byte_size),
+      pageCount: row.page_count,
+      chunkerVersion: row.chunker_version,
+      indexedAt: row.indexed_at,
+    }));
   }
 
   async findById(id: string, tx?: Tx): Promise<DocumentRecord | undefined> {

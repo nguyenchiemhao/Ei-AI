@@ -8,3 +8,8 @@ docs/
 # Tooling definitions, not project source: reformatting them is churn and a template
 # is easy to alter by accident.
 .claude/
+
+# Fixture data, not source. T-3.4-08 asserts that slicing the source by a chunk's character
+# offsets reproduces its text exactly, so a formatter with opinions about tables and wrapping
+# has no business in that loop.
+apps/api/src/database/corpus/*.md

@@ -1,9 +1,12 @@
-import { randomUUID } from 'node:crypto';
+import { createReadStream, readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { Client } from 'pg';
+import { LocalFsAdapter } from '../adapters/storage/local-fs.adapter';
 import { loadConfig } from '../config/configuration';
 import { PasswordService } from '../modules/identity/password.service';
 
-const SAMPLE_DOCUMENT_COUNT = 20;
+// Copied into dist by nest-cli.json, the way the migrations are.
+const CORPUS_DIR = join(__dirname, 'corpus');
 
 // Seeding is idempotent: every insert is ON CONFLICT DO NOTHING and every id is derived from
 // a stable natural key, so running it twice leaves the same database rather than a doubled one.
@@ -84,15 +87,30 @@ async function seedMemberships(
   }
 }
 
-// Documents stop at 'uploaded': the ingestion pipeline is WP-3.4's, and a seed that pretended
-// to index them would make the pipeline's own tests pass against fiction.
+function corpusFilenames(): string[] {
+  return readdirSync(CORPUS_DIR)
+    .filter((name) => name.endsWith('.md') && name !== 'README.md')
+    .sort();
+}
+
+// The first heading if the document has one, so the list reads like documents rather than files.
+function titleOf(path: string, filename: string): string {
+  return /^#\s+(.+)$/m.exec(readFileSync(path, 'utf8'))?.[1]?.trim() ?? filename;
+}
+
+// Documents stop at 'uploaded': the ingestion pipeline is WP-3.4's, and a seed that pretended to
+// index them would make the pipeline's own tests pass against fiction. The bytes, however, are
+// real and go through the same StoragePort an upload uses — a version whose storage_key points at
+// nothing is a corpus the pipeline cannot run on, which is what the first twenty rows were.
 async function seedDocuments(
   client: Client,
   workspaceId: string,
   uploaderId: string,
-): Promise<void> {
-  for (let i = 1; i <= SAMPLE_DOCUMENT_COUNT; i += 1) {
-    const filename = `sample-${String(i).padStart(2, '0')}.md`;
+): Promise<number> {
+  const storage = new LocalFsAdapter(loadConfig());
+  const filenames = corpusFilenames();
+  for (const filename of filenames) {
+    const path = join(CORPUS_DIR, filename);
     const { rows } = await client.query<{ id: string }>(
       `INSERT INTO documents (workspace_id, title, source_filename, content_type, created_by)
        SELECT $1, $2, $3, 'text/markdown', $4
@@ -100,18 +118,24 @@ async function seedDocuments(
          SELECT 1 FROM documents WHERE workspace_id = $1 AND source_filename = $3
        )
        RETURNING id`,
-      [workspaceId, `Sample document ${i}`, filename, uploaderId],
+      [workspaceId, titleOf(path, filename), filename, uploaderId],
     );
     if (rows.length === 0) continue;
 
-    await client.query(
+    const stored = await storage.put(createReadStream(path));
+    const version = await client.query<{ id: string }>(
       `INSERT INTO document_versions
          (document_id, version_no, storage_key, byte_size, sha256, uploaded_by, status)
-       VALUES ($1, 1, $2, 1024, $3, $4, 'uploaded')
-       ON CONFLICT DO NOTHING`,
-      [rows[0]!.id, `seed/${filename}`, randomUUID().replace(/-/g, ''), uploaderId],
+       VALUES ($1, 1, $2, $3, $4, $5, 'uploaded')
+       RETURNING id`,
+      [rows[0]!.id, stored.storageKey, stored.byteSize, stored.sha256, uploaderId],
     );
+    await client.query('UPDATE documents SET current_version_id = $1 WHERE id = $2', [
+      version.rows[0]!.id,
+      rows[0]!.id,
+    ]);
   }
+  return filenames.length;
 }
 
 // The one tool Phase 1 enables. Internal tools carry no mcp_server_id, so the UNIQUE
@@ -150,13 +174,13 @@ export async function seed(): Promise<void> {
     const credentialGiven = await setAdminPasswordIfAsked(client);
     const workspaceIds = await seedWorkspaces(client, adminId);
     await seedMemberships(client, workspaceIds, users);
-    await seedDocuments(client, workspaceIds[0]!, adminId);
+    const documentCount = await seedDocuments(client, workspaceIds[0]!, adminId);
     await seedSearchTool(client);
     await seedAllowlistEntry(client, adminId);
     await client.query('COMMIT');
     process.stdout.write(
       `seeded ${USERS.length} users, ${workspaceIds.length} workspaces, ` +
-        `${SAMPLE_DOCUMENT_COUNT} documents, 1 tool, 1 allowlist entry; ` +
+        `${documentCount} documents, 1 tool, 1 allowlist entry; ` +
         `${ADMIN_EMAIL} password ${credentialGiven ? 'set' : 'left untouched'}\n`,
     );
   } catch (error) {

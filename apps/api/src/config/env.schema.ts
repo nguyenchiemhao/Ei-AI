@@ -30,6 +30,32 @@ export const envSchema = z.object({
   RETRIEVAL_KEEP_TOP: z.coerce.number().int().positive().default(8),
   RETRIEVAL_RELEVANCE_FLOOR: z.coerce.number().min(0).max(1).default(0.35),
 
+  // Detail §WP-3.4 fixes the batch at 8 to respect the 4 GB VRAM budget. Five attempts backing
+  // off from two seconds span about thirty, which is the point: T-3.4-09 asks that a restart of
+  // infinity be survivable, and a window shorter than a model reload would not survive one.
+  EMBEDDING_BATCH_SIZE: z.coerce.number().int().positive().default(8),
+  EMBEDDING_TIMEOUT_MS: z.coerce.number().int().positive().default(60000),
+  EMBEDDING_MAX_ATTEMPTS: z.coerce.number().int().positive().default(5),
+  EMBEDDING_BACKOFF_MS: z.coerce.number().int().positive().default(2000),
+
+  // Where the Hugging Face cache is mounted. The worker reads BGE-M3's own tokenizer.json from
+  // it, so the chunker counts tokens the way the embedding model does; egress denies by default
+  // and nothing downloads it at runtime.
+  MODEL_CACHE_DIR: z.string().min(1).default('/models'),
+
+  // D-5. `tokenizer` counts with XLM-RoBERTa itself; `ratio` is the calibrated approximation,
+  // kept reachable rather than kept as dead code. See docs/ops/d5-token-counting.md.
+  CHUNK_TOKEN_COUNTER: z.enum(['tokenizer', 'ratio']).default('tokenizer'),
+  CHUNK_CHARS_PER_TOKEN: z.coerce.number().positive().default(3.5),
+  CHUNK_MIN_TOKENS: z.coerce.number().int().positive().default(200),
+  CHUNK_MAX_TOKENS: z.coerce.number().int().positive().default(400),
+  CHUNK_OVERLAP_RATIO: z.coerce.number().min(0).max(0.5).default(0.15),
+
+  // T-3.4-02. BullMQ retries with exponential back-off; the reason of the final failure is
+  // written to document_versions.status_reason rather than living only in Redis.
+  INGEST_MAX_ATTEMPTS: z.coerce.number().int().positive().default(3),
+  INGEST_BACKOFF_MS: z.coerce.number().int().positive().default(2000),
+
   AGENT_BUDGET_MS: z.coerce.number().int().positive().default(120000),
   AGENT_BUDGET_STEPS: z.coerce.number().int().positive().default(12),
   AGENT_LOOP_DETECT_THRESHOLD: z.coerce.number().int().positive().default(3),

@@ -1,3 +1,4 @@
+import type { IngestQueue } from '../ingestion/ingest.queue';
 import { mkdtemp, readdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -67,9 +68,19 @@ function serviceWith(role: WorkspaceRole | null, versionInsert?: ReturnType<type
   const db = {
     transaction: () => ({ execute: (work: (tx: unknown) => unknown) => work(TX) }),
   } as unknown as Database;
+  const enqueue = vi.fn().mockResolvedValue('v-1');
+  const ingestQueue = { enqueue } as unknown as IngestQueue;
   return {
-    service: new UploadService(members, documents, versions, { put } as unknown as StoragePort, db),
+    service: new UploadService(
+      ingestQueue,
+      members,
+      documents,
+      versions,
+      { put } as unknown as StoragePort,
+      db,
+    ),
     put,
+    enqueue,
     setCurrentVersion,
     versionInsert: insert,
   };
@@ -242,6 +253,43 @@ describe('UploadService', () => {
     await service.store('w-1', 'u-1', file);
 
     expect(setCurrentVersion).toHaveBeenCalledWith('d-1', 'v-1', TX);
+  });
+
+  it('queues the version it just stored, so the document is ingested', async () => {
+    const { service, enqueue } = serviceWith('Editor');
+    const { file } = await incoming();
+
+    await service.store('w-1', 'u-1', file);
+
+    expect(enqueue).toHaveBeenCalledWith('v-1');
+  });
+
+  it('still stores the upload when the queue is unreachable', async () => {
+    // The bytes are written and the row exists, so the document stays at `uploaded` rather than
+    // the caller losing a 201 to a Redis that is briefly down.
+    const { service, enqueue } = serviceWith('Editor');
+    enqueue.mockRejectedValue(new Error('connect ECONNREFUSED'));
+    const { file } = await incoming();
+
+    await expect(service.store('w-1', 'u-1', file)).resolves.toMatchObject({ versionId: 'v-1' });
+  });
+
+  it('queues only after the version exists, never before', async () => {
+    const order: string[] = [];
+    const { service, enqueue, setCurrentVersion } = serviceWith('Editor');
+    setCurrentVersion.mockImplementation(() => {
+      order.push('stored');
+      return Promise.resolve();
+    });
+    enqueue.mockImplementation(() => {
+      order.push('queued');
+      return Promise.resolve('v-1');
+    });
+    const { file } = await incoming();
+
+    await service.store('w-1', 'u-1', file);
+
+    expect(order).toEqual(['stored', 'queued']);
   });
 
   it('does not treat a unique violation with no constraint name as duplicate content', async () => {

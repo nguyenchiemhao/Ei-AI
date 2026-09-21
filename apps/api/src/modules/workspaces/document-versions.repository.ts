@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { DATABASE } from '../../database/database.module';
+import type { VersionStatus } from '../../database/schema';
 import type { Database } from '../../database/db';
 import type { Tx } from '../../database/transaction';
 
@@ -85,6 +86,37 @@ export class DocumentVersionsRepository {
       .returning(COLUMNS)
       .executeTakeFirstOrThrow();
     return toRecord(row as VersionRow);
+  }
+
+  // Written by the ingestion pipeline as a version moves through its state machine. The reason is
+  // cleared on every transition that is not a failure, so a stale explanation cannot outlive it.
+  async setStatus(
+    id: string,
+    status: VersionStatus,
+    statusReason: string | null = null,
+    tx?: Tx,
+  ): Promise<void> {
+    await this.on(tx)
+      .updateTable('document_versions')
+      .set({ status, status_reason: statusReason })
+      .where('id', '=', id)
+      .execute();
+  }
+
+  // The last transition writes three things at once: the state, the chunker that produced the
+  // chunks, and the moment it happened. A re-index after a chunker change is identifiable because
+  // `chunker_version` moves with `indexed_at`.
+  async setIndexed(id: string, chunkerVersion: string, tx?: Tx): Promise<void> {
+    await this.on(tx)
+      .updateTable('document_versions')
+      .set({
+        status: 'indexed',
+        status_reason: null,
+        chunker_version: chunkerVersion,
+        indexed_at: new Date(),
+      })
+      .where('id', '=', id)
+      .execute();
   }
 
   async findById(id: string, tx?: Tx): Promise<DocumentVersionRecord | undefined> {

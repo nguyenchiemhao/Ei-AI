@@ -1,6 +1,7 @@
+import { IngestQueue } from '../ingestion/ingest.queue';
 import { createReadStream } from 'node:fs';
 import { open, rm } from 'node:fs/promises';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { withTransaction, type Tx } from '../../database/transaction';
 import { DATABASE } from '../../database/database.module';
 import type { Database } from '../../database/db';
@@ -57,7 +58,10 @@ export interface UploadedFile {
 // T-3.2-06 replaces this with WorkspaceRoleGuard, like the Owner rule in MembershipsService.
 @Injectable()
 export class UploadService {
+  private readonly logger = new Logger(UploadService.name);
+
   constructor(
+    private readonly ingestQueue: IngestQueue,
     private readonly members: WorkspaceMembersRepository,
     private readonly documents: DocumentsRepository,
     private readonly versions: DocumentVersionsRepository,
@@ -73,15 +77,29 @@ export class UploadService {
       this.assertWithinLimit(file);
       await this.assertContentMatchesExtension(format, file);
       const stored = await this.storage.put(createReadStream(file.path));
-      return await this.record(
+      const document = await this.record(
         workspaceId,
         callerId,
         { ...file, originalname: filename },
         format.contentType,
         stored,
       );
+      await this.queueIngestion(document.versionId);
+      return document;
     } finally {
       await rm(file.path, { force: true });
+    }
+  }
+
+  // Queued after the transaction commits, and a failure here does not fail the upload: the bytes
+  // are stored and the row exists, so the document simply stays at `uploaded` — which is what the
+  // status column is for. Losing the response to a queue that is briefly down would be worse.
+  private async queueIngestion(versionId: string): Promise<void> {
+    try {
+      await this.ingestQueue.enqueue(versionId);
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      this.logger.error(`${versionId} stored but not queued: ${reason}`);
     }
   }
 
