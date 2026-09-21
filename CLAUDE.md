@@ -74,6 +74,10 @@ A body is the exception. Add one only when a decision needs a "why" the diff can
 
 **A size the client declares is a claim, not a measurement.** The 200 MB limit is applied twice: a guard refuses a `Content-Length` above the maximum before the body is read, and the service counts the bytes that actually land. A request that declares nothing — `Transfer-Encoding: chunked` — walks past the first check untouched. A limit enforced once, on a number the caller chose, is a limit the caller sets.
 
+**A guard that cannot fire is not a guard.** `mergeShortTail` folded a short final chunk back into its predecessor "when the two fit" — and the predecessor is always grown to the maximum, so they never fit. The branch had never run once. The unit test written to demonstrate it failed, and the corpus showed why: a shortest chunk of 78 tokens under a floor of 200. Before trusting a fallback, produce the input that reaches it; a branch nothing can enter defends nothing and hides the case it was written for.
+
+**A fixture that cannot express absence tests the default instead.** Passing `undefined` to a parameter that has a default selects the default: a job built as "no attempts configured" arrived carrying three, and a version meant to be missing arrived present. Both tests failed against a fixture that had quietly built the opposite of what it named. `null` as the sentinel is the shape that survives, and it was already settled in `downloads.service.spec.ts`.
+
 ## Packages
 
 **Forward-only means a new file, never an edit.** The plan described later constraints as belonging "inside" migrations already written, which the checksum guard refuses and the discipline forbids. Work that arrives after a migration is applied arrives as the next number.
@@ -99,5 +103,9 @@ A body is the exception. Add one only when a decision needs a "why" the diff can
 **Prefer reuse over a new variant**, and prefer extending over rewriting.
 
 **Changing a shared function is the last resort.** If the change would force edits at existing call sites, do not change it: add an optional parameter with a default that keeps current behaviour, or add a sibling function. When a shared function genuinely must change, read every call site first and say in your report which ones were checked.
+
+**A retry must be able to re-enter the work it retried.** The ingestion state machine had no `parsing → parsing`, so an attempt that died after its first transition left the row where the next attempt could not resume. The retry then failed on the state machine rather than on the missing file that actually broke it, and `cannot move from parsing to parsing` is what landed in the column a person reads to find out why. A guard that refuses the retry replaces the fault with itself.
+
+**What boots must not need what only one entrypoint has.** `api` and `ingest-worker` run the same module graph from the same image, and only the worker mounts the model cache. A snapshot lookup sitting in a constructor — beneath a comment promising it was deferred to first use — took the API down at boot over a directory it is never meant to have. Construct nothing that the other entrypoint cannot reach, and check that the comment claiming laziness describes the whole of it.
 
 **A value the database already enforces is a constant, not configuration.** `document_versions.byte_size` carries a CHECK at 200 MB. A configured limit above it would let a file through the API only for the database to refuse it, and one below it is a second place to change. The identity thresholds became variables because nothing else enforced them; this one is enforced by the schema.

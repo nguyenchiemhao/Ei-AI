@@ -5,11 +5,11 @@
 | Field | Value |
 | --- | --- |
 | Version | 1.0 |
-| Updated | 2026-09-17 |
-| Phase in flight | **Phase 1 · Foundation** — **G1 complete**, WP-2.1 · WP-2.2 · WP-2.5 · WP-3.1 · WP-3.3 closed |
-| Blocking decisions | **none open** — D-1, D-2 closed; Q-07…Q-09 closed at the WP-1.1 gate; Q-10, Q-11 opened at the WP-1.2 gate; Q-13 at the WP-2.5 gate |
-| Code written | WP-1.1 the stack boots; WP-1.2 the schema migrates and seeds; WP-2.5 the boundaries refuse in CI; WP-3.1 a person can log in, refresh, be locked out and be revoked; WP-3.3 a document is uploaded, keyed by its own content and downloaded |
-| Phase 1 progress | **74 / 154 tasks · 277 / 700 h** — all closed at their gates; `T-2.2-05` deferred |
+| Updated | 2026-09-21 |
+| Phase in flight | **Phase 1 · Foundation** — **G1 complete**, WP-2.1 · WP-2.2 · WP-2.5 · WP-3.1 · WP-3.3 · WP-3.4 closed |
+| Blocking decisions | **none open** — D-1, D-2 closed; Q-07…Q-09 closed at the WP-1.1 gate; Q-10, Q-11 opened at the WP-1.2 gate; Q-13 at the WP-2.5 gate; Q-19…Q-21 at the WP-3.4 gate |
+| Code written | WP-1.1 the stack boots; WP-1.2 the schema migrates and seeds; WP-2.5 the boundaries refuse in CI; WP-3.1 a person can log in, refresh, be locked out and be revoked; WP-3.3 a document is uploaded, keyed by its own content and downloaded; WP-3.4 that document is chunked, embedded and reaches `indexed` |
+| Phase 1 progress | **85 / 154 tasks · 333 / 700 h** — all closed at their gates; `T-2.2-05` deferred |
 
 **Authorities.** [Implementation plan](./ei-ai-implementation-plan.md) — phases, gates, dependencies · [Phase 1 · Overview](./ei-ai-phase-1-overview.md) — priority groups and the pre-agreed cut · [Phase 1 · Detail](./ei-ai-phase-1-detail.md) — 20 packages, one proving command each · [Phase 1 · Tasks](./ei-ai-phase-1-tasks.md) — the 149 tasks and their "Done when" · [Development environment](./ei-ai-dev-environment.md) — the machine and the stack.
 
@@ -101,6 +101,9 @@ Copied from [plan §10](./ei-ai-implementation-plan.md) and [overview §9](./ei-
 | ~~Q-17~~ | ~~One unexplained unit-test failure under `test:coverage` during WP-3.3~~ | — | ✅ **Answered 2026-09-17: two causes, both ours.** Found by running the unit suite 30 times rather than reading it: (1) `auth.service.spec.ts` asserted the rate-limit window against `Date.now()` read **before** the call, while the service reads its own clock after — true only while no millisecond ticks mid-call, and it failed on `899999 >= 900000`; (2) `upload.service.spec.ts` gave `StoragePort.put` a double that never read its stream, so the read stream opened a file `store`'s `finally` had already removed, surfacing as an uncaught ENOENT with every test still passing. Both fixed; 30 consecutive green runs after, against 2 failures in the 30 before. **The original failure's identity was lost**, so this matches by shape, not by name |
 | **Q-18** | **Which language does the API speak?** Error `title` and `detail` were translated to English on 2026-09-17 at the operator's instruction, reversing the WP-3.1 gate decision that took them from the "Nghĩa" column of design §7.4 because "the product's surface is Vietnamese". Design §7.3's worked example and §7.4's table still carry Vietnamese titles, and no document says whether the answer is English, Vietnamese, or `Accept-Language` | before the Phase 1 gate | ⬜ Open |
 | ~~Q-09~~ | ~~No task creates the `llamacpp` service the `dev-local` gate line needs~~ | — | ✅ **Closed 2026-09-14: `T-1.1-14`.** `compose.gpu.yml` stays removed — the GPU reservation belongs on the service |
+| **Q-19** | **The seed dies whole over an optional convenience.** `SEED_ADMIN_PASSWORD` failing the password policy aborts the entire seed — users, workspaces, documents, tools and all — and the message, *"Password must be at least 12 characters"*, does not name the variable that caused it. Should a bad value be a warning that leaves the placeholder hash and seeds everything else? `PasswordService` is WP-3.1's, so WP-3.4 left it as found | before the Phase 1 gate | ⬜ Open |
+| **Q-20** | **`documents.integration.spec.ts` defaults `API_BASE_URL` to `http://127.0.0.1:3000`**, which on the development machine is a different project's application — `marlin-dev` publishes that port and this stack reaches the host on 4180 through the ingress. Does the default become the ingress port, or is the variable required with no default? | before the Phase 1 gate | ⬜ Open |
+| **Q-21** | **`GET /workspaces/{id}/documents` is scope no task names.** [Detail §8](./ei-ai-phase-1-detail.md) lists it among the implemented Phase 1 endpoints and no WP-3.3 task builds it, while `T-3.4-11` needs the ingestion state exposed per document. WP-3.4 built the smallest version that keeps the invariants — Reader and above, each document with its current version's status, reason, `chunker_version` and `indexed_at`. Does it earn its own id, or become a condition on `T-3.3-07`? | before the Phase 1 gate | ⬜ Open |
 
 ### 3.1 What the public-repository decision commits us to
 
@@ -152,10 +155,10 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 | --- | --- | --- | --- | --- | --- | --- |
 | **G1** | Foundation that blocks everything | 3 | 33 | 124 h | 100 % closed | No — nothing else starts |
 | **G2** | Safety invariants | 5 | 38 | 136 h | 47 % — WP-2.1 · WP-2.2 · WP-2.5 closed | No — scope may narrow, the invariant may not |
-| **G3** | The product path | 6 | 56 | 280 h | 38 % — WP-3.1 · WP-3.3 closed | Partly — cut from G5 first |
+| **G3** | The product path | 6 | 56 | 280 h | 57 % — WP-3.1 · WP-3.3 · WP-3.4 closed | Partly — cut from G5 first |
 | **G4** | Measurement | 1 | 11 | 80 h | 0 % | No, but it never blocks code |
 | **G5** | Pre-agreed slack | 5 | 16 | 80 h | 0 % | Yes, first |
-| | **Total** | **20** | **154** | **700 h** | **48 %** | |
+| | **Total** | **20** | **154** | **700 h** | **55 %** | |
 
 ### 4.2 Roll-up by package
 
@@ -174,7 +177,7 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 | [WP-3.1](./ei-ai-phase-1-tasks.md#wp-31--identity--56-h) · Identity | B2 | 12/12 | 56/56 h | 4 | ✅ 2026-09-16 | ✅ passed 2026-09-16 · **run #18 green end to end**, job `6c` included. Run #17 was red at stage 3 on a flaky test of ours, now fixed — see the note |
 | [WP-3.2](./ei-ai-phase-1-tasks.md#wp-32--authorisation--40-h) · Authorisation | B2 | 0/8 | 0/40 h | 9 | ⬜ | ⬜ |
 | [WP-3.3](./ei-ai-phase-1-tasks.md#wp-33--workspaces-upload-storage--40-h) · Workspaces, upload, storage | L | 9/9 | 40/40 h | 5 | ✅ 2026-09-17 | ✅ passed 2026-09-17 · an ELF binary renamed `.pdf` → 415 `DOC_CONTENT_MISMATCH` and a 201 MB body → 413 `DOC_TOO_LARGE`, both through the endpoint. **Demonstrated locally; no CI run number is recorded against this package** — the four scenarios of `T-3.3-09` ride in job `6c` |
-| [WP-3.4](./ei-ai-phase-1-tasks.md#wp-34--markdown-ingestion-pipeline--56-h) · Markdown ingestion pipeline | B2 · L | 11/11 | 56/56 h | 2 | 🔎 2026-09-21 | ✅ passed 2026-09-21 |
+| [WP-3.4](./ei-ai-phase-1-tasks.md#wp-34--markdown-ingestion-pipeline--56-h) · Markdown ingestion pipeline | B2 · L | 11/11 | 56/56 h | 2 | ✅ 2026-09-21 | ✅ passed 2026-09-21 |
 | [WP-3.5](./ei-ai-phase-1-tasks.md#wp-35--tool-registry-and-operating-mode--16-h) · Tool registry and operating mode | L | 0/4 | 0/16 h | 5 | ⬜ | ⬜ |
 | [WP-3.6](./ei-ai-phase-1-tasks.md#wp-36--web--19-routes-four-of-them-real--72-h) · Web — 19 routes, four of them real | FE | 0/12 | 0/72 h | 1 | ⬜ | ⬜ |
 | [WP-4.1](./ei-ai-phase-1-tasks.md#wp-41--corpus-ocr-spike-gpu-benchmark--80-h) · Corpus, OCR spike, GPU benchmark | ML | 0/11 | 0/80 h | 1 | ⬜ | ⬜ |
@@ -349,21 +352,21 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 | T-3.3-08 | Download endpoint — Content-Disposition: attachment… | L | 2 | 9 | ✅ | reviewed 2026-09-17 · 2026-09-16 · `Content-Disposition: attachment`, `X-Content-Type-Options: nosniff`, body byte-identical to what was uploaded. Tested with a `.csv` containing `<script>` — a format the allowlist admits — rather than by opening the allowlist to HTML. **Found and fixed on the way: busboy decodes a multipart filename as latin-1, so `hợp đồng.csv` was being stored as `há»£p Äá»ng.csv`** |
 | T-3.3-09 | Tests — ELF-in-pdf, oversize, duplicate, unsupported format | L | 2 | 10 | ✅ | reviewed 2026-09-17 · 2026-09-16 · four scenarios green against the built `dist/main.js` in the existing **`6c`** job — ELF-in-pdf, unsupported format, oversize, duplicate content. The oversize case goes through `node:http` because `fetch` refuses to send a body that contradicts its own `Content-Length`. The suite deletes the rows it creates |
 
-**WP-3.4 · Markdown ingestion pipeline — 11/11 tasks · 56/56 h · 🔎 awaiting review**
+**WP-3.4 · Markdown ingestion pipeline — 11/11 tasks · 56/56 h · ✅ closed 2026-09-21**
 
 | ID | Task | Lane | h | W | Status | Note |
 | --- | --- | --- | --- | --- | --- | --- |
-| T-3.4-01 | BullMQ setup, queue definitions, worker.main.ts consumer entrypoint | B2 | 6 | 6 | 🔎 | 2026-09-21 · `ingest-worker` up, job enqueued through the real producer and **consumed**: `completed 1, failed 0`. Enqueuing the same version twice yields one job — the job id is the version id |
-| T-3.4-02 | Job lifecycle — retry with back-off, failure reason persisted on the… | B2 | 6 | 7 | 🔎 | 2026-09-21 · a real version whose bytes were removed: 3 attempts at 1 s and 2 s, then `status='failed'` with the ENOENT as `status_reason`. Restoring the bytes re-ingested it to `parsed` with the reason cleared |
-| T-3.4-03 | Ingestion state machine — uploaded → parsing → parsed → chunking →… | B2 | 4 | 9 | 🔎 | 2026-09-21 · every skip and every backward step refused. **Audit clause deferred to `T-2.4-06`**, which the wave table makes a dependant of this task |
-| T-3.4-04 | Markdown pass-through "parsing" — one pages row, extraction_method =… | L | 4 | 9 | 🔎 | 2026-09-21 · one page row whose text is **identical to the file on disk**, Vietnamese intact. `extraction_method = 'markdown'`, a recorded deviation from the task's `'text_layer'` |
-| T-3.4-05 | D-5 decision — measure the XLM-RoBERTa tokenizer against a… | L | 6 | 2 | 🔎 | 2026-09-21 · [docs/ops/d5-token-counting.md](../ops/d5-token-counting.md) · tokenizer chosen: exact (300–300 against the ratio's 279–373) and cheap (611 ms once, 4.0 ms/doc). **The ratio did not fail** — 0/75 windows outside the band — so the recovered 8.7 % is recorded as unreproduced |
-| T-3.4-06 | Chunker — 200–400 tokens with 15% overlap | L | 8 | 3 | 🔎 | 2026-09-21 · over the whole 50-file corpus, verified by the chosen tokenizer: **121 chunks, 200–392 tokens, 0 over, 0 under**; stride overlap 15.5% against a 15% target |
-| T-3.4-07 | Chunker — character offsets and heading_path preserved through the split | L | 6 | 4 | 🔎 | 2026-09-21 · every chunk is a contiguous slice, so offsets resolve by construction: **0 round-trip failures of 121**, and **0 chunks without a heading trail** |
-| T-3.4-08 | Offset round-trip test — slicing the source by the offsets reproduces… | L | 3 | 5 | 🔎 | 2026-09-21 · `chunker.corpus.spec.ts` runs **every** file, not a sample — 352 assertions over 50 documents. The seed now writes real bytes through `StoragePort`: 50 versions, 50 distinct 64-character digests, **0 missing files, 0 byte_size mismatches** |
-| T-3.4-09 | InfinityClient — /embeddings at batch 8, timeout, retry and back-off | L | 6 | 2 | 🔎 | 2026-09-21 · **restart survived by command, not by hand**: an embed started while infinity was reloading returned 320/320 vectors in 15.3 s against a 1.4 s warm run. First attempt at this check finished before the restart landed and proved nothing |
-| T-3.4-10 | Persist embeddings as halfvec, with the completeness check | L | 4 | 10 | 🔎 | 2026-09-21 · `SELECT count(*) FROM chunks WHERE embedding IS NULL` → **0** over 51 versions and 123 chunks. Completeness is structural: `StoredChunk` requires an embedding, so a chunk without one cannot be written. **WP-2.5 rule 1 narrowed to reads** to permit the write |
-| T-3.4-11 | End-to-end — upload a folder, reach indexed, expose ingestion status… | L | 3 | 11 | 🔎 | 2026-09-21 · `quy chế hợp đồng.md` uploaded through the API reached `indexed` unattended; `GET /workspaces/{id}/documents` returns the state of each. **Live-updating table deferred to `T-3.6-10`**; the list endpoint is scope no task names |
+| T-3.4-01 | BullMQ setup, queue definitions, worker.main.ts consumer entrypoint | B2 | 6 | 6 | ✅ | 2026-09-21 · `ingest-worker` up, job enqueued through the real producer and **consumed**: `completed 1, failed 0`. Enqueuing the same version twice yields one job — the job id is the version id |
+| T-3.4-02 | Job lifecycle — retry with back-off, failure reason persisted on the… | B2 | 6 | 7 | ✅ | 2026-09-21 · a real version whose bytes were removed: 3 attempts at 1 s and 2 s, then `status='failed'` with the ENOENT as `status_reason`. Restoring the bytes re-ingested it to `parsed` with the reason cleared |
+| T-3.4-03 | Ingestion state machine — uploaded → parsing → parsed → chunking →… | B2 | 4 | 9 | ✅ | 2026-09-21 · every skip and every backward step refused. **Audit clause deferred to `T-2.4-06`**, which the wave table makes a dependant of this task |
+| T-3.4-04 | Markdown pass-through "parsing" — one pages row, extraction_method =… | L | 4 | 9 | ✅ | 2026-09-21 · one page row whose text is **identical to the file on disk**, Vietnamese intact. `extraction_method = 'markdown'`, a recorded deviation from the task's `'text_layer'` |
+| T-3.4-05 | D-5 decision — measure the XLM-RoBERTa tokenizer against a… | L | 6 | 2 | ✅ | 2026-09-21 · [docs/ops/d5-token-counting.md](../ops/d5-token-counting.md) · tokenizer chosen: exact (300–300 against the ratio's 279–373) and cheap (611 ms once, 4.0 ms/doc). **The ratio did not fail** — 0/75 windows outside the band — so the recovered 8.7 % is recorded as unreproduced |
+| T-3.4-06 | Chunker — 200–400 tokens with 15% overlap | L | 8 | 3 | ✅ | 2026-09-21 · over the whole 50-file corpus, verified by the chosen tokenizer: **121 chunks, 200–392 tokens, 0 over, 0 under**; stride overlap 15.5% against a 15% target |
+| T-3.4-07 | Chunker — character offsets and heading_path preserved through the split | L | 6 | 4 | ✅ | 2026-09-21 · every chunk is a contiguous slice, so offsets resolve by construction: **0 round-trip failures of 121**, and **0 chunks without a heading trail** |
+| T-3.4-08 | Offset round-trip test — slicing the source by the offsets reproduces… | L | 3 | 5 | ✅ | 2026-09-21 · `chunker.corpus.spec.ts` runs **every** file, not a sample — 352 assertions over 50 documents. The seed now writes real bytes through `StoragePort`: 50 versions, 50 distinct 64-character digests, **0 missing files, 0 byte_size mismatches** |
+| T-3.4-09 | InfinityClient — /embeddings at batch 8, timeout, retry and back-off | L | 6 | 2 | ✅ | 2026-09-21 · **restart survived by command, not by hand**: an embed started while infinity was reloading returned 320/320 vectors in 15.3 s against a 1.4 s warm run. First attempt at this check finished before the restart landed and proved nothing |
+| T-3.4-10 | Persist embeddings as halfvec, with the completeness check | L | 4 | 10 | ✅ | 2026-09-21 · `SELECT count(*) FROM chunks WHERE embedding IS NULL` → **0** over 51 versions and 123 chunks. Completeness is structural: `StoredChunk` requires an embedding, so a chunk without one cannot be written. **WP-2.5 rule 1 narrowed to reads** to permit the write |
+| T-3.4-11 | End-to-end — upload a folder, reach indexed, expose ingestion status… | L | 3 | 11 | ✅ | 2026-09-21 · `quy chế hợp đồng.md` uploaded through the API reached `indexed` unattended; `GET /workspaces/{id}/documents` returns the state of each. **Live-updating table deferred to `T-3.6-10`**; the list endpoint is scope no task names |
 
 **WP-3.5 · Tool registry and operating mode — 0/4 tasks · 0/16 h**
 
@@ -645,6 +648,7 @@ Quoted from [Detail §10](./ei-ai-phase-1-detail.md), where each line carries th
 
 | Date | Change |
 | --- | --- |
+| 2026-09-21 | **WP-3.4 closed at its gate.** 11 rows reviewed and moved to ✅. The pipeline runs end to end: 51 versions `indexed`, 0 chunks without an embedding, and all 121 corpus chunks resolving their own offsets against the source. D-5 settled by measurement — the tokenizer for being exact and cheap, not for the ratio failing. Three code paths were found that nothing could reach: a tail merge that never fired, a retry that could not re-enter, and a constructor that needed a mount only one entrypoint has. Diary promoted: four rules added to CLAUDE.md, three candidates rejected as reconfirmations; `Q-19`, `Q-20`, `Q-21` opened. **WP-2.5 rule 1 narrowed from "may query" to "may read"**, its near miss re-proved. |
 | 2026-09-17 | **Two flaky tests of our own, found and fixed.** Running the unit suite 30 times reproduced both: an assertion measuring a window against a clock read on the wrong side of the call, and a `put` double that never consumed its stream, leaving a read stream to open a file already removed. `Q-17` answered. |
 | 2026-09-17 | **Every live document translated to English, Swagger and the error surface with them.** `docs/design`, `docs/plan` and `docs/plan/notes` are English; `docs/archive/v1-non-agentic/` stays in Vietnamese as the superseded record. The 24 `error-codes` titles and the `AppException` details behind them became English too, which reverses a decision recorded at the WP-3.1 gate — `Q-18` carries it to the design. |
 | 2026-09-17 | **WP-3.3 closed at its gate.** A document is uploaded through a real endpoint, refused when its bytes contradict its extension or exceed 200 MB, stored under a key derived from its own content, and comes back byte-identical as an attachment. Four rules promoted. `Q-17` carries out the one unexplained test failure the package could not reproduce. |

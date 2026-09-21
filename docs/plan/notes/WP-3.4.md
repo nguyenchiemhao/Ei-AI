@@ -421,3 +421,41 @@ is not evidence until a command produces it again.**
 - 2026-09-21 — `documents.integration.spec.ts` defaults `API_BASE_URL` to `http://127.0.0.1:3000`,
   a port another project holds on this machine, and the stack publishes 4180. Should the default
   become the ingress port, or should the variable be required with no default? · **for the gate**
+
+---
+
+## Gate · closed 2026-09-21
+
+Reviewed and accepted: all eleven tasks. The proving command ran end to end — 51 versions at
+`indexed`, `SELECT count(*) FROM chunks WHERE embedding IS NULL` returning **0** over 123 chunks,
+and every one of the 121 corpus chunks slicing its own text back out of the source file by its
+offsets. A Vietnamese-named Markdown document uploaded through the API reached `indexed` unattended
+and `GET /workspaces/{id}/documents` reported it.
+
+What the package kept teaching is that a path nothing travels is a path nobody has checked.
+`mergeShortTail` had never run; the retry had never re-entered; the snapshot lookup had never met a
+container without the model cache. Each was written to be correct and each was wrong in a way no
+unit test could see, because no test produced the input that reaches it. The corpus found two of
+them and a deliberately broken job found the third.
+
+**Not proved here:** no CI run number is recorded against this package's commits — every check was
+run locally, and `gh` is not installed in this environment. The live-updating documents table of
+`T-3.4-11` is deferred to `T-3.6-10`, which the wave table makes a dependant of `T-3.4-11`. The
+audit clause of `T-3.4-03` is deferred to `T-2.4-06`, blocked by `T-3.4-03` for the same reason.
+Non-Markdown formats are accepted, stored and left at `uploaded`: the parser attaches in milestone
+2A, and `page_count` stays null until it does, so every chunk carries `page_from = page_to = 1`.
+The D-5 measurement rests on a corpus composed from one prose pool, so its 0 % failure rate for the
+ratio counter is a statement about this corpus and not a general safety claim.
+
+**Promoted to [CLAUDE.md](../../../CLAUDE.md)** — four rules, in force from the next package: a
+retry must be able to re-enter the work it retried; what boots must not need what only one
+entrypoint has; a guard that cannot fire is not a guard; a fixture that cannot express absence
+tests the default instead. Three candidates were **not** promoted because existing rules already
+carry them: the Vietnamese pre-tokenizer finding is "a boundary that mangles Vietnamese looks
+correct in ASCII" met inside a test fixture; the host port answering for another project is "'up'
+is not 'working'"; and the three files at 0 % beneath an overall 89.94 % is "coverage's worth is
+the list, not the number". Each is recorded above as a reconfirmation rather than a new rule.
+
+**Promoted to [Progress §3](../ei-ai-progress.md)** — `Q-19` the seed dying whole over an optional
+convenience, `Q-20` the integration suite's default origin pointing at another project's port, and
+`Q-21` whether `GET /workspaces/{id}/documents` earns its own id.
