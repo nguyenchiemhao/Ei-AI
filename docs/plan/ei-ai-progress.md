@@ -6,10 +6,10 @@
 | --- | --- |
 | Version | 1.0 |
 | Updated | 2026-09-21 |
-| Phase in flight | **Phase 1 · Foundation** — **G1 complete**, WP-2.1 · WP-2.2 · WP-2.5 · WP-3.1 · WP-3.3 · WP-3.4 closed |
-| Blocking decisions | **none open** — D-1, D-2 closed; Q-07…Q-09 closed at the WP-1.1 gate; Q-10, Q-11 opened at the WP-1.2 gate; Q-13 at the WP-2.5 gate; Q-19…Q-21 at the WP-3.4 gate |
-| Code written | WP-1.1 the stack boots; WP-1.2 the schema migrates and seeds; WP-2.5 the boundaries refuse in CI; WP-3.1 a person can log in, refresh, be locked out and be revoked; WP-3.3 a document is uploaded, keyed by its own content and downloaded; WP-3.4 that document is chunked, embedded and reaches `indexed` |
-| Phase 1 progress | **85 / 154 tasks · 333 / 700 h** — all closed at their gates; `T-2.2-05` deferred |
+| Phase in flight | **Phase 1 · Foundation** — **G1 complete**, WP-2.1 · WP-2.2 · WP-2.3 · WP-2.5 · WP-3.1 · WP-3.3 · WP-3.4 closed |
+| Blocking decisions | **none open** — D-1, D-2 closed; Q-07…Q-09 closed at the WP-1.1 gate; Q-10, Q-11 opened at the WP-1.2 gate; Q-13 at the WP-2.5 gate; Q-19…Q-21 at the WP-3.4 gate; Q-22 at the WP-2.3 gate |
+| Code written | WP-1.1 the stack boots; WP-1.2 the schema migrates and seeds; WP-2.5 the boundaries refuse in CI; WP-3.1 a person can log in, refresh, be locked out and be revoked; WP-3.3 a document is uploaded, keyed by its own content and downloaded; WP-3.4 that document is chunked, embedded and reaches `indexed`; WP-2.3 it is found again by a question, with the permission predicate inside the query |
+| Phase 1 progress | **96 / 154 tasks · 381 / 700 h** — all closed at their gates; `T-2.2-05` deferred |
 
 **Authorities.** [Implementation plan](./ei-ai-implementation-plan.md) — phases, gates, dependencies · [Phase 1 · Overview](./ei-ai-phase-1-overview.md) — priority groups and the pre-agreed cut · [Phase 1 · Detail](./ei-ai-phase-1-detail.md) — 20 packages, one proving command each · [Phase 1 · Tasks](./ei-ai-phase-1-tasks.md) — the 149 tasks and their "Done when" · [Development environment](./ei-ai-dev-environment.md) — the machine and the stack.
 
@@ -104,6 +104,7 @@ Copied from [plan §10](./ei-ai-implementation-plan.md) and [overview §9](./ei-
 | **Q-19** | **The seed dies whole over an optional convenience.** `SEED_ADMIN_PASSWORD` failing the password policy aborts the entire seed — users, workspaces, documents, tools and all — and the message, *"Password must be at least 12 characters"*, does not name the variable that caused it. Should a bad value be a warning that leaves the placeholder hash and seeds everything else? `PasswordService` is WP-3.1's, so WP-3.4 left it as found | before the Phase 1 gate | ⬜ Open |
 | **Q-20** | **`documents.integration.spec.ts` defaults `API_BASE_URL` to `http://127.0.0.1:3000`**, which on the development machine is a different project's application — `marlin-dev` publishes that port and this stack reaches the host on 4180 through the ingress. Does the default become the ingress port, or is the variable required with no default? | before the Phase 1 gate | ⬜ Open |
 | **Q-21** | **`GET /workspaces/{id}/documents` is scope no task names.** [Detail §8](./ei-ai-phase-1-detail.md) lists it among the implemented Phase 1 endpoints and no WP-3.3 task builds it, while `T-3.4-11` needs the ingestion state exposed per document. WP-3.4 built the smallest version that keeps the invariants — Reader and above, each document with its current version's status, reason, `chunker_version` and `indexed_at`. Does it earn its own id, or become a condition on `T-3.3-07`? | before the Phase 1 gate | ⬜ Open |
+| **Q-22** | **The reranker is "wired behind the same interface" and nothing wires it.** [Detail §WP-2.3](./ei-ai-phase-1-detail.md) says so in the same sentence that excludes it from the Phase 1 path; `RERANK_MODEL` sits in the configuration schema unused, and none of the package's eleven tasks mentions it. WP-2.3 left it entirely to milestone 2A, reading Detail's sentence as a description of what 2A adds. Does the design agree, or is a seam owed now? | before the Phase 1 gate | ⬜ Open |
 
 ### 3.1 What the public-repository decision commits us to
 
@@ -154,11 +155,11 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 | Group | Name | Packages | Tasks | Hours | Done | Cuttable |
 | --- | --- | --- | --- | --- | --- | --- |
 | **G1** | Foundation that blocks everything | 3 | 33 | 124 h | 100 % closed | No — nothing else starts |
-| **G2** | Safety invariants | 5 | 38 | 136 h | 47 % — WP-2.1 · WP-2.2 · WP-2.5 closed | No — scope may narrow, the invariant may not |
+| **G2** | Safety invariants | 5 | 38 | 136 h | 76 % — WP-2.1 · WP-2.2 · WP-2.3 · WP-2.5 closed | No — scope may narrow, the invariant may not |
 | **G3** | The product path | 6 | 56 | 280 h | 57 % — WP-3.1 · WP-3.3 · WP-3.4 closed | Partly — cut from G5 first |
 | **G4** | Measurement | 1 | 11 | 80 h | 0 % | No, but it never blocks code |
 | **G5** | Pre-agreed slack | 5 | 16 | 80 h | 0 % | Yes, first |
-| | **Total** | **20** | **154** | **700 h** | **55 %** | |
+| | **Total** | **20** | **154** | **700 h** | **62 %** | |
 
 ### 4.2 Roll-up by package
 
@@ -171,7 +172,7 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 | [WP-1.3](./ei-ai-phase-1-tasks.md#wp-13--base-ci--stages-13-5-6--24-h) · Base CI — stages 1–3, 5, 6 | DO · L | 7/7 | 27/27 h | 1 | ✅ 2026-09-15 | ✅ run #3 green, #2 red on purpose |
 | [WP-2.1](./ei-ai-phase-1-tasks.md#wp-21--invariant-database-constraints--16-h) · Invariant database constraints | L | 6/6 | 16/16 h | 4 | ✅ 2026-09-15 | ✅ passed 2026-09-15 · CI stage 6 green |
 | [WP-2.2](./ei-ai-phase-1-tasks.md#wp-22--egress-default-deny--24-h) · Egress default-deny | DO · L | 5/6 | 19/24 h | 1 | ✅ 2026-09-15 | ✅ passed 2026-09-15 · CI stage 6b green |
-| [WP-2.3](./ei-ai-phase-1-tasks.md#wp-23--retrieval-with-the-permission-predicate--48-h) · Retrieval with the permission predicate | L | 0/11 | 0/48 h | 3 | ⬜ | ⬜ |
+| [WP-2.3](./ei-ai-phase-1-tasks.md#wp-23--retrieval-with-the-permission-predicate--48-h) · Retrieval with the permission predicate | L | 11/11 | 48/48 h | 3 | ✅ 2026-09-21 | ✅ passed 2026-09-21 |
 | [WP-2.4](./ei-ai-phase-1-tasks.md#wp-24--audit-append-only--32-h) · Audit, append-only | B2 | 0/8 | 0/32 h | 6 | ⬜ | ⬜ |
 | [WP-2.5](./ei-ai-phase-1-tasks.md#wp-25--architecture-rules-in-ci--16-h) · Architecture rules in CI | DO · L | 7/7 | 16/16 h | 3 | ✅ 2026-09-15 | ✅ passed 2026-09-15 · run #9 green, #10 red on purpose at stage 4 alone |
 | [WP-3.1](./ei-ai-phase-1-tasks.md#wp-31--identity--56-h) · Identity | B2 | 12/12 | 56/56 h | 4 | ✅ 2026-09-16 | ✅ passed 2026-09-16 · **run #18 green end to end**, job `6c` included. Run #17 was red at stage 3 on a flaky test of ours, now fixed — see the note |
@@ -265,21 +266,21 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 | T-2.2-05 | allowlist_entries repository and GET/POST /egress/allowlist… | L | 5 | 5 | ⏭ | **deferred to after `T-3.2-02`** — the Done when needs an authenticated principal, and no authentication exists until WP-3.1. Routes answer 501 |
 | T-2.2-06 | Seed one destination, document the manual reload step, and wire the… | L | 3 | 6 | ✅ | reviewed 2026-09-15 · 2026-09-15 · stage **6b** in CI, seed writes one `allowlist_entries` row, README documents parse-then-reload |
 
-**WP-2.3 · Retrieval with the permission predicate — 0/11 tasks · 0/48 h**
+**WP-2.3 · Retrieval with the permission predicate — 11/11 tasks · 48/48 h · ✅ closed 2026-09-21**
 
 | ID | Task | Lane | h | W | Status | Note |
 | --- | --- | --- | --- | --- | --- | --- |
-| T-2.3-01 | rank-fusion.ts — RRF as a pure function, with unit tests including ties… | L | 4 | 3 | ⬜ | |
-| T-2.3-02 | hybrid-search.repository.ts — the permitted CTE: membership, workspace… | L | 6 | 7 | ⬜ | |
-| T-2.3-03 | Dense branch — HNSW over halfvec, candidate limit from config | L | 5 | 8 | ⬜ | |
-| T-2.3-04 | Lexical branch — GIN + plainto_tsquery('simple', unaccent($n)) | L | 5 | 8 | ⬜ | |
-| T-2.3-05 | Full outer join, fusion, RETRIEVAL_KEEP_TOP, RETRIEVAL_RELEVANCE_FLOOR… | L | 5 | 9 | ⬜ | |
-| T-2.3-06 | retrieval.service.ts, DTOs and POST /search — response carries file… | L | 6 | 11 | ⬜ | |
-| T-2.3-07 | Question embedding through InfinityClient, cached in Redis for 1 hour | L | 4 | 12 | ⬜ | |
-| T-2.3-08 | permission-predicate.spec.ts — asserts the compiled SQL text contains… | L | 4 | 10 | ⬜ | |
-| T-2.3-09 | leakage.spec.ts — B's restricted chunk appears in no result, no… | L | 5 | 12 | ⬜ | |
-| T-2.3-10 | Mutation check — remove the permitted join and confirm both tests fail… | L | 2 | 13 | ⬜ | |
-| T-2.3-11 | Query-plan review of both branches at seeded volume, recorded in… | L | 2 | 12 | ⬜ | |
+| T-2.3-01 | rank-fusion.ts — RRF as a pure function, with unit tests including ties… | L | 4 | 3 | ✅ | 2026-09-21 · 23 unit tests including ties, single-branch hits and a k it is given. No import at all, so the "no database or config" condition holds by inspection |
+| T-2.3-02 | hybrid-search.repository.ts — the permitted CTE: membership, workspace… | L | 6 | 7 | ✅ | 2026-09-21 · an outsider's candidate set is **empty**, proved by the CTE and not by filtering; restricted documents, archived workspaces and unindexed versions each withheld, and naming a workspace cannot widen the set |
+| T-2.3-03 | Dense branch — HNSW over halfvec, candidate limit from config | L | 5 | 8 | ✅ | 2026-09-21 · `Index Scan using chunks_embedding_hnsw`. The seeded 123 chunks seq-scan correctly, so the plan is taken at 30 000 — see [query plans](../ops/retrieval-query-plans.md) |
+| T-2.3-04 | Lexical branch — GIN + plainto_tsquery('simple', unaccent($n)) | L | 5 | 8 | ✅ | 2026-09-21 · a part number found when the question drops its hyphen and diacritics, with a decoy on the question's own vector so only the lexical branch can lift it. **`plainto_tsquery` replaced** — see the note |
+| T-2.3-05 | Full outer join, fusion, RETRIEVAL_KEEP_TOP, RETRIEVAL_RELEVANCE_FLOOR… | L | 5 | 9 | ✅ | 2026-09-21 · the fused score is normalised to 0–1, so the configured 0.35 floor means something; moving the floor moves the count, 3 → 2 → 1 |
+| T-2.3-06 | retrieval.service.ts, DTOs and POST /search — response carries file… | L | 6 | 11 | ✅ | 2026-09-21 · `POST /search` over HTTP returns 8 passages with file name, character span and heading trail; the raw fused score is withheld |
+| T-2.3-07 | Question embedding through InfinityClient, cached in Redis for 1 hour | L | 4 | 12 | ✅ | 2026-09-21 · the second identical question never reaches `InfinityClient`; the key is a hash, not the question. "Visible in the client's metrics" read as "does not call the client" — there is no metric surface |
+| T-2.3-08 | permission-predicate.spec.ts — asserts the compiled SQL text contains… | L | 4 | 10 | ✅ | 2026-09-21 · 13 assertions on the **compiled SQL**, one of which counts: `chunks` is read exactly three times and carries exactly three `permitted` joins |
+| T-2.3-09 | leakage.spec.ts — B's restricted chunk appears in no result, no… | L | 5 | 12 | ✅ | 2026-09-21 · a restricted chunk reaches no result and **no log line** — stdout and stderr are captured across the search — while the member who was granted it does receive it |
+| T-2.3-10 | Mutation check — remove the permitted join and confirm both tests fail… | L | 2 | 13 | ✅ | 2026-09-21 · joins removed → **4 of 13** SQL assertions and **13 of 27** integration assertions red; restored → both green. Procedure in `modules/retrieval/README.md` |
+| T-2.3-11 | Query-plan review of both branches at seeded volume, recorded in… | L | 2 | 12 | ✅ | 2026-09-21 · both plans recorded in [docs/ops](../ops/retrieval-query-plans.md), with the instability at 10 000 rows and what settled it |
 
 **WP-2.4 · Audit, append-only — 0/8 tasks · 0/32 h**
 
@@ -648,6 +649,7 @@ Quoted from [Detail §10](./ei-ai-phase-1-detail.md), where each line carries th
 
 | Date | Change |
 | --- | --- |
+| 2026-09-21 | **WP-2.3 closed at its gate.** 11 rows reviewed and moved to ✅; G2 is 76 % and three of its never-waivable lines now have commands behind them. The endpoint worked while answering with half of itself — every score a multiple of `1/61` — because `plainto_tsquery` ANDs a whole question and matched nothing; the terms are OR-ed now. Mutation check: joins removed → 4 of 13 and 13 of 27 red, restored → green. Diary promoted: three rules added to CLAUDE.md, three candidates rejected as reconfirmations; `Q-22` opened. |
 | 2026-09-21 | **WP-3.4 closed at its gate.** 11 rows reviewed and moved to ✅. The pipeline runs end to end: 51 versions `indexed`, 0 chunks without an embedding, and all 121 corpus chunks resolving their own offsets against the source. D-5 settled by measurement — the tokenizer for being exact and cheap, not for the ratio failing. Three code paths were found that nothing could reach: a tail merge that never fired, a retry that could not re-enter, and a constructor that needed a mount only one entrypoint has. Diary promoted: four rules added to CLAUDE.md, three candidates rejected as reconfirmations; `Q-19`, `Q-20`, `Q-21` opened. **WP-2.5 rule 1 narrowed from "may query" to "may read"**, its near miss re-proved. |
 | 2026-09-17 | **Two flaky tests of our own, found and fixed.** Running the unit suite 30 times reproduced both: an assertion measuring a window against a clock read on the wrong side of the call, and a `put` double that never consumed its stream, leaving a read stream to open a file already removed. `Q-17` answered. |
 | 2026-09-17 | **Every live document translated to English, Swagger and the error surface with them.** `docs/design`, `docs/plan` and `docs/plan/notes` are English; `docs/archive/v1-non-agentic/` stays in Vietnamese as the superseded record. The 24 `error-codes` titles and the `AppException` details behind them became English too, which reverses a decision recorded at the WP-3.1 gate — `Q-18` carries it to the design. |

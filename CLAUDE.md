@@ -78,6 +78,12 @@ A body is the exception. Add one only when a decision needs a "why" the diff can
 
 **A fixture that cannot express absence tests the default instead.** Passing `undefined` to a parameter that has a default selects the default: a job built as "no attempts configured" arrived carrying three, and a version meant to be missing arrived present. Both tests failed against a fixture that had quietly built the opposite of what it named. `null` as the sentinel is the shape that survives, and it was already settled in `downloads.service.spec.ts`.
 
+**A thing that still answers can be answering with half of itself.** `POST /search` returned sensible passages, ranked plausibly, with every test green — and the lexical branch was matching nothing at all. `plainto_tsquery` ANDs a whole question, ten terms a chunk must all contain, and it matched 0 of 123 where the keyword form matched 44. Nothing failed, because a full outer join with an empty side is still a result. The only thing that said so was the arithmetic: every score was a multiple of `1/61`, the signature of one contributor. When a result is composed of parts, assert that each part contributed.
+
+**A measurement that changes between identical runs has not been made.** Three consecutive runs of the same query-plan probe gave `SEQ`, `INDEX`, `INDEX`. The query did not move; the dead tuples the probe itself left behind did, and 4.8 ms against 3.5 ms is close enough for the planner to change its mind. Repeat a measurement before recording it, and clear the state your own probe leaves — the first number was neither right nor wrong, it was noise with a plan attached.
+
+**To isolate one contributor, make the others prefer the wrong answer.** Killing the dense branch with a zero vector still ranked every chunk, because ordering by distance to zero orders everything. What isolates the lexical branch is a decoy sitting exactly on the question's own vector: it wins the dense branch outright, so only the lexical branch can put the right passage first. A control that cannot change the answer is not a control.
+
 ## Packages
 
 **Forward-only means a new file, never an edit.** The plan described later constraints as belonging "inside" migrations already written, which the checksum guard refuses and the discipline forbids. Work that arrives after a migration is applied arrives as the next number.
