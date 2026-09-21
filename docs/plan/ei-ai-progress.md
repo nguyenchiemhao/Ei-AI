@@ -174,7 +174,7 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 | [WP-3.1](./ei-ai-phase-1-tasks.md#wp-31--identity--56-h) · Identity | B2 | 12/12 | 56/56 h | 4 | ✅ 2026-09-16 | ✅ passed 2026-09-16 · **run #18 green end to end**, job `6c` included. Run #17 was red at stage 3 on a flaky test of ours, now fixed — see the note |
 | [WP-3.2](./ei-ai-phase-1-tasks.md#wp-32--authorisation--40-h) · Authorisation | B2 | 0/8 | 0/40 h | 9 | ⬜ | ⬜ |
 | [WP-3.3](./ei-ai-phase-1-tasks.md#wp-33--workspaces-upload-storage--40-h) · Workspaces, upload, storage | L | 9/9 | 40/40 h | 5 | ✅ 2026-09-17 | ✅ passed 2026-09-17 · an ELF binary renamed `.pdf` → 415 `DOC_CONTENT_MISMATCH` and a 201 MB body → 413 `DOC_TOO_LARGE`, both through the endpoint. **Demonstrated locally; no CI run number is recorded against this package** — the four scenarios of `T-3.3-09` ride in job `6c` |
-| [WP-3.4](./ei-ai-phase-1-tasks.md#wp-34--markdown-ingestion-pipeline--56-h) · Markdown ingestion pipeline | B2 · L | 0/11 | 0/56 h | 2 | ⬜ | ⬜ |
+| [WP-3.4](./ei-ai-phase-1-tasks.md#wp-34--markdown-ingestion-pipeline--56-h) · Markdown ingestion pipeline | B2 · L | 11/11 | 56/56 h | 2 | 🔎 2026-09-21 | ✅ passed 2026-09-21 |
 | [WP-3.5](./ei-ai-phase-1-tasks.md#wp-35--tool-registry-and-operating-mode--16-h) · Tool registry and operating mode | L | 0/4 | 0/16 h | 5 | ⬜ | ⬜ |
 | [WP-3.6](./ei-ai-phase-1-tasks.md#wp-36--web--19-routes-four-of-them-real--72-h) · Web — 19 routes, four of them real | FE | 0/12 | 0/72 h | 1 | ⬜ | ⬜ |
 | [WP-4.1](./ei-ai-phase-1-tasks.md#wp-41--corpus-ocr-spike-gpu-benchmark--80-h) · Corpus, OCR spike, GPU benchmark | ML | 0/11 | 0/80 h | 1 | ⬜ | ⬜ |
@@ -349,21 +349,21 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 | T-3.3-08 | Download endpoint — Content-Disposition: attachment… | L | 2 | 9 | ✅ | reviewed 2026-09-17 · 2026-09-16 · `Content-Disposition: attachment`, `X-Content-Type-Options: nosniff`, body byte-identical to what was uploaded. Tested with a `.csv` containing `<script>` — a format the allowlist admits — rather than by opening the allowlist to HTML. **Found and fixed on the way: busboy decodes a multipart filename as latin-1, so `hợp đồng.csv` was being stored as `há»£p Äá»ng.csv`** |
 | T-3.3-09 | Tests — ELF-in-pdf, oversize, duplicate, unsupported format | L | 2 | 10 | ✅ | reviewed 2026-09-17 · 2026-09-16 · four scenarios green against the built `dist/main.js` in the existing **`6c`** job — ELF-in-pdf, unsupported format, oversize, duplicate content. The oversize case goes through `node:http` because `fetch` refuses to send a body that contradicts its own `Content-Length`. The suite deletes the rows it creates |
 
-**WP-3.4 · Markdown ingestion pipeline — 0/11 tasks · 0/56 h**
+**WP-3.4 · Markdown ingestion pipeline — 11/11 tasks · 56/56 h · 🔎 awaiting review**
 
 | ID | Task | Lane | h | W | Status | Note |
 | --- | --- | --- | --- | --- | --- | --- |
-| T-3.4-01 | BullMQ setup, queue definitions, worker.main.ts consumer entrypoint | B2 | 6 | 6 | ⬜ | |
-| T-3.4-02 | Job lifecycle — retry with back-off, failure reason persisted on the… | B2 | 6 | 7 | ⬜ | |
-| T-3.4-03 | Ingestion state machine — uploaded → parsing → parsed → chunking →… | B2 | 4 | 9 | ⬜ | |
-| T-3.4-04 | Markdown pass-through "parsing" — one pages row, extraction_method =… | L | 4 | 9 | ⬜ | |
-| T-3.4-05 | D-5 decision — measure the XLM-RoBERTa tokenizer against a… | L | 6 | 2 | ⬜ | |
-| T-3.4-06 | Chunker — 200–400 tokens with 15% overlap | L | 8 | 3 | ⬜ | |
-| T-3.4-07 | Chunker — character offsets and heading_path preserved through the split | L | 6 | 4 | ⬜ | |
-| T-3.4-08 | Offset round-trip test — slicing the source by the offsets reproduces… | L | 3 | 5 | ⬜ | |
-| T-3.4-09 | InfinityClient — /embeddings at batch 8, timeout, retry and back-off | L | 6 | 2 | ⬜ | |
-| T-3.4-10 | Persist embeddings as halfvec, with the completeness check | L | 4 | 10 | ⬜ | |
-| T-3.4-11 | End-to-end — upload a folder, reach indexed, expose ingestion status… | L | 3 | 11 | ⬜ | |
+| T-3.4-01 | BullMQ setup, queue definitions, worker.main.ts consumer entrypoint | B2 | 6 | 6 | 🔎 | 2026-09-21 · `ingest-worker` up, job enqueued through the real producer and **consumed**: `completed 1, failed 0`. Enqueuing the same version twice yields one job — the job id is the version id |
+| T-3.4-02 | Job lifecycle — retry with back-off, failure reason persisted on the… | B2 | 6 | 7 | 🔎 | 2026-09-21 · a real version whose bytes were removed: 3 attempts at 1 s and 2 s, then `status='failed'` with the ENOENT as `status_reason`. Restoring the bytes re-ingested it to `parsed` with the reason cleared |
+| T-3.4-03 | Ingestion state machine — uploaded → parsing → parsed → chunking →… | B2 | 4 | 9 | 🔎 | 2026-09-21 · every skip and every backward step refused. **Audit clause deferred to `T-2.4-06`**, which the wave table makes a dependant of this task |
+| T-3.4-04 | Markdown pass-through "parsing" — one pages row, extraction_method =… | L | 4 | 9 | 🔎 | 2026-09-21 · one page row whose text is **identical to the file on disk**, Vietnamese intact. `extraction_method = 'markdown'`, a recorded deviation from the task's `'text_layer'` |
+| T-3.4-05 | D-5 decision — measure the XLM-RoBERTa tokenizer against a… | L | 6 | 2 | 🔎 | 2026-09-21 · [docs/ops/d5-token-counting.md](../ops/d5-token-counting.md) · tokenizer chosen: exact (300–300 against the ratio's 279–373) and cheap (611 ms once, 4.0 ms/doc). **The ratio did not fail** — 0/75 windows outside the band — so the recovered 8.7 % is recorded as unreproduced |
+| T-3.4-06 | Chunker — 200–400 tokens with 15% overlap | L | 8 | 3 | 🔎 | 2026-09-21 · over the whole 50-file corpus, verified by the chosen tokenizer: **121 chunks, 200–392 tokens, 0 over, 0 under**; stride overlap 15.5% against a 15% target |
+| T-3.4-07 | Chunker — character offsets and heading_path preserved through the split | L | 6 | 4 | 🔎 | 2026-09-21 · every chunk is a contiguous slice, so offsets resolve by construction: **0 round-trip failures of 121**, and **0 chunks without a heading trail** |
+| T-3.4-08 | Offset round-trip test — slicing the source by the offsets reproduces… | L | 3 | 5 | 🔎 | 2026-09-21 · `chunker.corpus.spec.ts` runs **every** file, not a sample — 352 assertions over 50 documents. The seed now writes real bytes through `StoragePort`: 50 versions, 50 distinct 64-character digests, **0 missing files, 0 byte_size mismatches** |
+| T-3.4-09 | InfinityClient — /embeddings at batch 8, timeout, retry and back-off | L | 6 | 2 | 🔎 | 2026-09-21 · **restart survived by command, not by hand**: an embed started while infinity was reloading returned 320/320 vectors in 15.3 s against a 1.4 s warm run. First attempt at this check finished before the restart landed and proved nothing |
+| T-3.4-10 | Persist embeddings as halfvec, with the completeness check | L | 4 | 10 | 🔎 | 2026-09-21 · `SELECT count(*) FROM chunks WHERE embedding IS NULL` → **0** over 51 versions and 123 chunks. Completeness is structural: `StoredChunk` requires an embedding, so a chunk without one cannot be written. **WP-2.5 rule 1 narrowed to reads** to permit the write |
+| T-3.4-11 | End-to-end — upload a folder, reach indexed, expose ingestion status… | L | 3 | 11 | 🔎 | 2026-09-21 · `quy chế hợp đồng.md` uploaded through the API reached `indexed` unattended; `GET /workspaces/{id}/documents` returns the state of each. **Live-updating table deferred to `T-3.6-10`**; the list endpoint is scope no task names |
 
 **WP-3.5 · Tool registry and operating mode — 0/4 tasks · 0/16 h**
 
