@@ -116,3 +116,22 @@ export function mayUseSystemAction(role: string, action: SystemAction): boolean 
 export function mayUseWorkspaceAction(role: string, action: WorkspaceAction): boolean {
   return (workspaceRolesFor(action) as readonly string[]).includes(role);
 }
+
+// `tools.min_system_role` stores a single "minimum role", which only means something if the roles
+// form a chain — and §9.1's matrix above is not one: an Auditor reads the audit log a Knowledge
+// Manager may not, and a Knowledge Manager manages workspaces an Auditor may not. So this order is
+// declared here, beside the matrix, and it governs **which tools a role is offered and nothing
+// else**. The matrix stays the authority on what a role may do.
+export const SYSTEM_ROLE_RANK = {
+  Administrator: 0,
+  'Knowledge Manager': 1,
+  Approver: 2,
+  Member: 3,
+  Auditor: 4,
+} as const satisfies Record<SystemRole, number>;
+
+// The roles a caller outranks or equals — the set their catalogue may draw from. The Auditor is
+// last, so their catalogue is empty, which is §9.1's dash under "Ask a question" seen from here.
+export function toolRolesVisibleTo(role: SystemRole): SystemRole[] {
+  return SYSTEM_ROLES.filter((other) => SYSTEM_ROLE_RANK[other] >= SYSTEM_ROLE_RANK[role]);
+}

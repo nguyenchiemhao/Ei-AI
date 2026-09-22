@@ -12,6 +12,12 @@ export interface UserRecord {
   lockedUntil: Date | null;
 }
 
+export interface MembershipSummary {
+  workspaceId: string;
+  workspaceName: string;
+  workspaceRole: string;
+}
+
 export interface NewUser {
   email: string;
   displayName: string;
@@ -88,6 +94,29 @@ export class UsersRepository {
       .returning(COLUMNS)
       .executeTakeFirstOrThrow();
     return toRecord(row as UserRow);
+  }
+
+  // `GET /me` answers "which workspaces am I in, and as what", which workspaces/ has no query for:
+  // listForMember returns the workspaces without the role. The read lives here rather than reaching
+  // into another module, because architecture rule 3 forbids the import and a shared table does not
+  // need one. Recorded as an open question in docs/plan/notes/WP-3.5.md.
+  async listWorkspaceMemberships(userId: string): Promise<MembershipSummary[]> {
+    const rows = await this.db
+      .selectFrom('workspace_members')
+      .innerJoin('workspaces', 'workspaces.id', 'workspace_members.workspace_id')
+      .select([
+        'workspace_members.workspace_id as workspace_id',
+        'workspaces.name as workspace_name',
+        'workspace_members.workspace_role as workspace_role',
+      ])
+      .where('workspace_members.user_id', '=', userId)
+      .orderBy('workspaces.name')
+      .execute();
+    return rows.map((row) => ({
+      workspaceId: row.workspace_id,
+      workspaceName: row.workspace_name,
+      workspaceRole: row.workspace_role,
+    }));
   }
 
   async setLockedUntil(id: string, lockedUntil: Date | null): Promise<void> {

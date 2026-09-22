@@ -31,12 +31,19 @@ module.exports = {
         'a fourth, so this, not "only through ports/", is the boundary that can be enforced. ' +
         'The audit module is exempt, by decision at WP-2.4: FR-66 has every module write events, ' +
         "AuditService is that module's exported surface rather than an internal of it, and a " +
-        'filename cannot tell the two apart. Every other pair of modules is still refused.',
+        'filename cannot tell the two apart. The tools module is exempt on the same argument, by ' +
+        'decision at WP-3.5: design 5.4 makes the registry "the only place that knows which mode ' +
+        'the system is running in", so every surface that reports the mode has to reach it. ' +
+        'Every other pair of modules is still refused.',
       severity: 'error',
       from: { path: '^apps/api/src/modules/([^/]+)/' },
       to: {
         path: '^apps/api/src/modules/[^/]+/.+\\.service\\.ts$',
-        pathNot: ['^apps/api/src/modules/$1/', '^apps/api/src/modules/audit/'],
+        pathNot: [
+          '^apps/api/src/modules/$1/',
+          '^apps/api/src/modules/audit/',
+          '^apps/api/src/modules/tools/',
+        ],
       },
     },
     {

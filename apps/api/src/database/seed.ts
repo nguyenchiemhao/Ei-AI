@@ -1,3 +1,4 @@
+import { INTERNAL_TOOLS } from '@ei-ai/shared-types';
 import { createReadStream, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Client } from 'pg';
@@ -138,19 +139,27 @@ async function seedDocuments(
   return filenames.length;
 }
 
-// The one tool Phase 1 enables. Internal tools carry no mcp_server_id, so the UNIQUE
-// (mcp_server_id, name) constraint does not apply to them and a WHERE NOT EXISTS does the work.
-async function seedSearchTool(client: Client): Promise<void> {
-  await client.query(
-    `INSERT INTO tools (name, description, input_schema, classification, enabled, min_system_role)
-     SELECT 'search_documents',
-            'Search indexed documents and return cited passages',
-            '{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}'::jsonb,
-            'read', TRUE, 'Member'
-     WHERE NOT EXISTS (
-       SELECT 1 FROM tools WHERE name = 'search_documents' AND mcp_server_id IS NULL
-     )`,
-  );
+// The three internal tools of ADR-10; only `search_documents` is enabled in Phase 1. Internal tools
+// carry no mcp_server_id, so the UNIQUE (mcp_server_id, name) constraint does not apply to them and
+// a WHERE NOT EXISTS does the work.
+async function seedInternalTools(client: Client): Promise<void> {
+  for (const tool of INTERNAL_TOOLS) {
+    await client.query(
+      `INSERT INTO tools (name, description, input_schema, classification, enabled, min_system_role)
+       SELECT $1, $2, $3::jsonb, $4::tool_classification, $5, $6
+       WHERE NOT EXISTS (
+         SELECT 1 FROM tools WHERE name = $1 AND mcp_server_id IS NULL
+       )`,
+      [
+        tool.name,
+        tool.description,
+        JSON.stringify(tool.inputSchema),
+        tool.classification,
+        tool.enabledInPhase1,
+        tool.minSystemRole,
+      ],
+    );
+  }
 }
 
 // One destination, recorded but not enabled. T-5.2-01 generates allowlist.conf from this table;
@@ -175,12 +184,12 @@ export async function seed(): Promise<void> {
     const workspaceIds = await seedWorkspaces(client, adminId);
     await seedMemberships(client, workspaceIds, users);
     const documentCount = await seedDocuments(client, workspaceIds[0]!, adminId);
-    await seedSearchTool(client);
+    await seedInternalTools(client);
     await seedAllowlistEntry(client, adminId);
     await client.query('COMMIT');
     process.stdout.write(
       `seeded ${USERS.length} users, ${workspaceIds.length} workspaces, ` +
-        `${documentCount} documents, 1 tool, 1 allowlist entry; ` +
+        `${documentCount} documents, ${INTERNAL_TOOLS.length} tools, 1 allowlist entry; ` +
         `${ADMIN_EMAIL} password ${credentialGiven ? 'set' : 'left untouched'}\n`,
     );
   } catch (error) {

@@ -13,6 +13,7 @@ import { AuditModule } from './modules/audit/audit.module';
 import { IdentityModule } from './modules/identity/identity.module';
 import { IngestionModule } from './modules/ingestion/ingestion.module';
 import { RetrievalModule } from './modules/retrieval/retrieval.module';
+import { ToolsModule } from './modules/tools/tools.module';
 import { WorkspacesModule } from './modules/workspaces/workspaces.module';
 
 // The edge is wired here rather than in main.ts so a testing module built from AppModule gets
@@ -26,6 +27,7 @@ import { WorkspacesModule } from './modules/workspaces/workspaces.module';
     DatabaseModule,
     AdminModule,
     AuditModule,
+    ToolsModule,
     IdentityModule,
     WorkspacesModule,
     IngestionModule,

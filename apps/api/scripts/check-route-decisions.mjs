@@ -22,6 +22,7 @@ const NO_ROLE_NEEDED = {
   'POST /auth/refresh': 'public — the refresh cookie is the credential',
   'POST /auth/logout': 'authenticated only — a caller may always end their own session',
   'GET /health': 'public liveness — CI and a load balancer poll it without a token',
+  'GET /me': 'authenticated only — every role reads its own identity and the operating mode',
   'GET /workspaces': 'authenticated only — lists the caller’s own memberships, scoped by them',
 };
 

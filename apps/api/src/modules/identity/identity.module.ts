@@ -6,6 +6,7 @@ import type { Env } from '../../config/env.schema';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { LoginAttemptsRepository } from './login-attempts.repository';
+import { MeController } from './me.controller';
 import { PasswordService } from './password.service';
 import { RefreshTokenRepository } from './refresh-token.repository';
 import { RefreshTokenService } from './refresh-token.service';
@@ -20,7 +21,7 @@ import { UsersRepository } from './users.repository';
       useFactory: (config: Env) => ({ secret: config.JWT_SECRET }),
     }),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, MeController],
   providers: [
     AuthService,
     LoginAttemptsRepository,
