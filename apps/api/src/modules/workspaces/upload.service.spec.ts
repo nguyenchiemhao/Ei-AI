@@ -1,9 +1,11 @@
 import type { IngestQueue } from '../ingestion/ingest.queue';
+import type { ActorContext } from '../audit/audit-context';
+import type { AuditService } from '../audit/audit.service';
 import { mkdtemp, readdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Readable } from 'node:stream';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AppException } from '../../common/app-exception';
 import type { Database } from '../../database/db';
 import type { DocumentVersionsRepository } from './document-versions.repository';
@@ -73,6 +75,7 @@ function serviceWith(role: WorkspaceRole | null, versionInsert?: ReturnType<type
   return {
     service: new UploadService(
       ingestQueue,
+      auditDouble,
       members,
       documents,
       versions,
@@ -85,6 +88,19 @@ function serviceWith(role: WorkspaceRole | null, versionInsert?: ReturnType<type
     versionInsert: insert,
   };
 }
+
+const ACTOR: ActorContext = { actorUserId: 'u-1', actorIp: '10.0.0.1', correlationId: 'c-1' };
+const recorded: { action: string; detail?: Record<string, unknown> }[] = [];
+const auditDouble = {
+  record: vi.fn((record: { action: string; detail?: Record<string, unknown> }) => {
+    recorded.push(record);
+    return Promise.resolve({});
+  }),
+} as unknown as AuditService;
+
+beforeEach(() => {
+  recorded.length = 0;
+});
 
 async function rejectionOf(promise: Promise<unknown>): Promise<AppException> {
   try {
@@ -100,7 +116,7 @@ describe('UploadService', () => {
     const { service, put } = serviceWith(role);
     const { file } = await incoming();
 
-    await expect(service.store('w-1', 'u-1', file)).resolves.toMatchObject({
+    await expect(service.store('w-1', ACTOR, file)).resolves.toMatchObject({
       documentId: 'd-1',
       versionId: 'v-1',
       versionNo: 1,
@@ -113,7 +129,7 @@ describe('UploadService', () => {
     const { service, put } = serviceWith(role);
     const { file } = await incoming();
 
-    const rejection = await rejectionOf(service.store('w-1', 'u-1', file));
+    const rejection = await rejectionOf(service.store('w-1', ACTOR, file));
 
     expect(rejection.code).toBe('AUTHZ_WORKSPACE_FORBIDDEN');
     expect(put).not.toHaveBeenCalled();
@@ -125,7 +141,7 @@ describe('UploadService', () => {
     const { file } = await incoming();
 
     const rejection = await rejectionOf(
-      service.store('w-1', 'u-1', { ...file, size: MAX_UPLOAD_BYTES + 1 }),
+      service.store('w-1', ACTOR, { ...file, size: MAX_UPLOAD_BYTES + 1 }),
     );
 
     expect(rejection.code).toBe('DOC_TOO_LARGE');
@@ -141,7 +157,7 @@ describe('UploadService', () => {
     const { service, put } = serviceWith('Editor');
     const { file } = await incoming();
 
-    await service.store('w-1', 'u-1', { ...file, size: MAX_UPLOAD_BYTES });
+    await service.store('w-1', ACTOR, { ...file, size: MAX_UPLOAD_BYTES });
 
     expect(put).toHaveBeenCalledOnce();
   });
@@ -154,7 +170,7 @@ describe('UploadService', () => {
     const { service } = serviceWith(role);
     const { file, dir } = await incoming();
 
-    await service.store('w-1', 'u-1', file).catch(() => undefined);
+    await service.store('w-1', ACTOR, file).catch(() => undefined);
 
     expect(await readdir(dir)).toEqual([]);
     expect(accepted).toBe(role === 'Editor');
@@ -167,7 +183,7 @@ describe('UploadService', () => {
       const { service, put } = serviceWith('Editor');
       const { file } = await incoming();
 
-      const rejection = await rejectionOf(service.store('w-1', 'u-1', { ...file, originalname }));
+      const rejection = await rejectionOf(service.store('w-1', ACTOR, { ...file, originalname }));
 
       expect(rejection.code).toBe('DOC_UNSUPPORTED_FORMAT');
       expect(rejection.getStatus()).toBe(415);
@@ -182,7 +198,7 @@ describe('UploadService', () => {
     const { file } = await incoming();
 
     const rejection = await rejectionOf(
-      service.store('w-1', 'u-1', {
+      service.store('w-1', ACTOR, {
         ...file,
         originalname: 'payload.exe',
         size: MAX_UPLOAD_BYTES + 1,
@@ -200,7 +216,7 @@ describe('UploadService', () => {
     const { file } = await incoming(elf);
 
     const rejection = await rejectionOf(
-      service.store('w-1', 'u-1', { ...file, originalname: 'payload.pdf' }),
+      service.store('w-1', ACTOR, { ...file, originalname: 'payload.pdf' }),
     );
 
     expect(rejection.code).toBe('DOC_CONTENT_MISMATCH');
@@ -214,7 +230,7 @@ describe('UploadService', () => {
     const { service, put } = serviceWith('Editor');
     const { file } = await incoming('%PDF-1.7\n');
 
-    await service.store('w-1', 'u-1', { ...file, originalname: 'real.pdf' });
+    await service.store('w-1', ACTOR, { ...file, originalname: 'real.pdf' });
 
     expect(put).toHaveBeenCalledOnce();
   });
@@ -228,7 +244,7 @@ describe('UploadService', () => {
     const { service } = serviceWith('Editor', vi.fn().mockRejectedValue(clash));
     const { file } = await incoming();
 
-    const rejection = await rejectionOf(service.store('w-1', 'u-1', file));
+    const rejection = await rejectionOf(service.store('w-1', ACTOR, file));
 
     expect(rejection.code).toBe('DOC_DUPLICATE_CONTENT');
     expect(rejection.getStatus()).toBe(409);
@@ -243,14 +259,14 @@ describe('UploadService', () => {
     const { service } = serviceWith('Editor', vi.fn().mockRejectedValue(other));
     const { file } = await incoming();
 
-    await expect(service.store('w-1', 'u-1', file)).rejects.toBe(other);
+    await expect(service.store('w-1', ACTOR, file)).rejects.toBe(other);
   });
 
   it('points the document at the version it just wrote', async () => {
     const { service, setCurrentVersion } = serviceWith('Editor');
     const { file } = await incoming();
 
-    await service.store('w-1', 'u-1', file);
+    await service.store('w-1', ACTOR, file);
 
     expect(setCurrentVersion).toHaveBeenCalledWith('d-1', 'v-1', TX);
   });
@@ -259,9 +275,9 @@ describe('UploadService', () => {
     const { service, enqueue } = serviceWith('Editor');
     const { file } = await incoming();
 
-    await service.store('w-1', 'u-1', file);
+    await service.store('w-1', ACTOR, file);
 
-    expect(enqueue).toHaveBeenCalledWith('v-1');
+    expect(enqueue).toHaveBeenCalledWith('v-1', 'c-1');
   });
 
   it('still stores the upload when the queue is unreachable', async () => {
@@ -271,7 +287,7 @@ describe('UploadService', () => {
     enqueue.mockRejectedValue(new Error('connect ECONNREFUSED'));
     const { file } = await incoming();
 
-    await expect(service.store('w-1', 'u-1', file)).resolves.toMatchObject({ versionId: 'v-1' });
+    await expect(service.store('w-1', ACTOR, file)).resolves.toMatchObject({ versionId: 'v-1' });
   });
 
   it('logs a queue rejection that is not an Error without printing undefined', async () => {
@@ -279,7 +295,7 @@ describe('UploadService', () => {
     enqueue.mockRejectedValue('socket hang up');
     const { file } = await incoming();
 
-    await expect(service.store('w-1', 'u-1', file)).resolves.toMatchObject({ versionId: 'v-1' });
+    await expect(service.store('w-1', ACTOR, file)).resolves.toMatchObject({ versionId: 'v-1' });
   });
 
   it('queues only after the version exists, never before', async () => {
@@ -295,7 +311,7 @@ describe('UploadService', () => {
     });
     const { file } = await incoming();
 
-    await service.store('w-1', 'u-1', file);
+    await service.store('w-1', ACTOR, file);
 
     expect(order).toEqual(['stored', 'queued']);
   });
@@ -305,7 +321,7 @@ describe('UploadService', () => {
     const { service } = serviceWith('Editor', vi.fn().mockRejectedValue(bare));
     const { file } = await incoming();
 
-    await expect(service.store('w-1', 'u-1', file)).rejects.toBe(bare);
+    await expect(service.store('w-1', ACTOR, file)).rejects.toBe(bare);
   });
 
   // Busboy hands over a latin-1 reading of the filename, so a Vietnamese name arrives mangled

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable, type NestMiddleware } from '@nestjs/common';
-import type { RequestLike, ResponseLike } from './http.types';
+import type { CorrelatedRequest, RequestLike, ResponseLike } from './http.types';
 
 export const CORRELATION_ID_HEADER = 'X-Correlation-Id';
 
@@ -16,8 +16,21 @@ function incomingCorrelationId(request: RequestLike): string | undefined {
 // problem body onto a response that already carries the header.
 @Injectable()
 export class CorrelationIdMiddleware implements NestMiddleware {
-  use(request: RequestLike, response: ResponseLike, next: () => void): void {
-    response.setHeader(CORRELATION_ID_HEADER, incomingCorrelationId(request) ?? randomUUID());
+  use(request: CorrelatedRequest, response: ResponseLike, next: () => void): void {
+    const correlationId = incomingCorrelationId(request) ?? randomUUID();
+    response.setHeader(CORRELATION_ID_HEADER, correlationId);
+    // Also on the request, because an audit row carries `correlation_id` as `NOT NULL` and a
+    // service has no way to read a response header. The header alone was write-only.
+    request.correlationId = correlationId;
     next();
   }
+}
+
+// An audit row cannot be written without one, so an absent id is a wiring fault rather than
+// something to paper over with a fresh uuid that links to nothing.
+export function correlationIdOf(request: CorrelatedRequest): string {
+  if (!request.correlationId) {
+    throw new Error('No correlation id on the request; CorrelationIdMiddleware did not run');
+  }
+  return request.correlationId;
 }

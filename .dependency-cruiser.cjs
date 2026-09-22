@@ -28,12 +28,15 @@ module.exports = {
       comment:
         'Rule 3 — a module reaches another module through its exported surface, never through ' +
         'its *.service.ts. ports/ holds the three outbound seams of design 5.4 and may not grow ' +
-        'a fourth, so this, not "only through ports/", is the boundary that can be enforced.',
+        'a fourth, so this, not "only through ports/", is the boundary that can be enforced. ' +
+        'The audit module is exempt, by decision at WP-2.4: FR-66 has every module write events, ' +
+        "AuditService is that module's exported surface rather than an internal of it, and a " +
+        'filename cannot tell the two apart. Every other pair of modules is still refused.',
       severity: 'error',
       from: { path: '^apps/api/src/modules/([^/]+)/' },
       to: {
         path: '^apps/api/src/modules/[^/]+/.+\\.service\\.ts$',
-        pathNot: '^apps/api/src/modules/$1/',
+        pathNot: ['^apps/api/src/modules/$1/', '^apps/api/src/modules/audit/'],
       },
     },
     {

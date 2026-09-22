@@ -26,7 +26,7 @@ function jobOf(
     id: 'v-1',
     attemptsMade,
     opts,
-    data: { documentVersionId: 'v-1' },
+    data: { documentVersionId: 'v-1', correlationId: 'c-1' },
   } as unknown as Job<IngestJob>;
 }
 
@@ -40,7 +40,7 @@ describe('IngestConsumer.onFailed', () => {
   it('marks the version failed once the queue has given up', async () => {
     const { consumer, markFailed } = consumerWith();
     await consumer.onFailed(jobOf(3), new Error('ENOENT: no such file\n  at read'));
-    expect(markFailed).toHaveBeenCalledWith('v-1', 'ENOENT: no such file');
+    expect(markFailed).toHaveBeenCalledWith('v-1', 'ENOENT: no such file', 'c-1');
   });
 
   it('logs a retry for a job the queue gave no id, rather than printing undefined', async () => {
@@ -53,7 +53,7 @@ describe('IngestConsumer.onFailed', () => {
   it('treats a job with no attempts configured as its own last attempt', async () => {
     const { consumer, markFailed } = consumerWith();
     await consumer.onFailed(jobOf(1, {}), new Error('boom'));
-    expect(markFailed).toHaveBeenCalledWith('v-1', 'boom');
+    expect(markFailed).toHaveBeenCalledWith('v-1', 'boom', 'c-1');
   });
 
   it('writes nothing when the job itself could not be read', async () => {

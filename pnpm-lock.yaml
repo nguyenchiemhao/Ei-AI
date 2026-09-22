@@ -17,6 +17,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@ei-ai/shared-types':
+        specifier: workspace:*
+        version: link:../../packages/shared-types
       '@huggingface/tokenizers':
         specifier: 0.2.0
         version: 0.2.0
@@ -142,6 +145,21 @@ importers:
       eslint:
         specifier: 9.18.0
         version: 9.18.0
+
+  packages/shared-types:
+    devDependencies:
+      '@ei-ai/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@ei-ai/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      eslint:
+        specifier: 9.18.0
+        version: 9.18.0
+      typescript:
+        specifier: 5.7.3
+        version: 5.7.3
 
   packages/tsconfig: {}
 

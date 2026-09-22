@@ -1,19 +1,12 @@
 import { Body, Controller, HttpCode, Post, Req, UseGuards, UsePipes } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ApiZodBody } from '../../common/api-docs';
-import { AppException } from '../../common/app-exception';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import type { AuthenticatedRequest, Principal } from '../../common/http.types';
+import type { AuthenticatedRequest } from '../../common/http.types';
 import { ZodValidationPipe } from '../../common/zod-validation.pipe';
 import { type PassageView, type SearchRequest, searchSchema } from './dto/search.dto';
+import { actorOf } from '../audit/audit-context';
 import { RetrievalService } from './retrieval.service';
-
-function principalOf(request: AuthenticatedRequest): Principal {
-  if (!request.principal) {
-    throw new AppException('AUTH_INVALID_CREDENTIALS', 'Missing access token');
-  }
-  return request.principal;
-}
 
 @ApiTags('retrieval')
 @ApiBearerAuth()
@@ -38,7 +31,7 @@ export class RetrievalController {
     @Req() request: AuthenticatedRequest,
   ): Promise<PassageView[]> {
     const passages = await this.retrieval.search(
-      principalOf(request).userId,
+      actorOf(request),
       body.question,
       body.workspaceIds,
     );

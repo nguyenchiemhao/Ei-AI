@@ -1,3 +1,4 @@
+import { correlationIdOf } from '../../common/correlation-id.middleware';
 import { isIP } from 'node:net';
 import { Body, Controller, HttpCode, Inject, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -8,6 +9,7 @@ import type {
   AuthenticatedRequest,
   CookieRequest,
   CookieResponse,
+  CorrelatedRequest,
   RequestLike,
 } from '../../common/http.types';
 import { ZodValidationPipe } from '../../common/zod-validation.pipe';
@@ -59,13 +61,14 @@ export class AuthController {
   @ApiResponse({ status: 429, description: 'RATE_LIMITED — more than 10 attempts in 15 minutes' })
   async login(
     @Body(new ZodValidationPipe(loginSchema)) body: LoginRequest,
-    @Req() request: RequestLike,
+    @Req() request: CorrelatedRequest,
     @Res({ passthrough: true }) response: CookieResponse,
   ): Promise<AuthenticatedUser> {
     const user = await this.auth.authenticate({
       email: body.email,
       password: body.password,
       ip: clientIpOf(request),
+      correlationId: correlationIdOf(request),
     });
     return this.issueSession(user, response);
   }

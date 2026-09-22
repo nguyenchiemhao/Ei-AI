@@ -29,6 +29,7 @@ import {
   updateWorkspaceSchema,
   type WorkspaceView,
 } from './dto/workspace.dto';
+import { actorOf } from '../audit/audit-context';
 import { ContentLengthGuard } from './content-length.guard';
 import { DocumentsListingService } from './documents-listing.service';
 import { MembershipsService } from './memberships.service';
@@ -74,7 +75,7 @@ export class WorkspacesController {
     @Body(new ZodValidationPipe(createWorkspaceSchema)) body: CreateWorkspaceRequest,
     @Req() request: AuthenticatedRequest,
   ): Promise<WorkspaceView> {
-    return this.workspaces.create(body, principalOf(request).userId);
+    return this.workspaces.create(body, actorOf(request));
   }
 
   @Get(':id')
@@ -89,8 +90,9 @@ export class WorkspacesController {
   update(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(updateWorkspaceSchema)) body: UpdateWorkspaceRequest,
+    @Req() request: AuthenticatedRequest,
   ): Promise<WorkspaceView> {
-    return this.workspaces.update(id, body);
+    return this.workspaces.update(id, body, actorOf(request));
   }
 
   @Get(':id/members')
@@ -113,7 +115,7 @@ export class WorkspacesController {
     @Body(new ZodValidationPipe(memberSchema)) body: MemberRequest,
     @Req() request: AuthenticatedRequest,
   ): Promise<MembershipView> {
-    return this.memberships.put(id, body, principalOf(request).userId);
+    return this.memberships.put(id, body, actorOf(request));
   }
 
   @Delete(':id/members/:userId')
@@ -125,7 +127,7 @@ export class WorkspacesController {
     @Param('userId') userId: string,
     @Req() request: AuthenticatedRequest,
   ): Promise<void> {
-    return this.memberships.remove(id, userId, principalOf(request).userId);
+    return this.memberships.remove(id, userId, actorOf(request));
   }
 
   @Get(':id/documents')
@@ -153,6 +155,6 @@ export class WorkspacesController {
     if (!file) {
       throw new AppException('VALIDATION_FAILED', 'Missing the "file" part of the multipart body');
     }
-    return this.uploads.store(id, principalOf(request).userId, file);
+    return this.uploads.store(id, actorOf(request), file);
   }
 }

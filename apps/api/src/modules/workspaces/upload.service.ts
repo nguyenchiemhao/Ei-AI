@@ -1,3 +1,6 @@
+import { AUDIT_ACTIONS, AUDIT_OBJECTS } from '@ei-ai/shared-types';
+import type { ActorContext } from '../audit/audit-context';
+import { AuditService } from '../audit/audit.service';
 import { IngestQueue } from '../ingestion/ingest.queue';
 import { createReadStream } from 'node:fs';
 import { open, rm } from 'node:fs/promises';
@@ -62,6 +65,7 @@ export class UploadService {
 
   constructor(
     private readonly ingestQueue: IngestQueue,
+    private readonly audit: AuditService,
     private readonly members: WorkspaceMembersRepository,
     private readonly documents: DocumentsRepository,
     private readonly versions: DocumentVersionsRepository,
@@ -69,7 +73,12 @@ export class UploadService {
     @Inject(DATABASE) private readonly db: Database,
   ) {}
 
-  async store(workspaceId: string, callerId: string, file: UploadedFile): Promise<StoredDocument> {
+  async store(
+    workspaceId: string,
+    actor: ActorContext,
+    file: UploadedFile,
+  ): Promise<StoredDocument> {
+    const callerId = actor.actorUserId;
     try {
       await this.assertMayUpload(workspaceId, callerId);
       const filename = decodeMultipartFilename(file.originalname);
@@ -79,12 +88,12 @@ export class UploadService {
       const stored = await this.storage.put(createReadStream(file.path));
       const document = await this.record(
         workspaceId,
-        callerId,
+        actor,
         { ...file, originalname: filename },
         format.contentType,
         stored,
       );
-      await this.queueIngestion(document.versionId);
+      await this.queueIngestion(document.versionId, actor.correlationId);
       return document;
     } finally {
       await rm(file.path, { force: true });
@@ -94,9 +103,9 @@ export class UploadService {
   // Queued after the transaction commits, and a failure here does not fail the upload: the bytes
   // are stored and the row exists, so the document simply stays at `uploaded` — which is what the
   // status column is for. Losing the response to a queue that is briefly down would be worse.
-  private async queueIngestion(versionId: string): Promise<void> {
+  private async queueIngestion(versionId: string, correlationId: string): Promise<void> {
     try {
-      await this.ingestQueue.enqueue(versionId);
+      await this.ingestQueue.enqueue(versionId, correlationId);
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
       this.logger.error(`${versionId} stored but not queued: ${reason}`);
@@ -108,11 +117,12 @@ export class UploadService {
   // a race between two uploads, and the constraint is not.
   private async record(
     workspaceId: string,
-    callerId: string,
+    actor: ActorContext,
     file: UploadedFile,
     contentType: string,
     stored: StoredObject,
   ): Promise<StoredDocument> {
+    const callerId = actor.actorUserId;
     return withTransaction(this.db, async (tx) => {
       const document = await this.documentFor(workspaceId, callerId, file, contentType, tx);
       const versionNo = await this.versions.nextVersionNo(document.id, tx);
@@ -129,6 +139,23 @@ export class UploadService {
           tx,
         );
         await this.documents.setCurrentVersion(document.id, version.id, tx);
+        await this.audit.record(
+          {
+            ...actor,
+            action: AUDIT_ACTIONS.DOCUMENT_UPLOADED,
+            objectKind: AUDIT_OBJECTS.DOCUMENT,
+            objectId: document.id,
+            workspaceId,
+            detail: {
+              sourceFilename: file.originalname,
+              contentType,
+              byteSize: version.byteSize,
+              sha256: version.sha256,
+              versionNo: version.versionNo,
+            },
+          },
+          tx,
+        );
         return {
           documentId: document.id,
           versionId: version.id,

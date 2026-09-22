@@ -3,6 +3,9 @@ import { AppException } from '../../common/app-exception';
 import { DATABASE } from '../../database/database.module';
 import type { Database } from '../../database/db';
 import { withTransaction } from '../../database/transaction';
+import { AUDIT_ACTIONS, AUDIT_OBJECTS } from '@ei-ai/shared-types';
+import type { ActorContext } from '../audit/audit-context';
+import { AuditService } from '../audit/audit.service';
 import type { Tx } from '../../database/transaction';
 import type { MemberRequest } from './dto/workspace.dto';
 import { type MembershipView, WorkspaceMembersRepository } from './workspace-members.repository';
@@ -22,6 +25,7 @@ function isUnknownUser(error: unknown): boolean {
 @Injectable()
 export class MembershipsService {
   constructor(
+    private readonly audit: AuditService,
     private readonly members: WorkspaceMembersRepository,
     @Inject(DATABASE) private readonly db: Database,
   ) {}
@@ -34,16 +38,35 @@ export class MembershipsService {
   async put(
     workspaceId: string,
     request: MemberRequest,
-    callerId: string,
+    actor: ActorContext,
   ): Promise<MembershipView> {
+    const callerId = actor.actorUserId;
     return withTransaction(this.db, async (tx) => {
       await this.assertOwner(workspaceId, callerId, tx);
+      const existing = await this.members.findRole(workspaceId, request.userId, tx);
       await this.assertOwnerRemains(workspaceId, request.userId, request.role, tx);
       try {
-        return await this.members.upsert(
+        const membership = await this.members.upsert(
           { workspaceId, userId: request.userId, role: request.role, addedBy: callerId },
           tx,
         );
+        // Added and re-roled are different things to an auditor: one grants access that did not
+        // exist, the other changes what an existing member may do.
+        await this.audit.record(
+          {
+            ...actor,
+            action:
+              existing === undefined
+                ? AUDIT_ACTIONS.MEMBERSHIP_ADDED
+                : AUDIT_ACTIONS.MEMBERSHIP_ROLE_CHANGED,
+            objectKind: AUDIT_OBJECTS.MEMBERSHIP,
+            objectId: request.userId,
+            workspaceId,
+            detail: { role: request.role, previousRole: existing ?? null },
+          },
+          tx,
+        );
+        return membership;
       } catch (error) {
         if (isUnknownUser(error)) {
           throw new AppException('NOT_FOUND', 'User does not exist');
@@ -53,14 +76,27 @@ export class MembershipsService {
     });
   }
 
-  async remove(workspaceId: string, userId: string, callerId: string): Promise<void> {
+  async remove(workspaceId: string, userId: string, actor: ActorContext): Promise<void> {
+    const callerId = actor.actorUserId;
     await withTransaction(this.db, async (tx) => {
       await this.assertOwner(workspaceId, callerId, tx);
+      const previousRole = await this.members.findRole(workspaceId, userId, tx);
       await this.assertOwnerRemains(workspaceId, userId, undefined, tx);
       const removed = await this.members.remove(workspaceId, userId, tx);
       if (removed === 0) {
         throw new AppException('NOT_FOUND', 'User is not a member of this workspace');
       }
+      await this.audit.record(
+        {
+          ...actor,
+          action: AUDIT_ACTIONS.MEMBERSHIP_REMOVED,
+          objectKind: AUDIT_OBJECTS.MEMBERSHIP,
+          objectId: userId,
+          workspaceId,
+          detail: { previousRole: previousRole ?? null },
+        },
+        tx,
+      );
     });
   }
 

@@ -98,6 +98,12 @@ beforeAll(async () => {
   createdWorkspaces.push(workspaceId);
 });
 
+// Since WP-2.4 an action leaves an audit row, and `audit_events` is append-only with foreign keys
+// to `users` and `workspaces` — so a workspace or a user that has ever been audited can no longer
+// be deleted, and `ON DELETE SET NULL` cannot rescue it either because that is an UPDATE the
+// immutability trigger refuses. What this suite creates is therefore archived rather than removed,
+// which is what the product does with a workspace anyway (FR-61); the rows it can still delete, it
+// deletes.
 afterAll(async () => {
   // One statement per call: a parameterised query in node-postgres is a prepared statement, and
   // a prepared statement holds exactly one command.
@@ -109,11 +115,11 @@ afterAll(async () => {
       [id],
     );
     await db.query('DELETE FROM documents WHERE workspace_id = $1', [id]);
-    await db.query('DELETE FROM workspaces WHERE id = $1', [id]);
+    await db.query('DELETE FROM workspace_members WHERE workspace_id = $1', [id]);
+    await db.query(`UPDATE workspaces SET status = 'archived' WHERE id = $1`, [id]);
   }
   if (createdUsers.length > 0) {
     await db.query('DELETE FROM login_attempts WHERE email = ANY($1)', [createdUsers]);
-    await db.query('DELETE FROM users WHERE email = ANY($1)', [createdUsers]);
   }
   await db.end();
 });

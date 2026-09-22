@@ -54,7 +54,11 @@ afterAll(async () => {
     // login_attempts survives its user — the foreign key is ON DELETE SET NULL — so a suite that
     // deleted only the users would leave eleven rows per run in a table the rate limit queries.
     await db.query('DELETE FROM login_attempts WHERE email = ANY($1)', [created]);
-    await db.query('DELETE FROM users WHERE email = ANY($1)', [created]);
+    // The users themselves stay. Since WP-2.4 a login attempt writes an audit row that references
+    // the actor, `audit_events` is append-only, and neither CASCADE nor SET NULL can reach it —
+    // one deletes audit rows, the other updates them, and the immutability trigger refuses both.
+    // Disabling them is what the product does to an account it is finished with.
+    await db.query(`UPDATE users SET status = 'disabled' WHERE email = ANY($1)`, [created]);
   }
   await db.end();
 });
@@ -95,6 +99,16 @@ describe('identity, end to end', () => {
     const eleventh = await login(email, 'wrong password entirely');
     expect(eleventh.status).toBe(423);
     expect(await codeOf(eleventh)).toBe('AUTH_ACCOUNT_LOCKED');
+
+    // T-2.4-04: eleven failures and one lockout, written despite every one of those requests
+    // failing. An audit row inside the failing action's transaction would have rolled back with it.
+    const { rows } = await db.query<{ action: string; count: string }>(
+      `SELECT action, count(*) AS count FROM audit_events
+       WHERE detail->>'email' = $1 GROUP BY action ORDER BY action`,
+      [email],
+    );
+    const byAction = Object.fromEntries(rows.map((row) => [row.action, Number(row.count)]));
+    expect(byAction).toEqual({ 'auth.login.failed': 11, 'auth.account.locked': 1 });
 
     const withTheRightPassword = await login(email);
     expect(withTheRightPassword.status).toBe(423);

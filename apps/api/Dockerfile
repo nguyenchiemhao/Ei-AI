@@ -9,6 +9,7 @@ FROM base AS deps
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
 COPY packages/tsconfig/package.json packages/tsconfig/
 COPY packages/eslint-config/package.json packages/eslint-config/
+COPY packages/shared-types/package.json packages/shared-types/
 COPY apps/api/package.json apps/api/
 RUN pnpm install --frozen-lockfile
 

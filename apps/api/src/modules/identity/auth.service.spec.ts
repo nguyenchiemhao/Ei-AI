@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import type { AuditService } from '../audit/audit.service';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppException } from '../../common/app-exception';
 import type { Env } from '../../config/env.schema';
 import { AuthService } from './auth.service';
@@ -44,7 +45,7 @@ function serviceFor(
     countFailuresSinceLastSuccess,
   } as unknown as LoginAttemptsRepository;
   return {
-    service: new AuthService(users, passwords, attempts, LIMITS),
+    service: new AuthService(users, passwords, attempts, auditDouble, LIMITS),
     verifyWithConstantCost,
     record,
     countSince,
@@ -52,8 +53,23 @@ function serviceFor(
   };
 }
 
+// Authentication is not transactional, so its events go through recordIndependently. The double
+// collects them so a test can count what an auditor would see.
+const auditedEvents: { action: string; detail?: Record<string, unknown> }[] = [];
+const auditDouble = {
+  recordIndependently: vi.fn((record: { action: string; detail?: Record<string, unknown> }) => {
+    auditedEvents.push(record);
+    return Promise.resolve();
+  }),
+} as unknown as AuditService;
+
+beforeEach(() => {
+  auditedEvents.length = 0;
+  vi.mocked(auditDouble.recordIndependently).mockClear();
+});
+
 function login(service: AuthService, email = 'member@ei-ai.local', password = 'x') {
-  return service.authenticate({ email, password, ip: '10.0.0.1' });
+  return service.authenticate({ email, password, ip: '10.0.0.1', correlationId: 'c-1' });
 }
 
 async function rejectionOf(promise: Promise<unknown>): Promise<AppException> {
@@ -231,6 +247,7 @@ describe('AuthService.activeUser', () => {
       users,
       {} as unknown as PasswordService,
       {} as unknown as LoginAttemptsRepository,
+      auditDouble,
       LIMITS,
     );
   }
@@ -251,5 +268,64 @@ describe('AuthService.activeUser', () => {
     const rejection = await rejectionOf(serviceForId(undefined).activeUser('u-1'));
 
     expect(rejection.code).toBe('AUTH_INVALID_CREDENTIALS');
+  });
+});
+
+describe('what authentication records', () => {
+  it('records one event for a successful login', async () => {
+    const { service } = serviceFor(ACTIVE_USER, true);
+    await login(service);
+    expect(auditedEvents.map((e) => e.action)).toEqual(['auth.login.succeeded']);
+  });
+
+  it('records a failure with the reason, and never the password', async () => {
+    const { service } = serviceFor(ACTIVE_USER, false);
+    await expect(login(service, 'member@ei-ai.local', 'wrong-password')).rejects.toThrow();
+    expect(auditedEvents).toHaveLength(1);
+    expect(auditedEvents[0]).toMatchObject({
+      action: 'auth.login.failed',
+      detail: { reason: 'bad_password', email: 'member@ei-ai.local' },
+    });
+    expect(JSON.stringify(auditedEvents)).not.toContain('wrong-password');
+  });
+
+  it('tells an unknown email from a bad password, which an auditor needs', async () => {
+    const { service } = serviceFor(undefined, false);
+    await expect(login(service, 'nobody@ei-ai.local')).rejects.toThrow();
+    expect(auditedEvents[0]).toMatchObject({ detail: { reason: 'unknown_email' } });
+  });
+
+  it('records the lockout as its own event beside the failure that caused it', async () => {
+    const { service } = serviceFor(ACTIVE_USER, false, { consecutiveFailures: 10 });
+    await expect(login(service)).rejects.toThrow();
+    expect(auditedEvents.map((e) => e.action)).toEqual([
+      'auth.account.locked',
+      'auth.login.failed',
+    ]);
+  });
+
+  it('records the refusal when an already locked account tries again', async () => {
+    const locked = { ...ACTIVE_USER, lockedUntil: new Date(Date.now() + 60_000) };
+    const { service } = serviceFor(locked, true);
+    await expect(login(service)).rejects.toThrow();
+    expect(auditedEvents[0]).toMatchObject({
+      action: 'auth.login.failed',
+      detail: { reason: 'account_locked' },
+    });
+  });
+
+  it('records the refusal when the rate limit is what stopped it', async () => {
+    const { service } = serviceFor(ACTIVE_USER, true, { recentAttempts: 10 });
+    await expect(login(service)).rejects.toThrow();
+    expect(auditedEvents[0]).toMatchObject({
+      action: 'auth.login.failed',
+      detail: { reason: 'rate_limited' },
+    });
+  });
+
+  it('carries the address and the correlation id of the attempt', async () => {
+    const { service } = serviceFor(ACTIVE_USER, true);
+    await login(service);
+    expect(auditedEvents[0]).toMatchObject({ actorIp: '10.0.0.1', correlationId: 'c-1' });
   });
 });

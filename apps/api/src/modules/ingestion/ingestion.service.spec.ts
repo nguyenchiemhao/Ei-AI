@@ -1,3 +1,5 @@
+import type { AuditService } from '../audit/audit.service';
+import type { Database } from '../../database/db';
 import { Readable } from 'node:stream';
 import { describe, expect, it, vi } from 'vitest';
 import type { EmbeddingClient } from '../../adapters/embedding/infinity.client';
@@ -33,6 +35,17 @@ function env(): Env {
 
 // `null` means "absent", as in downloads.service.spec.ts: passing `undefined` explicitly would
 // select the default below rather than override it.
+const TX = Symbol('tx');
+// The audit row shares the transaction of the state change, so the double has to be there for the
+// service to work at all — and what it collects is what an auditor would read.
+const recorded: { action: string; detail?: Record<string, unknown> }[] = [];
+const auditDouble = {
+  record: vi.fn((record: { action: string; detail?: Record<string, unknown> }) => {
+    recorded.push(record);
+    return Promise.resolve({});
+  }),
+} as unknown as AuditService;
+
 interface Fixture {
   filename?: string;
   status?: string;
@@ -45,7 +58,7 @@ function serviceWith({
   filename = 'hợp đồng.md',
   status = 'uploaded',
   version = { id: 'v-1', documentId: 'd-1', storageKey: 'ab/abc', status },
-  document = { id: 'd-1', sourceFilename: filename },
+  document = { id: 'd-1', sourceFilename: filename, workspaceId: 'w-1' },
   contents = MARKDOWN,
 }: Fixture = {}) {
   const setStatus = vi.fn().mockResolvedValue(undefined);
@@ -56,6 +69,7 @@ function serviceWith({
     Promise.resolve(texts.map((_, i) => Array.from({ length: 4 }, () => i))),
   );
   const read = vi.fn().mockReturnValue(Readable.from([Buffer.from(contents, 'utf8')]));
+  recorded.length = 0;
   return {
     service: new IngestionService(
       {
@@ -70,6 +84,10 @@ function serviceWith({
       { replaceAll: replaceChunks } as unknown as ChunksRepository,
       new Chunker(words, env()),
       env(),
+      auditDouble,
+      {
+        transaction: () => ({ execute: (work: (tx: unknown) => unknown) => work(TX) }),
+      } as unknown as Database,
       { read } as unknown as StoragePort,
       { embed } as unknown as EmbeddingClient,
     ),
@@ -85,36 +103,36 @@ function serviceWith({
 describe('IngestionService.ingest', () => {
   it('refuses a version that is not there', async () => {
     const { service } = serviceWith({ version: null });
-    await expect(service.ingest('v-1')).rejects.toThrow(/No document version v-1/);
+    await expect(service.ingest('v-1', 'c-1')).rejects.toThrow(/No document version v-1/);
   });
 
   it('refuses a version whose document is gone', async () => {
     const { service } = serviceWith({ document: null });
-    await expect(service.ingest('v-1')).rejects.toThrow(/No document d-1/);
+    await expect(service.ingest('v-1', 'c-1')).rejects.toThrow(/No document d-1/);
   });
 
   it('leaves a format the parser owns at uploaded, touching nothing', async () => {
     const { service, setStatus, replacePages } = serviceWith({ filename: 'hợp đồng.pdf' });
-    await service.ingest('v-1');
+    await service.ingest('v-1', 'c-1');
     expect(setStatus).not.toHaveBeenCalled();
     expect(replacePages).not.toHaveBeenCalled();
   });
 
   it('walks the states in the order the machine allows', async () => {
     const { service, setStatus, setIndexed } = serviceWith();
-    await service.ingest('v-1');
+    await service.ingest('v-1', 'c-1');
     expect(setStatus.mock.calls.map((call) => call[1])).toEqual([
       'parsing',
       'parsed',
       'chunking',
       'embedding',
     ]);
-    expect(setIndexed).toHaveBeenCalledWith('v-1', 'v1-tokenizer');
+    expect(setIndexed).toHaveBeenCalledWith('v-1', 'v1-tokenizer', TX);
   });
 
   it('writes one page whose text is the file, byte for byte', async () => {
     const { service, replacePages } = serviceWith();
-    await service.ingest('v-1');
+    await service.ingest('v-1', 'c-1');
     expect(replacePages).toHaveBeenCalledWith('v-1', [
       { pageNo: 1, text: MARKDOWN, extractionMethod: 'markdown' },
     ]);
@@ -122,14 +140,14 @@ describe('IngestionService.ingest', () => {
 
   it('embeds the text of every chunk, in order', async () => {
     const { service, embed, replaceChunks } = serviceWith();
-    await service.ingest('v-1');
+    await service.ingest('v-1', 'c-1');
     const chunks = replaceChunks.mock.calls[0]![1] as { text: string }[];
     expect(embed).toHaveBeenCalledWith(chunks.map((chunk) => chunk.text));
   });
 
   it('numbers chunks from one and gives each the vector that matches it', async () => {
     const { service, replaceChunks } = serviceWith();
-    await service.ingest('v-1');
+    await service.ingest('v-1', 'c-1');
     const chunks = replaceChunks.mock.calls[0]![1] as {
       chunkNo: number;
       embedding: number[];
@@ -140,20 +158,20 @@ describe('IngestionService.ingest', () => {
 
   it('re-ingests a version the machine left at parsing, rather than refusing the retry', async () => {
     const { service, setStatus } = serviceWith({ status: 'parsing' });
-    await expect(service.ingest('v-1')).resolves.toBeUndefined();
+    await expect(service.ingest('v-1', 'c-1')).resolves.toBeUndefined();
     expect(setStatus.mock.calls[0]![1]).toBe('parsing');
   });
 
   it('refuses to re-ingest a version that is already indexed past the restart', async () => {
     const { service } = serviceWith({ status: 'indexed' });
-    await expect(service.ingest('v-1')).resolves.toBeUndefined();
+    await expect(service.ingest('v-1', 'c-1')).resolves.toBeUndefined();
   });
 });
 
 describe('IngestionService.markFailed', () => {
   it('records the reason against the version', async () => {
     const { service, setStatus } = serviceWith();
-    await service.markFailed('v-1', 'ENOENT: no such file');
-    expect(setStatus).toHaveBeenCalledWith('v-1', 'failed', 'ENOENT: no such file');
+    await service.markFailed('v-1', 'ENOENT: no such file', 'c-1');
+    expect(setStatus).toHaveBeenCalledWith('v-1', 'failed', 'ENOENT: no such file', TX);
   });
 });

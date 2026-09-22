@@ -9,6 +9,7 @@ import { DatabaseModule } from './database/database.module';
 import { CorrelationIdMiddleware } from './common/correlation-id.middleware';
 import { ProblemJsonFilter } from './common/problem-json.filter';
 import { AdminModule } from './modules/admin/admin.module';
+import { AuditModule } from './modules/audit/audit.module';
 import { IdentityModule } from './modules/identity/identity.module';
 import { IngestionModule } from './modules/ingestion/ingestion.module';
 import { RetrievalModule } from './modules/retrieval/retrieval.module';
@@ -24,6 +25,7 @@ import { WorkspacesModule } from './modules/workspaces/workspaces.module';
     StorageModule,
     DatabaseModule,
     AdminModule,
+    AuditModule,
     IdentityModule,
     WorkspacesModule,
     IngestionModule,

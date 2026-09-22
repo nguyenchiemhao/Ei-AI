@@ -12,6 +12,15 @@ export interface ResponseLike {
   json(body: unknown): void;
 }
 
+// Set by CorrelationIdMiddleware before anything else runs, so every handler and every service
+// beneath it can put the same id on whatever it writes.
+export interface CorrelatedRequest extends RequestLike {
+  correlationId?: string;
+  // Express fills this; an audit row records where an action came from (FR-66's authentication
+  // events are the ones an auditor reads it for).
+  ip?: string;
+}
+
 // Set by JwtAuthGuard once a bearer token has been verified. Everything downstream reads the
 // principal from here rather than decoding the token a second time.
 export interface Principal {
@@ -22,7 +31,7 @@ export interface Principal {
   expiresAt: Date;
 }
 
-export interface AuthenticatedRequest extends RequestLike {
+export interface AuthenticatedRequest extends CorrelatedRequest {
   principal?: Principal;
 }
 

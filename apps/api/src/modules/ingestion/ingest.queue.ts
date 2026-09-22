@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { Inject, Injectable, type OnModuleDestroy } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import Redis from 'ioredis';
@@ -9,6 +10,19 @@ export const INGEST_QUEUE = Symbol('INGEST_QUEUE');
 
 export interface IngestJob {
   documentVersionId: string;
+  // Carried from the request that queued the work, so an ingestion event in the audit log leads
+  // back to the upload that caused it. The worker has no request of its own to take one from.
+  //
+  // Optional in the type because a queue outlives a deploy: jobs enqueued by an earlier build sit
+  // in Redis without it, and the worker meets them as soon as it restarts. `correlationOf` is what
+  // every reader must go through.
+  correlationId?: string;
+}
+
+// A job from before this field existed gets an id of its own rather than a null the audit column
+// refuses. It links to no request, which is the truth about it — nothing pretends otherwise.
+export function correlationOf(job: IngestJob): string {
+  return job.correlationId ?? randomUUID();
 }
 
 // BullMQ refuses a connection whose `maxRetriesPerRequest` is not null — a worker blocks on
@@ -37,10 +51,10 @@ export class IngestQueue implements OnModuleDestroy {
 
   // The job id is the version's own id: a version enqueued twice produces one job, so a retried
   // upload or a redelivered request cannot put the same bytes through the pipeline twice.
-  async enqueue(documentVersionId: string): Promise<string> {
+  async enqueue(documentVersionId: string, correlationId: string): Promise<string> {
     const job = await this.queue.add(
       INGEST_JOB_NAME,
-      { documentVersionId },
+      { documentVersionId, correlationId },
       { jobId: documentVersionId },
     );
     return job.id ?? documentVersionId;

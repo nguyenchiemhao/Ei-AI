@@ -54,28 +54,28 @@ describe('jobOptions', () => {
 describe('IngestQueue', () => {
   it('names the job and carries the version in its payload', async () => {
     const { queue, add } = queueWith();
-    await queue.enqueue('v-1');
+    await queue.enqueue('v-1', 'c-1');
     expect(add).toHaveBeenCalledWith(
       INGEST_JOB_NAME,
-      { documentVersionId: 'v-1' },
+      { documentVersionId: 'v-1', correlationId: 'c-1' },
       { jobId: 'v-1' },
     );
   });
 
   it('uses the version id as the job id, so the same version cannot queue twice', async () => {
     const { queue, add } = queueWith();
-    await queue.enqueue('v-7');
+    await queue.enqueue('v-7', 'c-1');
     expect(add.mock.calls[0]![2]).toEqual({ jobId: 'v-7' });
   });
 
   it('returns the id the queue assigned', async () => {
     const { queue } = queueWith(vi.fn().mockResolvedValue({ id: 'assigned' }));
-    await expect(queue.enqueue('v-1')).resolves.toBe('assigned');
+    await expect(queue.enqueue('v-1', 'c-1')).resolves.toBe('assigned');
   });
 
   it('falls back to the version id when the queue reports none', async () => {
     const { queue } = queueWith(vi.fn().mockResolvedValue({ id: undefined }));
-    await expect(queue.enqueue('v-1')).resolves.toBe('v-1');
+    await expect(queue.enqueue('v-1', 'c-1')).resolves.toBe('v-1');
   });
 
   it('closes the queue when the module goes down', async () => {

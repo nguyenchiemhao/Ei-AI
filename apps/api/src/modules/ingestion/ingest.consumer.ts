@@ -3,7 +3,12 @@ import { type Job, Worker } from 'bullmq';
 import { CONFIG } from '../../config/config.module';
 import type { Env } from '../../config/env.schema';
 import { failureReason, isFinalAttempt } from './job-attempts';
-import { createQueueConnection, INGEST_QUEUE_NAME, type IngestJob } from './ingest.queue';
+import {
+  correlationOf,
+  createQueueConnection,
+  INGEST_QUEUE_NAME,
+  type IngestJob,
+} from './ingest.queue';
 import { IngestionService } from './ingestion.service';
 
 // Started by worker.main.ts and by nothing else: the API process produces jobs and the worker
@@ -21,12 +26,21 @@ export class IngestConsumer implements OnModuleDestroy {
   start(): Worker<IngestJob> {
     const worker = new Worker<IngestJob>(
       INGEST_QUEUE_NAME,
-      (job: Job<IngestJob>) => this.ingestion.ingest(job.data.documentVersionId),
+      (job: Job<IngestJob>) =>
+        this.ingestion.ingest(job.data.documentVersionId, correlationOf(job.data)),
       // One job at a time: a batch of embeddings already saturates the 4 GB VRAM budget, and a
       // second concurrent document would contend for it rather than finish sooner.
       { connection: createQueueConnection(this.config), concurrency: 1 },
     );
-    worker.on('failed', (job, error) => void this.onFailed(job, error));
+    // The failure handler must not be able to take the worker down with it. `void` on a rejected
+    // promise is an unhandled rejection, and Node kills the process: a job whose audit row could
+    // not be written once stopped every later job from running at all.
+    worker.on('failed', (job, error) => {
+      this.onFailed(job, error).catch((failure: unknown) => {
+        const reason = failure instanceof Error ? failure.message : String(failure);
+        this.logger.error(`could not record the failure of ${job?.id ?? 'unknown'}: ${reason}`);
+      });
+    });
     this.worker = worker;
     return worker;
   }
@@ -45,7 +59,11 @@ export class IngestConsumer implements OnModuleDestroy {
       );
       return;
     }
-    await this.ingestion.markFailed(job.data.documentVersionId, failureReason(error));
+    await this.ingestion.markFailed(
+      job.data.documentVersionId,
+      failureReason(error),
+      correlationOf(job.data),
+    );
   }
 
   async onModuleDestroy(): Promise<void> {
