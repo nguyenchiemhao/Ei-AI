@@ -90,6 +90,12 @@ A body is the exception. Add one only when a decision needs a "why" the diff can
 
 **An append-only table's foreign keys freeze the rows they point at.** `audit_events` references `users` and `workspaces`, and once an action is audited neither row can be deleted: `ON DELETE CASCADE` would delete audit rows and `ON DELETE SET NULL` would update them, and the immutability trigger refuses both. It surfaced as two test teardowns failing, not as a design review. Immutability reaches further than the table it is declared on.
 
+**Three checks that see different things, and the weakest is the one you would have written.** The authorisation matrix was loosened three ways and measured each time. Widening a row of the table: the matrix spec goes red and so does a real request. Removing the `@Roles` decorator: the table still agrees with the design, and only the route scan and a real request notice. Removing the guard from the controller's chain: the table is right, the decorator is still on the route, the scan is green — **and nothing but a real request can tell**. One check would have been the first one.
+
+**Coverage measured before the last edit is not coverage.** The WP-2.4 gate reported 100 % on every metric, and the fix for the worker crash landed after that measurement — `test` was run afterwards, `test:coverage` was not. The lines that stopped a failed audit write from killing the process were never covered, and the gate said the opposite. Run the gate's own measurement after the last change, not before it.
+
+**Two permission dimensions ANDed make one of them unreachable.** Design §9.1 gives "upload documents" to Administrator and Knowledge Manager, and the workspace roles give it to Owner and Editor; both must admit the caller. So a Member who is an Editor of a workspace cannot upload, and the Editor role is reachable only by someone whose system role already permits the action everywhere. Neither table is wrong on its own. Before layering two checks, write down who the narrower one leaves the wider one meaningless for.
+
 ## Packages
 
 **Forward-only means a new file, never an edit.** The plan described later constraints as belonging "inside" migrations already written, which the checksum guard refuses and the discipline forbids. Work that arrives after a migration is applied arrives as the next number.
