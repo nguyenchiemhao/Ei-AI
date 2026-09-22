@@ -6,10 +6,10 @@
 | --- | --- |
 | Version | 1.0 |
 | Updated | 2026-09-21 |
-| Phase in flight | **Phase 1 · Foundation** — **G1 complete**, WP-2.1 · WP-2.2 · WP-2.3 · WP-2.5 · WP-3.1 · WP-3.3 · WP-3.4 closed |
-| Blocking decisions | **none open** — D-1, D-2 closed; Q-07…Q-09 closed at the WP-1.1 gate; Q-10, Q-11 opened at the WP-1.2 gate; Q-13 at the WP-2.5 gate; Q-19…Q-21 at the WP-3.4 gate; Q-22 at the WP-2.3 gate |
-| Code written | WP-1.1 the stack boots; WP-1.2 the schema migrates and seeds; WP-2.5 the boundaries refuse in CI; WP-3.1 a person can log in, refresh, be locked out and be revoked; WP-3.3 a document is uploaded, keyed by its own content and downloaded; WP-3.4 that document is chunked, embedded and reaches `indexed`; WP-2.3 it is found again by a question, with the permission predicate inside the query |
-| Phase 1 progress | **96 / 154 tasks · 381 / 700 h** — all closed at their gates; `T-2.2-05` deferred |
+| Phase in flight | **Phase 1 · Foundation** — **G1 complete**, **G2 complete**, WP-3.1 · WP-3.3 · WP-3.4 closed |
+| Blocking decisions | **none open** — D-1, D-2 closed; Q-07…Q-09 closed at the WP-1.1 gate; Q-10, Q-11 opened at the WP-1.2 gate; Q-13 at the WP-2.5 gate; Q-19…Q-21 at the WP-3.4 gate; Q-22 at the WP-2.3 gate; Q-23, Q-24 at the WP-2.4 gate. **Q-13 closed 2026-09-21** |
+| Code written | WP-1.1 the stack boots; WP-1.2 the schema migrates and seeds; WP-2.5 the boundaries refuse in CI; WP-3.1 a person can log in, refresh, be locked out and be revoked; WP-3.3 a document is uploaded, keyed by its own content and downloaded; WP-3.4 that document is chunked, embedded and reaches `indexed`; WP-2.3 it is found again by a question, with the permission predicate inside the query; WP-2.4 every one of those steps leaves an append-only, hash-chained record |
+| Phase 1 progress | **104 / 154 tasks · 413 / 700 h** — all closed at their gates; `T-2.2-05` deferred |
 
 **Authorities.** [Implementation plan](./ei-ai-implementation-plan.md) — phases, gates, dependencies · [Phase 1 · Overview](./ei-ai-phase-1-overview.md) — priority groups and the pre-agreed cut · [Phase 1 · Detail](./ei-ai-phase-1-detail.md) — 20 packages, one proving command each · [Phase 1 · Tasks](./ei-ai-phase-1-tasks.md) — the 149 tasks and their "Done when" · [Development environment](./ei-ai-dev-environment.md) — the machine and the stack.
 
@@ -94,7 +94,7 @@ Copied from [plan §10](./ei-ai-implementation-plan.md) and [overview §9](./ei-
 | **Q-12** | CI reports but does not **gate**: run #2 pushed a broken commit onto `dev` and nothing stopped it. Branch protection with required status checks is GitHub configuration rather than code, so no task can carry it — who turns it on, and when? | before the Phase 1 gate | ⬜ Open |
 | ~~Q-10~~ | ~~The host tunnel to the database that no task names~~ | — | ✅ **Closed 2026-09-15: its own id, `T-1.1-15`** |
 | **Q-11** | **Deferred to FR-54's design, 2026-09-15.** `write_snapshots` was given a shape — target system's own `target_kind`/`target_id`, `before_state` verbatim, one snapshot per step — from the undo feature's intent rather than from a design. Confirm or replace it when FR-54's undo path is actually designed | Phase 3 · milestone 3B | ⬜ Open |
-| **Q-13** | `packages/shared-types` is named in [detail §2 and §7](./ei-ai-phase-1-detail.md)'s tree and written into by `T-2.4-03` and `T-3.2-01`, but no task creates it and `T-1.1-01` closed without it. Rule 4 of WP-2.5 could therefore only be written as its negative half. Does it become its own id, or a condition on `T-3.2-01`? | before `T-3.2-01` | ⬜ Open |
+| ~~Q-13~~ | ~~`packages/shared-types` is named in the tree and written into by `T-2.4-03` and `T-3.2-01`, but no task creates it~~ | — | ✅ **Closed 2026-09-21: created at the WP-2.4 gate**, with the audit event-name taxonomy as its first content. It declares `types: []` — `apps/web` will import it, so it may not depend on Node. Whether it earns a retrospective task id is left with `T-3.2-01` |
 | **Q-14** | Design §7.4's taxonomy names no code for **404**, **429**, an **expired access token**, a **validation failure** or an **unexpected error**, while §7.2 lists 404 and 429 as expected responses on a dozen endpoints. WP-3.1 added `NOT_FOUND`, `RATE_LIMITED`, `AUTH_TOKEN_EXPIRED`, `VALIDATION_FAILED` and `INTERNAL_ERROR` so the filter could keep §7.1's promise that every error carries a code from `error-codes`. Does the design adopt them? | before the Phase 1 gate | ⬜ Open |
 | **Q-15** | Three pieces of scope no task names, each built as the smallest thing that works: `database/database.module.ts` (nothing wired Kysely into Nest — `T-1.2-10` stopped at the generated types and `createDatabase` had no caller), `SEED_ADMIN_PASSWORD` on the seed (nobody could log in, and the Phase 1 milestone opens with logging in), and the OpenAPI page at `/docs`. Do they grow `T-1.2-10`, `T-1.2-11` and `T-3.1-01`, or earn ids? | before the Phase 1 gate | ⬜ Open |
 | **Q-16** | A **locked** account can still refresh. `activeUser` checks `status` and not `locked_until`, so a holder of a valid refresh token keeps minting access tokens through a lockout. Detail ties lockout to failed logins and no task says otherwise, so the behaviour was left as written rather than changed inside the package | before WP-3.2 closes | ⬜ Open |
@@ -105,6 +105,8 @@ Copied from [plan §10](./ei-ai-implementation-plan.md) and [overview §9](./ei-
 | **Q-20** | **`documents.integration.spec.ts` defaults `API_BASE_URL` to `http://127.0.0.1:3000`**, which on the development machine is a different project's application — `marlin-dev` publishes that port and this stack reaches the host on 4180 through the ingress. Does the default become the ingress port, or is the variable required with no default? | before the Phase 1 gate | ⬜ Open |
 | **Q-21** | **`GET /workspaces/{id}/documents` is scope no task names.** [Detail §8](./ei-ai-phase-1-detail.md) lists it among the implemented Phase 1 endpoints and no WP-3.3 task builds it, while `T-3.4-11` needs the ingestion state exposed per document. WP-3.4 built the smallest version that keeps the invariants — Reader and above, each document with its current version's status, reason, `chunker_version` and `indexed_at`. Does it earn its own id, or become a condition on `T-3.3-07`? | before the Phase 1 gate | ⬜ Open |
 | **Q-22** | **The reranker is "wired behind the same interface" and nothing wires it.** [Detail §WP-2.3](./ei-ai-phase-1-detail.md) says so in the same sentence that excludes it from the Phase 1 path; `RERANK_MODEL` sits in the configuration schema unused, and none of the package's eleven tasks mentions it. WP-2.3 left it entirely to milestone 2A, reading Detail's sentence as a description of what 2A adds. Does the design agree, or is a seam owed now? | before the Phase 1 gate | ⬜ Open |
+| **Q-23** | **An append-only table's foreign keys freeze the rows they point at.** `audit_events` references `users` and `workspaces`; once an action is audited neither can be deleted, and neither `ON DELETE CASCADE` nor `SET NULL` can help — one deletes audit rows, the other updates them, and `reject_mutation()` refuses both. FR-61 archives a workspace rather than deleting one, so this may be correct; nothing says so, and the first person to try to delete a user will meet it. Do the foreign keys stay? | before the Phase 1 gate | ⬜ Open |
+| **Q-24** | **A queue outlives a deploy, and nothing writes that down.** `IngestJob` gained a field; jobs enqueued by the previous build sat in Redis without it and the worker met them on restart. `correlationOf` now tolerates a legacy payload, but the general case — a job whose shape has changed — has no discipline behind it. Does the deployment runbook gain a queue-drain step, or does every payload change stay backward compatible by rule? | before the Phase 1 gate | ⬜ Open |
 
 ### 3.1 What the public-repository decision commits us to
 
@@ -155,11 +157,11 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 | Group | Name | Packages | Tasks | Hours | Done | Cuttable |
 | --- | --- | --- | --- | --- | --- | --- |
 | **G1** | Foundation that blocks everything | 3 | 33 | 124 h | 100 % closed | No — nothing else starts |
-| **G2** | Safety invariants | 5 | 38 | 136 h | 76 % — WP-2.1 · WP-2.2 · WP-2.3 · WP-2.5 closed | No — scope may narrow, the invariant may not |
+| **G2** | Safety invariants | 5 | 38 | 136 h | **97 % — all five closed**; `T-2.2-05` deferred | No — scope may narrow, the invariant may not |
 | **G3** | The product path | 6 | 56 | 280 h | 57 % — WP-3.1 · WP-3.3 · WP-3.4 closed | Partly — cut from G5 first |
 | **G4** | Measurement | 1 | 11 | 80 h | 0 % | No, but it never blocks code |
 | **G5** | Pre-agreed slack | 5 | 16 | 80 h | 0 % | Yes, first |
-| | **Total** | **20** | **154** | **700 h** | **62 %** | |
+| | **Total** | **20** | **154** | **700 h** | **68 %** | |
 
 ### 4.2 Roll-up by package
 
@@ -173,7 +175,7 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 | [WP-2.1](./ei-ai-phase-1-tasks.md#wp-21--invariant-database-constraints--16-h) · Invariant database constraints | L | 6/6 | 16/16 h | 4 | ✅ 2026-09-15 | ✅ passed 2026-09-15 · CI stage 6 green |
 | [WP-2.2](./ei-ai-phase-1-tasks.md#wp-22--egress-default-deny--24-h) · Egress default-deny | DO · L | 5/6 | 19/24 h | 1 | ✅ 2026-09-15 | ✅ passed 2026-09-15 · CI stage 6b green |
 | [WP-2.3](./ei-ai-phase-1-tasks.md#wp-23--retrieval-with-the-permission-predicate--48-h) · Retrieval with the permission predicate | L | 11/11 | 48/48 h | 3 | ✅ 2026-09-21 | ✅ passed 2026-09-21 |
-| [WP-2.4](./ei-ai-phase-1-tasks.md#wp-24--audit-append-only--32-h) · Audit, append-only | B2 | 0/8 | 0/32 h | 6 | ⬜ | ⬜ |
+| [WP-2.4](./ei-ai-phase-1-tasks.md#wp-24--audit-append-only--32-h) · Audit, append-only | B2 | 8/8 | 32/32 h | 6 | ✅ 2026-09-21 | ✅ passed 2026-09-21 |
 | [WP-2.5](./ei-ai-phase-1-tasks.md#wp-25--architecture-rules-in-ci--16-h) · Architecture rules in CI | DO · L | 7/7 | 16/16 h | 3 | ✅ 2026-09-15 | ✅ passed 2026-09-15 · run #9 green, #10 red on purpose at stage 4 alone |
 | [WP-3.1](./ei-ai-phase-1-tasks.md#wp-31--identity--56-h) · Identity | B2 | 12/12 | 56/56 h | 4 | ✅ 2026-09-16 | ✅ passed 2026-09-16 · **run #18 green end to end**, job `6c` included. Run #17 was red at stage 3 on a flaky test of ours, now fixed — see the note |
 | [WP-3.2](./ei-ai-phase-1-tasks.md#wp-32--authorisation--40-h) · Authorisation | B2 | 0/8 | 0/40 h | 9 | ⬜ | ⬜ |
@@ -282,18 +284,18 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 | T-2.3-10 | Mutation check — remove the permitted join and confirm both tests fail… | L | 2 | 13 | ✅ | 2026-09-21 · joins removed → **4 of 13** SQL assertions and **13 of 27** integration assertions red; restored → both green. Procedure in `modules/retrieval/README.md` |
 | T-2.3-11 | Query-plan review of both branches at seeded volume, recorded in… | L | 2 | 12 | ✅ | 2026-09-21 · both plans recorded in [docs/ops](../ops/retrieval-query-plans.md), with the instability at 10 000 rows and what settled it |
 
-**WP-2.4 · Audit, append-only — 0/8 tasks · 0/32 h**
+**WP-2.4 · Audit, append-only — 8/8 tasks · 32/32 h · ✅ closed 2026-09-21**
 
 | ID | Task | Lane | h | W | Status | Note |
 | --- | --- | --- | --- | --- | --- | --- |
-| T-2.4-01 | audit.repository.ts — canonical payload serialisation and prev_hash →… | B2 | 6 | 6 | ⬜ | |
-| T-2.4-02 | audit-transaction.interceptor.ts — opens the transaction before the… | B2 | 6 | 7 | ⬜ | |
-| T-2.4-03 | auditService.record() and the event-name taxonomy constants in… | B2 | 4 | 8 | ⬜ | |
-| T-2.4-04 | Wire authentication events — success, failure, lockout | B2 | 3 | 10 | ⬜ | |
-| T-2.4-05 | Wire workspace, membership and permission-change events | B2 | 3 | 9 | ⬜ | |
-| T-2.4-06 | Wire upload and every ingestion state change | B2 | 4 | 10 | ⬜ | |
-| T-2.4-07 | Wire search events with workspace scope — no document content in any log | B2 | 3 | 12 | ⬜ | |
-| T-2.4-08 | Immutability and chain-integrity tests | B2 | 3 | 9 | ⬜ | |
+| T-2.4-01 | audit.repository.ts — canonical payload serialisation and prev_hash →… | B2 | 6 | 6 | ✅ | 2026-09-21 · two events link and the hash recomputes from the stored row. **`pg_advisory_xact_lock` before the tip is read**, after a probe showed two concurrent writers chaining from the same tip; 25 concurrent appends now give 25 distinct `prev_hash`, 6.3 ms each |
+| T-2.4-02 | audit-transaction.interceptor.ts — opens the transaction before the… | B2 | 6 | 7 | ✅ | 2026-09-21 · **no interceptor**, by decision: each service calls `record(…, tx)` inside the transaction it already opens, so BR-07 holds by construction. `CorrelationIdMiddleware` now puts the id on the request — it was write-only on the response |
+| T-2.4-03 | auditService.record() and the event-name taxonomy constants in… | B2 | 4 | 8 | ✅ | 2026-09-21 · **`packages/shared-types` created, `Q-13` closed.** Every event name is a constant; the package builds to JS and declares `types: []`, because `apps/web` will import it too |
+| T-2.4-04 | Wire authentication events — success, failure, lockout | B2 | 3 | 10 | ✅ | 2026-09-21 · eleven failed logins and one lockout, **counted in the database** end to end. Written on their own transaction: a record inside the failing action's would have rolled back with it |
+| T-2.4-05 | Wire workspace, membership and permission-change events | B2 | 3 | 9 | ✅ | 2026-09-21 · one event per action with actor and object; adding a member and changing their role are separate actions. Four service signatures took an `ActorContext` — every call site read and changed |
+| T-2.4-06 | Wire upload and every ingestion state change | B2 | 4 | 10 | ✅ | 2026-09-21 · one upload → `document.uploaded` plus **five** state-change events. Correlation id rides the BullMQ payload, so an ingestion trail leads back to the upload |
+| T-2.4-07 | Wire search events with workspace scope — no document content in any log | B2 | 3 | 12 | ✅ | 2026-09-21 · the question, the scope, the count and the document ids. A grep of the whole table for the returned passage text finds **nothing** |
+| T-2.4-08 | Immutability and chain-integrity tests | B2 | 3 | 9 | ✅ | 2026-09-21 · `UPDATE` and `DELETE` both raise. A row planted with a wrong hash is found at exactly that row — a weaker claim than editing one, because the database will not allow an edit |
 
 **WP-2.5 · Architecture rules in CI — 7/7 · 16/16 h · ✅ closed 2026-09-15**
 
@@ -649,6 +651,7 @@ Quoted from [Detail §10](./ei-ai-phase-1-detail.md), where each line carries th
 
 | Date | Change |
 | --- | --- |
+| 2026-09-21 | **WP-2.4 closed at its gate — G2 is complete.** 8 rows to ✅. One upload on a clean database leaves `document.uploaded` once and five state-change events, `prev_hash` correct 7/7 and every hash recomputing from its own row; `UPDATE` and `DELETE` both raise. Found by running it: the worker died instead of failing a job, because the failure handler could itself fail; an append-only table's foreign keys freeze the rows they point at; and rule 3 of WP-2.5 forbade every module from writing an audit event, exempted by decision with its near miss re-proved. `Q-13` closed — `packages/shared-types` exists. Diary promoted: three rules; `Q-23`, `Q-24` opened. |
 | 2026-09-21 | **WP-2.3 closed at its gate.** 11 rows reviewed and moved to ✅; G2 is 76 % and three of its never-waivable lines now have commands behind them. The endpoint worked while answering with half of itself — every score a multiple of `1/61` — because `plainto_tsquery` ANDs a whole question and matched nothing; the terms are OR-ed now. Mutation check: joins removed → 4 of 13 and 13 of 27 red, restored → green. Diary promoted: three rules added to CLAUDE.md, three candidates rejected as reconfirmations; `Q-22` opened. |
 | 2026-09-21 | **WP-3.4 closed at its gate.** 11 rows reviewed and moved to ✅. The pipeline runs end to end: 51 versions `indexed`, 0 chunks without an embedding, and all 121 corpus chunks resolving their own offsets against the source. D-5 settled by measurement — the tokenizer for being exact and cheap, not for the ratio failing. Three code paths were found that nothing could reach: a tail merge that never fired, a retry that could not re-enter, and a constructor that needed a mount only one entrypoint has. Diary promoted: four rules added to CLAUDE.md, three candidates rejected as reconfirmations; `Q-19`, `Q-20`, `Q-21` opened. **WP-2.5 rule 1 narrowed from "may query" to "may read"**, its near miss re-proved. |
 | 2026-09-17 | **Two flaky tests of our own, found and fixed.** Running the unit suite 30 times reproduced both: an assertion measuring a window against a clock read on the wrong side of the call, and a `put` double that never consumed its stream, leaving a read stream to open a file already removed. `Q-17` answered. |

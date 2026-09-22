@@ -84,6 +84,12 @@ A body is the exception. Add one only when a decision needs a "why" the diff can
 
 **To isolate one contributor, make the others prefer the wrong answer.** Killing the dense branch with a zero vector still ranked every chunk, because ordering by distance to zero orders everything. What isolates the lexical branch is a decoy sitting exactly on the question's own vector: it wins the dense branch outright, so only the lexical branch can put the right passage first. A control that cannot change the answer is not a control.
 
+**A handler for failures that can itself fail stops everything.** `worker.on('failed', (job, error) => void this.onFailed(job, error))` — and `void` on a rejected promise is an unhandled rejection, which ends the Node process. One job whose audit row could not be written took the ingest worker down and stopped every later job from running at all. The path that runs when something has already gone wrong is the path least likely to have been exercised; give it its own catch.
+
+**A queue outlives the code that filled it.** `IngestJob` gained a required field, and jobs enqueued by the previous build were still sitting in Redis without it when the new worker started. A job payload is a wire format between two versions of the same program, so a field added to it is optional until every job that predates it has drained — and a `NOT NULL` column downstream turns that into a crash rather than a warning.
+
+**An append-only table's foreign keys freeze the rows they point at.** `audit_events` references `users` and `workspaces`, and once an action is audited neither row can be deleted: `ON DELETE CASCADE` would delete audit rows and `ON DELETE SET NULL` would update them, and the immutability trigger refuses both. It surfaced as two test teardowns failing, not as a design review. Immutability reaches further than the table it is declared on.
+
 ## Packages
 
 **Forward-only means a new file, never an edit.** The plan described later constraints as belonging "inside" migrations already written, which the checksum guard refuses and the discipline forbids. Work that arrives after a migration is applied arrives as the next number.
