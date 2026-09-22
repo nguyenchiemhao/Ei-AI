@@ -18,6 +18,9 @@ import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '
 import { ApiZodBody } from '../../common/api-docs';
 import { AppException } from '../../common/app-exception';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { Roles, WorkspaceRole } from '../../common/guards/roles.decorator';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { WorkspaceRoleGuard } from '../../common/guards/workspace-role.guard';
 import type { AuthenticatedRequest, Principal } from '../../common/http.types';
 import { ZodValidationPipe } from '../../common/zod-validation.pipe';
 import {
@@ -48,7 +51,7 @@ function principalOf(request: AuthenticatedRequest): Principal {
 
 @ApiTags('workspaces')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, WorkspaceRoleGuard)
 @Controller('workspaces')
 export class WorkspacesController {
   constructor(
@@ -59,12 +62,14 @@ export class WorkspacesController {
   ) {}
 
   @Get()
+  // No matrix row: this lists the caller's own memberships and is scoped by them.
   @ApiOperation({ summary: 'Workspaces the caller belongs to, archived ones included' })
   list(@Req() request: AuthenticatedRequest): Promise<WorkspaceView[]> {
     return this.workspaces.listFor(principalOf(request).userId);
   }
 
   @Post()
+  @Roles('workspace.manage')
   @ApiOperation({ summary: 'Create a workspace; the creator becomes its Owner' })
   @ApiZodBody(createWorkspaceSchema)
   @ApiResponse({
@@ -79,12 +84,14 @@ export class WorkspacesController {
   }
 
   @Get(':id')
+  @WorkspaceRole('workspace.read')
   @ApiResponse({ status: 404, description: 'NOT_FOUND' })
   read(@Param('id') id: string): Promise<WorkspaceView> {
     return this.workspaces.read(id);
   }
 
   @Patch(':id')
+  @WorkspaceRole('workspace.settings')
   @ApiOperation({ summary: 'Rename, describe, archive or unarchive' })
   @ApiZodBody(updateWorkspaceSchema)
   update(
@@ -96,16 +103,15 @@ export class WorkspacesController {
   }
 
   @Get(':id/members')
+  @WorkspaceRole('workspace.members')
   @ApiOperation({ summary: 'Members of the workspace; Owner only' })
   @ApiResponse({ status: 403, description: 'AUTHZ_WORKSPACE_FORBIDDEN' })
-  listMembers(
-    @Param('id') id: string,
-    @Req() request: AuthenticatedRequest,
-  ): Promise<MembershipView[]> {
-    return this.memberships.list(id, principalOf(request).userId);
+  listMembers(@Param('id') id: string): Promise<MembershipView[]> {
+    return this.memberships.list(id);
   }
 
   @Post(':id/members')
+  @WorkspaceRole('workspace.members')
   @ApiOperation({ summary: 'Add a member or change a role; Owner only' })
   @ApiZodBody(memberSchema)
   @ApiResponse({ status: 403, description: 'AUTHZ_WORKSPACE_FORBIDDEN' })
@@ -119,6 +125,7 @@ export class WorkspacesController {
   }
 
   @Delete(':id/members/:userId')
+  @WorkspaceRole('workspace.members')
   @HttpCode(204)
   @ApiOperation({ summary: 'Remove a member; Owner only' })
   @ApiResponse({ status: 409, description: 'WORKSPACE_LAST_OWNER' })
@@ -131,14 +138,17 @@ export class WorkspacesController {
   }
 
   @Get(':id/documents')
+  @WorkspaceRole('workspace.read')
   @ApiOperation({ summary: 'Documents in a workspace, with the ingestion state of each' })
   @ApiResponse({ status: 200, description: 'Reader and above' })
   @ApiResponse({ status: 403, description: 'AUTHZ_WORKSPACE_FORBIDDEN — not a member' })
-  listDocuments(@Param('id') id: string, @Req() request: AuthenticatedRequest): Promise<unknown[]> {
-    return this.documentsListing.list(id, principalOf(request).userId);
+  listDocuments(@Param('id') id: string): Promise<unknown[]> {
+    return this.documentsListing.list(id);
   }
 
   @Post(':id/documents')
+  @Roles('document.manage')
+  @WorkspaceRole('workspace.documents')
   @UseGuards(ContentLengthGuard)
   @UseFilters(UploadLimitFilter)
   @UseInterceptors(FileInterceptor('file'))

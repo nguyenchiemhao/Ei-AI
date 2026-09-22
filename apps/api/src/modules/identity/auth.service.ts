@@ -140,6 +140,12 @@ export class AuthService {
     if (!user || user.status !== ACTIVE) {
       throw new AppException('AUTH_INVALID_CREDENTIALS', 'Account is not available');
     }
+    // Q-16. A refresh token outlives the access token by hours, so without this a holder of one
+    // kept minting access tokens straight through a lockout — the eleventh failed login closed the
+    // front door and left the side one open.
+    if (user.lockedUntil !== null && user.lockedUntil.getTime() > Date.now()) {
+      throw new AppException('AUTH_ACCOUNT_LOCKED', 'Account is locked; try again later');
+    }
     return user;
   }
 }

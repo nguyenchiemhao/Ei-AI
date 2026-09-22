@@ -80,30 +80,10 @@ async function rejectionOf(promise: Promise<unknown>): Promise<AppException> {
   }
 }
 
-describe('MembershipsService, the Owner rule', () => {
-  it.each([['Editor'], ['Reader']] as const)(
-    'refuses a %s who tries to add a member',
-    async (role) => {
-      const { service, upsert } = serviceWith({ callerRole: role });
-
-      const rejection = await rejectionOf(
-        service.put('w-1', { userId: TARGET, role: 'Reader' }, actor(CALLER_ID)),
-      );
-
-      expect(rejection.code).toBe('AUTHZ_WORKSPACE_FORBIDDEN');
-      expect(rejection.getStatus()).toBe(403);
-      expect(upsert).not.toHaveBeenCalled();
-    },
-  );
-
-  it('refuses someone who is not a member at all', async () => {
-    const { service } = serviceWith({ callerRole: null });
-
-    expect((await rejectionOf(service.list('w-1', CALLER_ID))).code).toBe(
-      'AUTHZ_WORKSPACE_FORBIDDEN',
-    );
-  });
-
+// The Owner rule moved to WorkspaceRoleGuard at T-3.2-06: who may change membership is asserted in
+// common/guards/workspace-role.guard.spec.ts, against the same table the guard reads. What stays
+// here is the rule no guard can make — a workspace may not be left without an Owner.
+describe('MembershipsService, the last-Owner rule', () => {
   it('lets an Owner add a member, inside one transaction', async () => {
     const { service, upsert } = serviceWith();
 
@@ -183,10 +163,12 @@ describe('MembershipsService, the cases that are not there', () => {
     ).toBe('NOT_FOUND');
   });
 
-  it('lets an Owner read the member list', async () => {
+  // Who may read the list is WorkspaceRoleGuard's decision now (`workspace.members`); what is
+  // left here is that the service asks the repository for the workspace it was given.
+  it('reads the member list of the workspace it was given', async () => {
     const { service, list } = serviceWith();
 
-    await service.list('w-1', CALLER_ID);
+    await service.list('w-1');
 
     expect(list).toHaveBeenCalledWith('w-1');
   });
@@ -227,6 +209,12 @@ describe('what a membership change records', () => {
     });
   });
 
+  it('records a removal of someone whose role could not be read, without inventing one', async () => {
+    const { service } = serviceWith({ targetRole: null, removed: 1 });
+    await service.remove('w-1', TARGET, actor(CALLER_ID));
+    expect(recorded[0]).toMatchObject({ detail: { previousRole: null } });
+  });
+
   it('records a removal, with the role that was lost', async () => {
     const { service } = serviceWith({ targetRole: 'Reader' });
     await service.remove('w-1', TARGET, actor(CALLER_ID));
@@ -235,12 +223,6 @@ describe('what a membership change records', () => {
       objectId: TARGET,
       detail: { previousRole: 'Reader' },
     });
-  });
-
-  it('records nothing when the caller is not an Owner', async () => {
-    const { service } = serviceWith({ callerRole: 'Editor' });
-    await rejectionOf(service.put('w-1', { userId: TARGET, role: 'Reader' }, actor(CALLER_ID)));
-    expect(recorded).toHaveLength(0);
   });
 
   it('records nothing when removing would leave no Owner', async () => {

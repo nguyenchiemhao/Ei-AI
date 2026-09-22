@@ -252,6 +252,18 @@ describe('AuthService.activeUser', () => {
     );
   }
 
+  it('refuses a locked account, so a refresh token cannot outlive a lockout (Q-16)', async () => {
+    const locked = { ...ACTIVE_USER, lockedUntil: new Date(Date.now() + 60_000) };
+    await expect(serviceForId(locked).activeUser('u-1')).rejects.toMatchObject({
+      code: 'AUTH_ACCOUNT_LOCKED',
+    });
+  });
+
+  it('admits an account whose lockout has expired', async () => {
+    const wasLocked = { ...ACTIVE_USER, lockedUntil: new Date(Date.now() - 60_000) };
+    await expect(serviceForId(wasLocked).activeUser('u-1')).resolves.toMatchObject({ id: 'u-1' });
+  });
+
   it('returns an active user', async () => {
     await expect(serviceForId(ACTIVE_USER).activeUser('u-1')).resolves.toBe(ACTIVE_USER);
   });

@@ -70,6 +70,37 @@ describe('IngestConsumer.onFailed', () => {
     expect(options).toMatchObject({ concurrency: 1 });
   });
 
+  it('hands the job to the pipeline with the correlation id it carries', async () => {
+    const ingest = vi.fn().mockResolvedValue(undefined);
+    const consumer = new IngestConsumer({} as Env, { ingest } as unknown as IngestionService);
+    // The Worker double is module-scoped, so its calls accumulate across this file: the constructor
+    // arguments wanted here are this consumer's, not whichever test ran first.
+    vi.mocked(Worker).mockClear();
+    consumer.start();
+    const processor = vi.mocked(Worker).mock.calls[0]![1] as (job: unknown) => unknown;
+    await processor({ data: { documentVersionId: 'v-1', correlationId: 'c-1' } });
+    expect(ingest).toHaveBeenCalledWith('v-1', 'c-1');
+  });
+
+  it('survives a failure handler that itself fails', async () => {
+    // `void` on a rejected promise is an unhandled rejection and Node ends the process; one job
+    // whose audit row could not be written took the worker down with it.
+    const consumer = new IngestConsumer(
+      {} as Env,
+      {
+        markFailed: vi.fn().mockRejectedValue(new Error('audit down')),
+      } as unknown as IngestionService,
+    );
+    const worker = consumer.start();
+    const handler = vi.mocked(worker.on).mock.calls.find(([event]) => event === 'failed')?.[1] as (
+      job: unknown,
+      error: Error,
+    ) => void;
+    const withoutId = { ...jobOf(3), id: undefined } as unknown as Job<IngestJob>;
+    expect(() => handler(withoutId, new Error('boom'))).not.toThrow();
+    await new Promise((resolve) => setImmediate(resolve));
+  });
+
   it('closes the worker it started when the module goes down', async () => {
     const { consumer } = consumerWith();
     const worker = consumer.start();

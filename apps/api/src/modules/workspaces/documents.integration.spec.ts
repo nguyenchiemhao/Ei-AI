@@ -80,8 +80,11 @@ beforeAll(async () => {
   // hash rather than that service. The rule caught the import; the fixture was the thing wrong.
   const hash = await argon2Hash(PASSWORD, { algorithm: Algorithm.Argon2id });
   await db.query(
-    `INSERT INTO users (email, display_name, password_hash, auth_source)
-     VALUES ($1, 'Integration', $2, 'local')`,
+    // Knowledge Manager since T-3.2-06: design §9.1 gives "upload and delete documents" to
+    // Administrator and Knowledge Manager, so a Member is refused before the format is looked at
+    // however high their workspace role.
+    `INSERT INTO users (email, display_name, password_hash, auth_source, system_role)
+     VALUES ($1, 'Integration', $2, 'local', 'Knowledge Manager')`,
     [email, hash],
   );
   createdUsers.push(email);

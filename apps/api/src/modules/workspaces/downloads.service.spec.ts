@@ -58,7 +58,7 @@ describe('DownloadsService', () => {
     async (role) => {
       const { service, read } = serviceWith({ role });
 
-      const download = await service.current('d-1', 'u-1');
+      const download = await service.current('d-1');
 
       expect(download).toMatchObject({
         filename: 'hợp đồng.csv',
@@ -69,39 +69,36 @@ describe('DownloadsService', () => {
     },
   );
 
-  it('refuses somebody who is not a member of the workspace', async () => {
-    const { service, read } = serviceWith({ role: null });
-
-    expect((await rejectionOf(service.current('d-1', 'u-1'))).code).toBe(
-      'AUTHZ_WORKSPACE_FORBIDDEN',
-    );
-    expect(read).not.toHaveBeenCalled();
-  });
+  // Membership moved to WorkspaceRoleGuard at T-3.2-06 (`workspace.read`, resolved through the
+  // document); the roles are asserted in common/guards/workspace-role.guard.spec.ts.
 
   it('answers a document that is not there with NOT_FOUND', async () => {
     const { service } = serviceWith({ document: null });
 
-    expect((await rejectionOf(service.current('nope', 'u-1'))).code).toBe('NOT_FOUND');
+    expect((await rejectionOf(service.current('nope'))).code).toBe('NOT_FOUND');
   });
 
   it('answers a document with no version yet with NOT_FOUND', async () => {
     const { service } = serviceWith({ document: { ...DOCUMENT, currentVersionId: null } });
 
-    expect((await rejectionOf(service.current('d-1', 'u-1'))).code).toBe('NOT_FOUND');
+    expect((await rejectionOf(service.current('d-1'))).code).toBe('NOT_FOUND');
   });
 
   it('answers a current version that has vanished with NOT_FOUND, not a broken stream', async () => {
     const { service, read } = serviceWith({ version: null });
 
-    expect((await rejectionOf(service.current('d-1', 'u-1'))).code).toBe('NOT_FOUND');
+    expect((await rejectionOf(service.current('d-1'))).code).toBe('NOT_FOUND');
     expect(read).not.toHaveBeenCalled();
   });
 
   // The membership check comes before anything is read from storage.
-  it('checks membership before touching storage', async () => {
-    const { service, read } = serviceWith({ role: null });
+  // The guard refuses before the handler runs, so storage is never reached by someone who may not
+  // read — asserted end to end in the authorisation integration suite rather than here, where the
+  // service no longer knows who is asking.
+  it('does not touch storage for a document that has no version', async () => {
+    const { service, read } = serviceWith({ document: { ...DOCUMENT, currentVersionId: null } });
 
-    await rejectionOf(service.current('d-1', 'u-1'));
+    await rejectionOf(service.current('d-1'));
 
     expect(read).not.toHaveBeenCalled();
   });

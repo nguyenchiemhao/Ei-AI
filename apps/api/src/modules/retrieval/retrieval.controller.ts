@@ -2,6 +2,8 @@ import { Body, Controller, HttpCode, Post, Req, UseGuards, UsePipes } from '@nes
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ApiZodBody } from '../../common/api-docs';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { Roles } from '../../common/guards/roles.decorator';
+import { RolesGuard } from '../../common/guards/roles.guard';
 import type { AuthenticatedRequest } from '../../common/http.types';
 import { ZodValidationPipe } from '../../common/zod-validation.pipe';
 import { type PassageView, type SearchRequest, searchSchema } from './dto/search.dto';
@@ -10,7 +12,7 @@ import { RetrievalService } from './retrieval.service';
 
 @ApiTags('retrieval')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('search')
 export class RetrievalController {
   constructor(private readonly retrieval: RetrievalService) {}
@@ -18,6 +20,8 @@ export class RetrievalController {
   // 200 rather than 201: a search creates nothing. It is a POST because a question is a body,
   // not a path — and because a question does not belong in a URL that gets logged.
   @Post()
+  // Which chunks come back is the `permitted` CTE's business; this is only who may ask.
+  @Roles('question.ask')
   @HttpCode(200)
   @UsePipes(new ZodValidationPipe(searchSchema))
   @ApiZodBody(searchSchema)

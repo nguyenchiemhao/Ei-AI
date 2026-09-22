@@ -20,6 +20,10 @@ export const ERROR_CODES = {
   },
   AUTHZ_WORKSPACE_FORBIDDEN: { status: 403, title: 'Not a member of this workspace' },
   AUTHZ_TOOL_FORBIDDEN: { status: 403, title: 'This role may not call this tool' },
+  // An eighth code §7.4 does not name. AUTHZ_TOOL_FORBIDDEN is FR-22's, about the tool catalogue;
+  // a system role refused an action of design §9.1 is a different refusal and a client that told
+  // them apart would be right to. Q-14 in Progress §3 asks whether the taxonomy adopts these.
+  AUTHZ_ROLE_FORBIDDEN: { status: 403, title: 'This role may not take this action' },
   DOC_UNSUPPORTED_FORMAT: { status: 415, title: 'Document format is not supported' },
   DOC_TOO_LARGE: { status: 413, title: 'Document exceeds the size limit' },
   DOC_CONTENT_MISMATCH: { status: 415, title: 'Content does not match the file extension' },

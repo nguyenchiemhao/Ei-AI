@@ -3,6 +3,7 @@ import Redis from 'ioredis';
 import type { Queue } from 'bullmq';
 import type { Env } from '../../config/env.schema';
 import {
+  correlationOf,
   createQueueConnection,
   IngestQueue,
   INGEST_JOB_NAME,
@@ -82,5 +83,20 @@ describe('IngestQueue', () => {
     const { queue, close } = queueWith();
     await queue.onModuleDestroy();
     expect(close).toHaveBeenCalled();
+  });
+});
+
+describe('correlationOf', () => {
+  it('uses the id the job carries', () => {
+    expect(correlationOf({ documentVersionId: 'v-1', correlationId: 'c-1' })).toBe('c-1');
+  });
+
+  // A queue outlives a deploy: a job enqueued before this field existed has none, and a null would
+  // be refused by `audit_events.correlation_id`. The new id links to no request, which is the
+  // truth about such a job.
+  it('invents one for a job from before the field existed', () => {
+    const invented = correlationOf({ documentVersionId: 'v-1' });
+    expect(invented).toMatch(/^[0-9a-f-]{36}$/);
+    expect(invented).not.toBe(correlationOf({ documentVersionId: 'v-1' }));
   });
 });

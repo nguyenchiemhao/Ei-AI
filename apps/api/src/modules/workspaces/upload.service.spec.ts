@@ -125,15 +125,8 @@ describe('UploadService', () => {
     expect(put).toHaveBeenCalledOnce();
   });
 
-  it.each([['Reader'], [null]] as const)('refuses %s', async (role) => {
-    const { service, put } = serviceWith(role);
-    const { file } = await incoming();
-
-    const rejection = await rejectionOf(service.store('w-1', ACTOR, file));
-
-    expect(rejection.code).toBe('AUTHZ_WORKSPACE_FORBIDDEN');
-    expect(put).not.toHaveBeenCalled();
-  });
+  // Editor-or-Owner moved to WorkspaceRoleGuard at T-3.2-06 (`workspace.documents`); the roles are
+  // asserted in common/guards/workspace-role.guard.spec.ts.
 
   // The byte counter behind the Content-Length check: the header is the client's claim.
   it('refuses a file over the limit and states the limit in the response', async () => {

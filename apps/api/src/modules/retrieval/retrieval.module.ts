@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { IdentityModule } from '../identity/identity.module';
+import { RolesGuard } from '../../common/guards/roles.guard';
 import { HybridSearchRepository } from './hybrid-search.repository';
 import { QuestionEmbeddingCache } from './question-embedding.cache';
 import { RetrievalController } from './retrieval.controller';
@@ -10,7 +11,7 @@ import { RetrievalService } from './retrieval.service';
 @Module({
   imports: [IdentityModule],
   controllers: [RetrievalController],
-  providers: [RetrievalService, HybridSearchRepository, QuestionEmbeddingCache],
+  providers: [RetrievalService, HybridSearchRepository, QuestionEmbeddingCache, RolesGuard],
   exports: [RetrievalService],
 })
 export class RetrievalModule {}

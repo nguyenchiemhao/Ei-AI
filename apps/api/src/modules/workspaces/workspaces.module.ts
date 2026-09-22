@@ -7,6 +7,8 @@ import { CONFIG } from '../../config/config.module';
 import type { Env } from '../../config/env.schema';
 import { IdentityModule } from '../identity/identity.module';
 import { IngestQueueModule } from '../ingestion/ingest-queue.module';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { WorkspaceRoleGuard } from '../../common/guards/workspace-role.guard';
 import { ContentLengthGuard } from './content-length.guard';
 import { DocumentVersionsRepository } from './document-versions.repository';
 import { DocumentsController } from './documents.controller';
@@ -45,6 +47,8 @@ import { WorkspacesService } from './workspaces.service';
     UploadService,
     DocumentsListingService,
     ContentLengthGuard,
+    RolesGuard,
+    WorkspaceRoleGuard,
     DocumentsRepository,
     DocumentVersionsRepository,
     DownloadsService,

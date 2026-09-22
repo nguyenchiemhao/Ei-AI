@@ -30,8 +30,9 @@ export class MembershipsService {
     @Inject(DATABASE) private readonly db: Database,
   ) {}
 
-  async list(workspaceId: string, callerId: string): Promise<MembershipView[]> {
-    await this.assertOwner(workspaceId, callerId);
+  // Owner-only, decided by WorkspaceRoleGuard on the route (`workspace.members`). The caller is
+  // no longer an argument here: there is nothing left for this service to decide about them.
+  list(workspaceId: string): Promise<MembershipView[]> {
     return this.members.list(workspaceId);
   }
 
@@ -40,14 +41,12 @@ export class MembershipsService {
     request: MemberRequest,
     actor: ActorContext,
   ): Promise<MembershipView> {
-    const callerId = actor.actorUserId;
     return withTransaction(this.db, async (tx) => {
-      await this.assertOwner(workspaceId, callerId, tx);
       const existing = await this.members.findRole(workspaceId, request.userId, tx);
       await this.assertOwnerRemains(workspaceId, request.userId, request.role, tx);
       try {
         const membership = await this.members.upsert(
-          { workspaceId, userId: request.userId, role: request.role, addedBy: callerId },
+          { workspaceId, userId: request.userId, role: request.role, addedBy: actor.actorUserId },
           tx,
         );
         // Added and re-roled are different things to an auditor: one grants access that did not
@@ -77,9 +76,7 @@ export class MembershipsService {
   }
 
   async remove(workspaceId: string, userId: string, actor: ActorContext): Promise<void> {
-    const callerId = actor.actorUserId;
     await withTransaction(this.db, async (tx) => {
-      await this.assertOwner(workspaceId, callerId, tx);
       const previousRole = await this.members.findRole(workspaceId, userId, tx);
       await this.assertOwnerRemains(workspaceId, userId, undefined, tx);
       const removed = await this.members.remove(workspaceId, userId, tx);
@@ -98,13 +95,6 @@ export class MembershipsService {
         tx,
       );
     });
-  }
-
-  private async assertOwner(workspaceId: string, callerId: string, tx?: Tx): Promise<void> {
-    const role = await this.members.findRole(workspaceId, callerId, tx);
-    if (role !== 'Owner') {
-      throw new AppException('AUTHZ_WORKSPACE_FORBIDDEN', 'Only an Owner may change membership');
-    }
   }
 
   // A workspace with no Owner is one nobody can administer, and nothing in the schema forbids

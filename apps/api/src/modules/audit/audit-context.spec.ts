@@ -52,6 +52,10 @@ describe('anonymousContext', () => {
     });
   });
 
+  it('records no address when the request has none', () => {
+    expect(anonymousContext(request({ ip: undefined, principal: undefined })).actorIp).toBeNull();
+  });
+
   it('names the actor when a failed action is known to be theirs', () => {
     expect(anonymousContext(request({ principal: undefined }), 'u-9').actorUserId).toBe('u-9');
   });

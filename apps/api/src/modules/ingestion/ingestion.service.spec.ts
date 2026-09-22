@@ -169,6 +169,24 @@ describe('IngestionService.ingest', () => {
 });
 
 describe('IngestionService.markFailed', () => {
+  // The path a version takes when it fails before anyone could read it: the row is gone, or its
+  // document is, and the audit record still has to be written with whatever is known.
+  it('records a failure for a version that no longer exists', async () => {
+    const { service, setStatus } = serviceWith({ version: null });
+    await service.markFailed('v-1', 'ENOENT', 'c-1');
+    expect(setStatus).toHaveBeenCalledWith('v-1', 'failed', 'ENOENT', TX);
+    expect(recorded[0]).toMatchObject({
+      workspaceId: null,
+      detail: { from: null, to: 'failed', reason: 'ENOENT' },
+    });
+  });
+
+  it('records a failure for a version whose document is gone', async () => {
+    const { service } = serviceWith({ document: null });
+    await service.markFailed('v-1', 'ENOENT', 'c-1');
+    expect(recorded[0]).toMatchObject({ workspaceId: null });
+  });
+
   it('records the reason against the version', async () => {
     const { service, setStatus } = serviceWith();
     await service.markFailed('v-1', 'ENOENT: no such file', 'c-1');

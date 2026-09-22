@@ -21,8 +21,6 @@ import {
 import { describeLimit, MAX_UPLOAD_BYTES } from './upload-limits';
 import { WorkspaceMembersRepository } from './workspace-members.repository';
 
-const MAY_UPLOAD = new Set(['Owner', 'Editor']);
-
 // Busboy decodes a multipart filename as latin-1, so `hợp đồng.csv` reaches the handler as
 // `há»£p Äá»ng.csv` and would be stored that way. Reinterpreting those bytes as UTF-8 puts it
 // back; a pure-ASCII name passes through unchanged, because the two encodings agree there.
@@ -78,9 +76,7 @@ export class UploadService {
     actor: ActorContext,
     file: UploadedFile,
   ): Promise<StoredDocument> {
-    const callerId = actor.actorUserId;
     try {
-      await this.assertMayUpload(workspaceId, callerId);
       const filename = decodeMultipartFilename(file.originalname);
       const format = this.formatOf(filename);
       this.assertWithinLimit(file);
@@ -198,13 +194,6 @@ export class UploadService {
         tx,
       ))
     );
-  }
-
-  private async assertMayUpload(workspaceId: string, callerId: string): Promise<void> {
-    const role = await this.members.findRole(workspaceId, callerId);
-    if (role === undefined || !MAY_UPLOAD.has(role)) {
-      throw new AppException('AUTHZ_WORKSPACE_FORBIDDEN', 'Only an Editor or Owner may upload');
-    }
   }
 
   // The extension decides which of the ten formats this claims to be; T-3.3-05 then checks the
