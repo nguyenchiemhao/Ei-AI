@@ -82,6 +82,13 @@ A body is the exception. Add one only when a decision needs a "why" the diff can
 
 **A measurement that changes between identical runs has not been made.** Three consecutive runs of the same query-plan probe gave `SEQ`, `INDEX`, `INDEX`. The query did not move; the dead tuples the probe itself left behind did, and 4.8 ms against 3.5 ms is close enough for the planner to change its mind. Repeat a measurement before recording it, and clear the state your own probe leaves — the first number was neither right nor wrong, it was noise with a plan attached.
 
+**"Not present" is only evidence when something is known to be present.** The control on the tool
+catalogue asserted that a Member's compiled SQL does not send `Administrator`, `Knowledge Manager` or
+`Approver`. Delete the `min_system_role` predicate entirely and the query sends no roles at all, so
+all three absences hold and the control is green against a query returning every tool in the table.
+Rewritten as an equality — the exact set each role sends — it goes red along with six others. Name
+what must be there, not only what must not.
+
 **To isolate one contributor, make the others prefer the wrong answer.** Killing the dense branch with a zero vector still ranked every chunk, because ordering by distance to zero orders everything. What isolates the lexical branch is a decoy sitting exactly on the question's own vector: it wins the dense branch outright, so only the lexical branch can put the right passage first. A control that cannot change the answer is not a control.
 
 **A handler for failures that can itself fail stops everything.** `worker.on('failed', (job, error) => void this.onFailed(job, error))` — and `void` on a rejected promise is an unhandled rejection, which ends the Node process. One job whose audit row could not be written took the ingest worker down and stopped every later job from running at all. The path that runs when something has already gone wrong is the path least likely to have been exercised; give it its own catch.
@@ -127,3 +134,15 @@ A body is the exception. Add one only when a decision needs a "why" the diff can
 **What boots must not need what only one entrypoint has.** `api` and `ingest-worker` run the same module graph from the same image, and only the worker mounts the model cache. A snapshot lookup sitting in a constructor — beneath a comment promising it was deferred to first use — took the API down at boot over a directory it is never meant to have. Construct nothing that the other entrypoint cannot reach, and check that the comment claiming laziness describes the whole of it.
 
 **A value the database already enforces is a constant, not configuration.** `document_versions.byte_size` carries a CHECK at 200 MB. A configured limit above it would let a file through the API only for the database to refuse it, and one below it is a second place to change. The identity thresholds became variables because nothing else enforced them; this one is enforced by the schema.
+
+**A switch withholds; it does not create.** `TOOL_WEB_SEARCH_ENABLED=true` offers nothing, because
+no `web_search` row exists until 2B writes one, and the operating mode has to say `web: off` rather
+than promise a capability the agent would then not find. Where configuration and a registry both
+have a say, configuration can only narrow what the registry already holds — and a test has to fix
+that direction, or the flag reads like a feature toggle to the next person who finds it.
+
+**An order the database cannot check is kept only by whoever writes the rows.** `tools.min_system_role`
+carries a CHECK over the five role names and nothing more; the ranking that makes "minimum" mean
+something lives in TypeScript. A row inserted with a role the ranking does not know passes the CHECK
+and is invisible to every caller, silently. That is acceptable while the only writer is the seed, and
+it stops being acceptable the moment a screen can write one.

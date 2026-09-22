@@ -6,9 +6,9 @@
 | --- | --- |
 | Version | 1.0 |
 | Updated | 2026-09-21 |
-| Phase in flight | **Phase 1 · Foundation** — **G1 complete**, **G2 complete**, WP-3.1 · WP-3.2 · WP-3.3 · WP-3.4 closed |
-| Blocking decisions | **none open** — D-1, D-2 closed; Q-07…Q-09 closed at the WP-1.1 gate; Q-10, Q-11 opened at the WP-1.2 gate; Q-13 at the WP-2.5 gate; Q-19…Q-21 at the WP-3.4 gate; Q-22 at the WP-2.3 gate; Q-23, Q-24 at the WP-2.4 gate; Q-25, Q-26 at the WP-3.2 gate. **Q-13 closed 2026-09-21, Q-16 fixed 2026-09-22** |
-| Code written | WP-1.1 the stack boots; WP-1.2 the schema migrates and seeds; WP-2.5 the boundaries refuse in CI; WP-3.1 a person can log in, refresh, be locked out and be revoked; WP-3.3 a document is uploaded, keyed by its own content and downloaded; WP-3.4 that document is chunked, embedded and reaches `indexed`; WP-2.3 it is found again by a question, with the permission predicate inside the query; WP-2.4 every one of those steps leaves an append-only, hash-chained record |
+| Phase in flight | **Phase 1 · Foundation** — **G1 complete**, **G2 complete**, WP-3.1 · WP-3.2 · WP-3.3 · WP-3.4 · WP-3.5 closed |
+| Blocking decisions | **none open** — D-1, D-2 closed; Q-07…Q-09 closed at the WP-1.1 gate; Q-10, Q-11 opened at the WP-1.2 gate; Q-13 at the WP-2.5 gate; Q-19…Q-21 at the WP-3.4 gate; Q-22 at the WP-2.3 gate; Q-23, Q-24 at the WP-2.4 gate; Q-25, Q-26 at the WP-3.2 gate; Q-27 at the WP-3.5 gate. **Q-13 closed 2026-09-21, Q-16 fixed 2026-09-22** |
+| Code written | WP-1.1 the stack boots; WP-1.2 the schema migrates and seeds; WP-2.5 the boundaries refuse in CI; WP-3.1 a person can log in, refresh, be locked out and be revoked; WP-3.3 a document is uploaded, keyed by its own content and downloaded; WP-3.4 that document is chunked, embedded and reaches `indexed`; WP-2.3 it is found again by a question, with the permission predicate inside the query; WP-2.4 every one of those steps leaves an append-only, hash-chained record; WP-3.5 the installation can say which of the three operating modes it is running in, computed from the registry rather than declared |
 | Phase 1 progress | **112 / 154 tasks · 453 / 700 h** — all closed at their gates; `T-2.2-05` deferred |
 
 **Authorities.** [Implementation plan](./ei-ai-implementation-plan.md) — phases, gates, dependencies · [Phase 1 · Overview](./ei-ai-phase-1-overview.md) — priority groups and the pre-agreed cut · [Phase 1 · Detail](./ei-ai-phase-1-detail.md) — 20 packages, one proving command each · [Phase 1 · Tasks](./ei-ai-phase-1-tasks.md) — the 149 tasks and their "Done when" · [Development environment](./ei-ai-dev-environment.md) — the machine and the stack.
@@ -109,6 +109,7 @@ Copied from [plan §10](./ei-ai-implementation-plan.md) and [overview §9](./ei-
 | **Q-24** | **A queue outlives a deploy, and nothing writes that down.** `IngestJob` gained a field; jobs enqueued by the previous build sat in Redis without it and the worker met them on restart. `correlationOf` now tolerates a legacy payload, but the general case — a job whose shape has changed — has no discipline behind it. Does the deployment runbook gain a queue-drain step, or does every payload change stay backward compatible by rule? | before the Phase 1 gate | ⬜ Open |
 | **Q-25** | **Two permission dimensions ANDed make one of them unreachable.** Design §9.1 gives "upload and delete documents" to Administrator and Knowledge Manager, and the workspace roles give it to Owner and Editor. Both must admit the caller, so a Member who is an **Editor** of a workspace cannot upload — the workspace role is reachable only by someone whose system role already permits the action everywhere. It broke four WP-3.3 tests, whose user is now a Knowledge Manager. Is that what §9.1 intends? | before the Phase 1 gate | ⬜ Open |
 | **Q-26** | **The four workspace-role actions exist only in `shared-types`.** Design §9.1 describes the three roles in one sentence each and names no actions, while Detail counts `3 × 4 = 12` cases. WP-3.2 read that sentence against the built surface as read, manage documents, change the workspace, manage members. Does §9.1 gain the table? | before the Phase 1 gate | ⬜ Open |
+| **Q-27** | **Two modules now read `workspace_members` by user.** `GET /me` answers "which workspaces am I in, and as what", and `workspaces.listForMember` returns the workspaces without the role, so `identity` grew a query of its own rather than take a third exemption from architecture rule 3 for one read. Either `workspaces` grows the query and the rule is loosened again, or the duplication is accepted as the price of the boundary. Nothing breaks either way today. | before the Phase 1 gate | ⬜ Open |
 
 ### 3.1 What the public-repository decision commits us to
 
@@ -160,10 +161,10 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 | --- | --- | --- | --- | --- | --- | --- |
 | **G1** | Foundation that blocks everything | 3 | 33 | 124 h | 100 % closed | No — nothing else starts |
 | **G2** | Safety invariants | 5 | 38 | 136 h | **97 % — all five closed**; `T-2.2-05` deferred | No — scope may narrow, the invariant may not |
-| **G3** | The product path | 6 | 56 | 280 h | 71 % — WP-3.1 · WP-3.2 · WP-3.3 · WP-3.4 closed | Partly — cut from G5 first |
+| **G3** | The product path | 6 | 56 | 280 h | 79 % — WP-3.1 · WP-3.2 · WP-3.3 · WP-3.4 · WP-3.5 closed | Partly — cut from G5 first |
 | **G4** | Measurement | 1 | 11 | 80 h | 0 % | No, but it never blocks code |
 | **G5** | Pre-agreed slack | 5 | 16 | 80 h | 0 % | Yes, first |
-| | **Total** | **20** | **154** | **700 h** | **73 %** | |
+| | **Total** | **20** | **154** | **700 h** | **74 %** | |
 
 ### 4.2 Roll-up by package
 
@@ -183,7 +184,7 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 | [WP-3.2](./ei-ai-phase-1-tasks.md#wp-32--authorisation--40-h) · Authorisation | B2 | 8/8 | 40/40 h | 9 | ✅ 2026-09-22 | ✅ passed 2026-09-22 |
 | [WP-3.3](./ei-ai-phase-1-tasks.md#wp-33--workspaces-upload-storage--40-h) · Workspaces, upload, storage | L | 9/9 | 40/40 h | 5 | ✅ 2026-09-17 | ✅ passed 2026-09-17 · an ELF binary renamed `.pdf` → 415 `DOC_CONTENT_MISMATCH` and a 201 MB body → 413 `DOC_TOO_LARGE`, both through the endpoint. **Demonstrated locally; no CI run number is recorded against this package** — the four scenarios of `T-3.3-09` ride in job `6c` |
 | [WP-3.4](./ei-ai-phase-1-tasks.md#wp-34--markdown-ingestion-pipeline--56-h) · Markdown ingestion pipeline | B2 · L | 11/11 | 56/56 h | 2 | ✅ 2026-09-21 | ✅ passed 2026-09-21 |
-| [WP-3.5](./ei-ai-phase-1-tasks.md#wp-35--tool-registry-and-operating-mode--16-h) · Tool registry and operating mode | L | 0/4 | 0/16 h | 5 | ⬜ | ⬜ |
+| [WP-3.5](./ei-ai-phase-1-tasks.md#wp-35--tool-registry-and-operating-mode--16-h) · Tool registry and operating mode | L | 4/4 | 16/16 h | 5 | ✅ 2026-09-22 | ✅ passed 2026-09-22 |
 | [WP-3.6](./ei-ai-phase-1-tasks.md#wp-36--web--19-routes-four-of-them-real--72-h) · Web — 19 routes, four of them real | FE | 0/12 | 0/72 h | 1 | ⬜ | ⬜ |
 | [WP-4.1](./ei-ai-phase-1-tasks.md#wp-41--corpus-ocr-spike-gpu-benchmark--80-h) · Corpus, OCR spike, GPU benchmark | ML | 0/11 | 0/80 h | 1 | ⬜ | ⬜ |
 | [WP-5.1](./ei-ai-phase-1-tasks.md#wp-51--zip-expansion--16-h--l) · ZIP expansion | L | 0/4 | 0/16 h | 10 | ⬜ | ⬜ |
@@ -373,14 +374,14 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 | T-3.4-10 | Persist embeddings as halfvec, with the completeness check | L | 4 | 10 | ✅ | 2026-09-21 · `SELECT count(*) FROM chunks WHERE embedding IS NULL` → **0** over 51 versions and 123 chunks. Completeness is structural: `StoredChunk` requires an embedding, so a chunk without one cannot be written. **WP-2.5 rule 1 narrowed to reads** to permit the write |
 | T-3.4-11 | End-to-end — upload a folder, reach indexed, expose ingestion status… | L | 3 | 11 | ✅ | 2026-09-21 · `quy chế hợp đồng.md` uploaded through the API reached `indexed` unattended; `GET /workspaces/{id}/documents` returns the state of each. **Live-updating table deferred to `T-3.6-10`**; the list endpoint is scope no task names |
 
-**WP-3.5 · Tool registry and operating mode — 0/4 tasks · 0/16 h**
+**WP-3.5 · Tool registry and operating mode — 4/4 tasks · 16/16 h · ✅ closed 2026-09-22**
 
 | ID | Task | Lane | h | W | Status | Note |
 | --- | --- | --- | --- | --- | --- | --- |
-| T-3.5-01 | tools repository and seed of the three internal tools; only… | L | 4 | 5 | ⬜ | |
-| T-3.5-02 | Role filtering inside the query by min_system_role | L | 4 | 10 | ⬜ | |
-| T-3.5-03 | Operating-mode computation per request from enabled and reachable tools | L | 4 | 11 | ⬜ | |
-| T-3.5-04 | GET /me — user, roles, memberships, operatingMode, FEATURE_STATUS | L | 4 | 12 | ⬜ | |
+| T-3.5-01 | tools repository and seed of the three internal tools; only… | L | 4 | 5 | ✅ | Three rows, all `read`, only `search_documents` enabled; the other two carry `phase 2B` in the description |
+| T-3.5-02 | Role filtering inside the query by min_system_role | L | 4 | 10 | ✅ | `SYSTEM_ROLE_RANK` declared beside the matrix and scoped to tool visibility. The control was rewritten: three absences stayed green against a query with no filter at all |
+| T-3.5-03 | Operating-mode computation per request from enabled and reachable tools | L | 4 | 11 | ✅ | Reachability not probed — the MCP client is 3A. Inserting one `mcp_servers` row moves the ERP group with no restart, which is FR-80 shown |
+| T-3.5-04 | GET /me — user, roles, memberships, operatingMode, FEATURE_STATUS | L | 4 | 12 | ✅ | `FEATURE_STATUS` defined from Detail §7.1, eight entries with phases. The web-app half of the Done when deferred to `T-3.6-05` and `T-5.5-01` |
 
 **WP-3.6 · Web — 19 routes, four of them real — 0/12 tasks · 0/72 h**
 
@@ -653,6 +654,7 @@ Quoted from [Detail §10](./ei-ai-phase-1-detail.md), where each line carries th
 
 | Date | Change |
 | --- | --- |
+| 2026-09-22 | **WP-3.5 closed at its gate.** 4 rows to ✅. `GET /me` reports `"operatingMode": "document-only"` with `mcp_servers` at 0 rows, `toolGroups` `{documents: on, web: off, erp: not_configured}`, and nothing in the response reads `unreachable`. Found by running it: the compiled-SQL control stayed **green** against a query with the role filter deleted entirely, because three assertions of absence all hold when the query sends no roles at all — rewritten as an equality it goes red with six others. The rule-3 exemption for `tools` was checked with its near miss: `WorkspacesService` from the same file is still refused. One `mcp_servers` row moves the ERP group and back with no restart, which is FR-80 shown rather than asserted. Two design contradictions recorded: §3 calls the mode configured where §5.4 and ADR-10 compute it, and ADR-10 says `search_documents` has no switch where `TOOL_SEARCH_DOCUMENTS_ENABLED` is one. Diary promoted: three rules; `Q-27` opened. |
 | 2026-09-22 | **WP-3.2 closed at its gate.** 8 rows to ✅. The matrix reports **77/77** from a table whose type refuses a row that names neither a route nor a phase, and **15 routes carry a decision, 0 without**. The loosening check was run three ways — widen the table, remove the decorator, remove the guard — and only a real request notices the third. Four service checks were removed and their assertions moved to the guards. `Q-16` fixed: a locked account can no longer refresh. Found on the way: a Member who is a workspace Editor can no longer upload, because §9.1's two dimensions are ANDed. Diary promoted: three rules; `Q-25`, `Q-26` opened. |
 | 2026-09-21 | **WP-2.4 closed at its gate — G2 is complete.** 8 rows to ✅. One upload on a clean database leaves `document.uploaded` once and five state-change events, `prev_hash` correct 7/7 and every hash recomputing from its own row; `UPDATE` and `DELETE` both raise. Found by running it: the worker died instead of failing a job, because the failure handler could itself fail; an append-only table's foreign keys freeze the rows they point at; and rule 3 of WP-2.5 forbade every module from writing an audit event, exempted by decision with its near miss re-proved. `Q-13` closed — `packages/shared-types` exists. Diary promoted: three rules; `Q-23`, `Q-24` opened. |
 | 2026-09-21 | **WP-2.3 closed at its gate.** 11 rows reviewed and moved to ✅; G2 is 76 % and three of its never-waivable lines now have commands behind them. The endpoint worked while answering with half of itself — every score a multiple of `1/61` — because `plainto_tsquery` ANDs a whole question and matched nothing; the terms are OR-ed now. Mutation check: joins removed → 4 of 13 and 13 of 27 red, restored → green. Diary promoted: three rules added to CLAUDE.md, three candidates rejected as reconfirmations; `Q-22` opened. |
