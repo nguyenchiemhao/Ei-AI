@@ -45,3 +45,5 @@ coverage/
 .DS_Store
 Thumbs.db
 desktop.ini
+spike/out/
+spike/corpus/

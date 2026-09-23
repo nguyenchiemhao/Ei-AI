@@ -171,6 +171,22 @@ services:
     depends_on: [api, web]
     networks: [backend]
 
+  # WP-4.1's OCR spike. Not started by default, and deliberately not a product service: it runs in
+  # the parser image only because that image already pins docling and carries the Tesseract
+  # Vietnamese data, and a second image would repeat those pins and drift from them.
+  spike:
+    profiles: [spike]
+    build:
+      context: ../..
+      dockerfile: apps/parser/Dockerfile
+    # As the developer, not as root: output written into the bind mount otherwise lands root-owned
+    # on the host and the next run cannot touch its own results.
+    user: '${UID:-1000}:${GID:-1000}'
+    working_dir: /workspace
+    volumes:
+      - ../../spike:/workspace/spike
+    networks: [backend]
+
   squid:
     image: ubuntu/squid:6.6-24.04_beta@sha256:6a097f68bae708cedbabd6188d68c7e2e7a38cedd05a176e1cc0ba29e3bbe029
     # The directory is mounted, not the two files. A single-file bind mount pins an inode, and
