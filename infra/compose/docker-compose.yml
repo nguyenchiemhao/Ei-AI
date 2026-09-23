@@ -39,8 +39,16 @@ services:
     # never serve a request. The 8.7 GB on the development machine arrived by a route nobody wrote
     # down. Through squid the download is an audited egress against a declared destination, which
     # is what the boundary is for.
-    env_file:
-      - ../../.env
+    #
+    # Named variables rather than `env_file`: this is a third-party image that needs a proxy
+    # address and nothing else, and the file also carries JWT_SECRET, POSTGRES_PASSWORD and
+    # DATABASE_URL. The proxy address is topology, not configuration — squid answers at a fixed
+    # name on this network — so it is written here rather than read from a file that knows secrets.
+    environment:
+      HF_HOME: /models
+      HTTP_PROXY: http://squid:3128
+      HTTPS_PROXY: http://squid:3128
+      NO_PROXY: api,web,postgres,redis,infinity,parser,localhost,127.0.0.1
     command:
       - v2
       - --model-id
@@ -49,8 +57,6 @@ services:
       - BAAI/bge-reranker-v2-m3
       - --port
       - '7997'
-    environment:
-      HF_HOME: /models
     volumes:
       - models:/models
     # The gate runs a plain `docker compose up`, so the reservation belongs here:
