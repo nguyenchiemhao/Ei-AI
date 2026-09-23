@@ -6,9 +6,9 @@
 | --- | --- |
 | Version | 1.0 |
 | Updated | 2026-09-21 |
-| Phase in flight | **Phase 1 · Foundation** — **G1 complete**, **G2 complete**, WP-3.1 · WP-3.2 · WP-3.3 · WP-3.4 · WP-3.5 closed |
-| Blocking decisions | **none open** — D-1, D-2 closed; Q-07…Q-09 closed at the WP-1.1 gate; Q-10, Q-11 opened at the WP-1.2 gate; Q-13 at the WP-2.5 gate; Q-19…Q-21 at the WP-3.4 gate; Q-22 at the WP-2.3 gate; Q-23, Q-24 at the WP-2.4 gate; Q-25, Q-26 at the WP-3.2 gate; Q-27 at the WP-3.5 gate. **Q-13 closed 2026-09-21, Q-16 fixed 2026-09-22** |
-| Code written | WP-1.1 the stack boots; WP-1.2 the schema migrates and seeds; WP-2.5 the boundaries refuse in CI; WP-3.1 a person can log in, refresh, be locked out and be revoked; WP-3.3 a document is uploaded, keyed by its own content and downloaded; WP-3.4 that document is chunked, embedded and reaches `indexed`; WP-2.3 it is found again by a question, with the permission predicate inside the query; WP-2.4 every one of those steps leaves an append-only, hash-chained record; WP-3.5 the installation can say which of the three operating modes it is running in, computed from the registry rather than declared |
+| Phase in flight | **Phase 1 · Foundation** — **G1 complete**, **G2 complete**, **G3 complete** — all six packages closed |
+| Blocking decisions | **none open** — D-1, D-2 closed; Q-07…Q-09 closed at the WP-1.1 gate; Q-10, Q-11 opened at the WP-1.2 gate; Q-13 at the WP-2.5 gate; Q-19…Q-21 at the WP-3.4 gate; Q-22 at the WP-2.3 gate; Q-23, Q-24 at the WP-2.4 gate; Q-25, Q-26 at the WP-3.2 gate; Q-27 at the WP-3.5 gate; Q-28…Q-30 at the WP-3.6 gate. **Q-13 closed 2026-09-21, Q-16 fixed 2026-09-22** |
+| Code written | WP-3.6 a person can sign in, upload a Vietnamese document, watch it reach `indexed` and find the passage again, in a browser, across 22 screens; WP-1.1 the stack boots; WP-1.2 the schema migrates and seeds; WP-2.5 the boundaries refuse in CI; WP-3.1 a person can log in, refresh, be locked out and be revoked; WP-3.3 a document is uploaded, keyed by its own content and downloaded; WP-3.4 that document is chunked, embedded and reaches `indexed`; WP-2.3 it is found again by a question, with the permission predicate inside the query; WP-2.4 every one of those steps leaves an append-only, hash-chained record; WP-3.5 the installation can say which of the three operating modes it is running in, computed from the registry rather than declared |
 | Phase 1 progress | **112 / 154 tasks · 453 / 700 h** — all closed at their gates; `T-2.2-05` deferred |
 
 **Authorities.** [Implementation plan](./ei-ai-implementation-plan.md) — phases, gates, dependencies · [Phase 1 · Overview](./ei-ai-phase-1-overview.md) — priority groups and the pre-agreed cut · [Phase 1 · Detail](./ei-ai-phase-1-detail.md) — 20 packages, one proving command each · [Phase 1 · Tasks](./ei-ai-phase-1-tasks.md) — the 149 tasks and their "Done when" · [Development environment](./ei-ai-dev-environment.md) — the machine and the stack.
@@ -110,6 +110,9 @@ Copied from [plan §10](./ei-ai-implementation-plan.md) and [overview §9](./ei-
 | **Q-25** | **Two permission dimensions ANDed make one of them unreachable.** Design §9.1 gives "upload and delete documents" to Administrator and Knowledge Manager, and the workspace roles give it to Owner and Editor. Both must admit the caller, so a Member who is an **Editor** of a workspace cannot upload — the workspace role is reachable only by someone whose system role already permits the action everywhere. It broke four WP-3.3 tests, whose user is now a Knowledge Manager. Is that what §9.1 intends? | before the Phase 1 gate | ⬜ Open |
 | **Q-26** | **The four workspace-role actions exist only in `shared-types`.** Design §9.1 describes the three roles in one sentence each and names no actions, while Detail counts `3 × 4 = 12` cases. WP-3.2 read that sentence against the built surface as read, manage documents, change the workspace, manage members. Does §9.1 gain the table? | before the Phase 1 gate | ⬜ Open |
 | **Q-27** | **Two modules now read `workspace_members` by user.** `GET /me` answers "which workspaces am I in, and as what", and `workspaces.listForMember` returns the workspaces without the role, so `identity` grew a query of its own rather than take a third exemption from architecture rule 3 for one read. Either `workspaces` grows the query and the rule is loosened again, or the duplication is accepted as the price of the boundary. Nothing breaks either way today. | before the Phase 1 gate | ⬜ Open |
+| **Q-28** | **A workspace card counts its documents with a request of its own.** `GET /workspaces` carries no `documentCount` or `indexedCount`, so the list screen issues one document listing per workspace to show "N documents · M indexed". Two workspaces today; it is the wrong shape at two hundred. Does the endpoint gain the counts, or does the card stop showing them? | before the Phase 1 gate | ⬜ Open |
+| **Q-29** | **`ToolsService.catalogueFor` has no caller.** WP-3.5 built the role-filtered catalogue with a compiled-SQL spec and an integration spec, and `GET /tools` is a `501` stub because tool administration is 3A. Nothing in the running system reaches the query the package was largely about. Does `GET /tools` become real for the caller's own catalogue now, or wait for 3A? | before the Phase 1 gate | ⬜ Open |
+| **Q-30** | **The end-to-end flow leaves a document behind on every run.** `dv_content_unique` refuses a second copy of the same bytes, so each run uploads different content, and Phase 1 has no delete endpoint — the seeded corpus grows by one per run. Harmless locally; it is the shape that makes a CI database drift. | before the Phase 1 gate | ⬜ Open |
 
 ### 3.1 What the public-repository decision commits us to
 
@@ -161,10 +164,10 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 | --- | --- | --- | --- | --- | --- | --- |
 | **G1** | Foundation that blocks everything | 3 | 33 | 124 h | 100 % closed | No — nothing else starts |
 | **G2** | Safety invariants | 5 | 38 | 136 h | **97 % — all five closed**; `T-2.2-05` deferred | No — scope may narrow, the invariant may not |
-| **G3** | The product path | 6 | 56 | 280 h | 79 % — WP-3.1 · WP-3.2 · WP-3.3 · WP-3.4 · WP-3.5 closed | Partly — cut from G5 first |
+| **G3** | The product path | 6 | 56 | 280 h | **100 % — all six closed** | Partly — cut from G5 first |
 | **G4** | Measurement | 1 | 11 | 80 h | 0 % | No, but it never blocks code |
 | **G5** | Pre-agreed slack | 5 | 16 | 80 h | 0 % | Yes, first |
-| | **Total** | **20** | **154** | **700 h** | **74 %** | |
+| | **Total** | **20** | **154** | **700 h** | **82 %** | |
 
 ### 4.2 Roll-up by package
 
@@ -185,7 +188,7 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 | [WP-3.3](./ei-ai-phase-1-tasks.md#wp-33--workspaces-upload-storage--40-h) · Workspaces, upload, storage | L | 9/9 | 40/40 h | 5 | ✅ 2026-09-17 | ✅ passed 2026-09-17 · an ELF binary renamed `.pdf` → 415 `DOC_CONTENT_MISMATCH` and a 201 MB body → 413 `DOC_TOO_LARGE`, both through the endpoint. **Demonstrated locally; no CI run number is recorded against this package** — the four scenarios of `T-3.3-09` ride in job `6c` |
 | [WP-3.4](./ei-ai-phase-1-tasks.md#wp-34--markdown-ingestion-pipeline--56-h) · Markdown ingestion pipeline | B2 · L | 11/11 | 56/56 h | 2 | ✅ 2026-09-21 | ✅ passed 2026-09-21 |
 | [WP-3.5](./ei-ai-phase-1-tasks.md#wp-35--tool-registry-and-operating-mode--16-h) · Tool registry and operating mode | L | 4/4 | 16/16 h | 5 | ✅ 2026-09-22 | ✅ passed 2026-09-22 |
-| [WP-3.6](./ei-ai-phase-1-tasks.md#wp-36--web--19-routes-four-of-them-real--72-h) · Web — 19 routes, four of them real | FE | 0/12 | 0/72 h | 1 | ⬜ | ⬜ |
+| [WP-3.6](./ei-ai-phase-1-tasks.md#wp-36--web--19-routes-four-of-them-real--72-h) · Web — 19 routes, four of them real | FE | 12/12 | 72/72 h | 1 | ✅ 2026-09-22 | ✅ passed 2026-09-22 · 28/28 Playwright |
 | [WP-4.1](./ei-ai-phase-1-tasks.md#wp-41--corpus-ocr-spike-gpu-benchmark--80-h) · Corpus, OCR spike, GPU benchmark | ML | 0/11 | 0/80 h | 1 | ⬜ | ⬜ |
 | [WP-5.1](./ei-ai-phase-1-tasks.md#wp-51--zip-expansion--16-h--l) · ZIP expansion | L | 0/4 | 0/16 h | 10 | ⬜ | ⬜ |
 | [WP-5.2](./ei-ai-phase-1-tasks.md#wp-52--allowlist-generation-from-the-database--16-h) · Allowlist generation from the database | DO · L | 0/4 | 0/16 h | 2 | ⬜ | ⬜ |
@@ -383,22 +386,22 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 | T-3.5-03 | Operating-mode computation per request from enabled and reachable tools | L | 4 | 11 | ✅ | Reachability not probed — the MCP client is 3A. Inserting one `mcp_servers` row moves the ERP group with no restart, which is FR-80 shown |
 | T-3.5-04 | GET /me — user, roles, memberships, operatingMode, FEATURE_STATUS | L | 4 | 12 | ✅ | `FEATURE_STATUS` defined from Detail §7.1, eight entries with phases. The web-app half of the Done when deferred to `T-3.6-05` and `T-5.5-01` |
 
-**WP-3.6 · Web — 19 routes, four of them real — 0/12 tasks · 0/72 h**
+**WP-3.6 · Web — 19 routes, four of them real — 12/12 tasks · 72/72 h · ✅ closed 2026-09-22**
 
 | ID | Task | Lane | h | W | Status | Note |
 | --- | --- | --- | --- | --- | --- | --- |
-| T-3.6-01 | Vite 6 + React 19 + TypeScript + Tailwind 4 + shadcn/ui initialised | FE | 5 | 2 | ⬜ | |
-| T-3.6-02 | providers.tsx — TanStack Query, Zustand auth store, theme | FE | 5 | 1 | ⬜ | |
-| T-3.6-03 | apiClient.ts — problem+json parsing, transparent refresh on 401… | FE | 8 | 2 | ⬜ | |
-| T-3.6-04 | router.tsx — all 19 routes declared, including the unbuilt ones | FE | 6 | 3 | ⬜ | |
-| T-3.6-05 | AppShell + Sidebar, badges driven by FEATURE_STATUS | FE | 6 | 13 | ⬜ | |
-| T-3.6-06 | ComingSoon component — purpose, planned phase, and what it will do | FE | 4 | 4 | ⬜ | |
-| T-3.6-07 | Login screen, including the lockout message | FE | 6 | 8 | ⬜ | |
-| T-3.6-08 | Auth flow — guarded routes, token storage, 401 → refresh → retry, logout | FE | 6 | 11 | ⬜ | |
-| T-3.6-09 | Workspace list — cards with document count and index status | FE | 6 | 12 | ⬜ | |
-| T-3.6-10 | Workspace documents table — status, pages, uploader, date, per-row… | FE | 6 | 12 | ⬜ | |
-| T-3.6-11 | Upload screen — drag and drop, per-file progress, per-file result with… | FE | 6 | 12 | ⬜ | |
-| T-3.6-12 | Search screen — query box, workspace scope, results with file name and… | FE | 8 | 12 | ⬜ | |
+| T-3.6-01 | Vite 6 + React 19 + TypeScript + Tailwind 4 + shadcn/ui initialised | FE | 5 | 2 | ✅ | Every dependency in one edit, lockfile regenerated in a throwaway container. `@vitejs/plugin-react` pinned to 5.2.0: 6.1.1 peers on vite ^8 and the repo pins 6.0.7 |
+| T-3.6-02 | providers.tsx — TanStack Query, Zustand auth store, theme | FE | 5 | 1 | ✅ | `providers.tsx`, Zustand store, theme. The access token is in memory only; the refresh cookie is the durable credential |
+| T-3.6-03 | apiClient.ts — problem+json parsing, transparent refresh on 401… | FE | 8 | 2 | ✅ | `api-client.ts` — problem+json, one refresh in flight, `X-Correlation-Id`. The cold start refreshes before asking, so no reload logs a 401 |
+| T-3.6-04 | router.tsx — all 19 routes declared, including the unbuilt ones | FE | 6 | 3 | ✅ | **22 routes, not 19** — design §8.1 has 21 rows and `Search documents` has none. Counted by `check-screen-inventory.mjs`, which reads §8.1 out of the design |
+| T-3.6-05 | AppShell + Sidebar, badges driven by FEATURE_STATUS | FE | 6 | 13 | ✅ | `AppShell` + sidebar; badges read `FEATURE_STATUS` through the route→feature table in `routes.ts`. The mode line of FR-79 is here |
+| T-3.6-06 | ComingSoon component — purpose, planned phase, and what it will do | FE | 4 | 4 | ✅ | `ComingSoon` calls its own endpoint, so what a reader sees is the server’s 501 or 403 rather than the router’s opinion |
+| T-3.6-07 | Login screen, including the lockout message | FE | 6 | 8 | ✅ | Lockout and rate-limit messages by code, not by status |
+| T-3.6-08 | Auth flow — guarded routes, token storage, 401 → refresh → retry, logout | FE | 6 | 11 | ✅ | `RequireAuth` distinguishes "not signed in" from "not asked yet". The refresh goes through the deduplicating path — StrictMode runs effects twice and two refreshes look like a replay |
+| T-3.6-09 | Workspace list — cards with document count and index status | FE | 6 | 12 | ✅ | Counts fetched per workspace; `GET /workspaces` carries none. Open question |
+| T-3.6-10 | Workspace documents table — status, pages, uploader, date, per-row… | FE | 6 | 12 | ✅ | Polled at 2 s while any row is unsettled. Without it the table showed `embedding` three minutes after the database said `indexed` |
+| T-3.6-11 | Upload screen — drag and drop, per-file progress, per-file result with… | FE | 6 | 12 | ✅ | One request per file, so one refusal fails one file. Refusal codes rendered by name |
+| T-3.6-12 | Search screen — query box, workspace scope, results with file name and… | FE | 8 | 12 | ✅ | Passages with file name, chunk, character span and pages. Says on the screen that nothing is generated |
 
 #### G4 · Measurement
 
@@ -654,6 +657,7 @@ Quoted from [Detail §10](./ei-ai-phase-1-detail.md), where each line carries th
 
 | Date | Change |
 | --- | --- |
+| 2026-09-22 | **WP-3.6 closed at its gate — G3 is complete.** 12 rows to ✅, and eight `501` controllers pulled forward from WP-5.5. 28 of 28 Playwright tests: every route renders with no console error, a Member typing an admin route gets `403 AUTHZ_ROLE_FORBIDDEN` from the server, and a Vietnamese document goes upload → `indexed` → found again. Found by running it: my own arithmetic was wrong — §8.1 has 21 screens and the router needs 22, not the 19 written in seven documents; the documents table never refetched, so it read `embedding` three minutes after the database said `indexed`, with every API test green; `shared-types` compiled to CommonJS and the browser could not load it, mounting an empty page while `tsc` stayed green; the suite signed in per test and the product's own rate limit locked it out; and rule 2 caught the composition root, where exempting `app.module.ts` opened a hole that a second rule now closes. Diary promoted: three rules; `Q-28`…`Q-30` opened. |
 | 2026-09-22 | **WP-3.5 closed at its gate.** 4 rows to ✅. `GET /me` reports `"operatingMode": "document-only"` with `mcp_servers` at 0 rows, `toolGroups` `{documents: on, web: off, erp: not_configured}`, and nothing in the response reads `unreachable`. Found by running it: the compiled-SQL control stayed **green** against a query with the role filter deleted entirely, because three assertions of absence all hold when the query sends no roles at all — rewritten as an equality it goes red with six others. The rule-3 exemption for `tools` was checked with its near miss: `WorkspacesService` from the same file is still refused. One `mcp_servers` row moves the ERP group and back with no restart, which is FR-80 shown rather than asserted. Two design contradictions recorded: §3 calls the mode configured where §5.4 and ADR-10 compute it, and ADR-10 says `search_documents` has no switch where `TOOL_SEARCH_DOCUMENTS_ENABLED` is one. Diary promoted: three rules; `Q-27` opened. |
 | 2026-09-22 | **WP-3.2 closed at its gate.** 8 rows to ✅. The matrix reports **77/77** from a table whose type refuses a row that names neither a route nor a phase, and **15 routes carry a decision, 0 without**. The loosening check was run three ways — widen the table, remove the decorator, remove the guard — and only a real request notices the third. Four service checks were removed and their assertions moved to the guards. `Q-16` fixed: a locked account can no longer refresh. Found on the way: a Member who is a workspace Editor can no longer upload, because §9.1's two dimensions are ANDed. Diary promoted: three rules; `Q-25`, `Q-26` opened. |
 | 2026-09-21 | **WP-2.4 closed at its gate — G2 is complete.** 8 rows to ✅. One upload on a clean database leaves `document.uploaded` once and five state-change events, `prev_hash` correct 7/7 and every hash recomputing from its own row; `UPDATE` and `DELETE` both raise. Found by running it: the worker died instead of failing a job, because the failure handler could itself fail; an append-only table's foreign keys freeze the rows they point at; and rule 3 of WP-2.5 forbade every module from writing an audit event, exempted by decision with its near miss re-proved. `Q-13` closed — `packages/shared-types` exists. Diary promoted: three rules; `Q-23`, `Q-24` opened. |

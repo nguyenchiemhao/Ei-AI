@@ -89,6 +89,21 @@ all three absences hold and the control is green against a query returning every
 Rewritten as an equality — the exact set each role sends — it goes red along with six others. Name
 what must be there, not only what must not.
 
+**Arithmetic written in prose is arithmetic nobody has done.** The plan for WP-3.6 said "five real
+screens plus sixteen planned makes twenty-one", and design §8.1 has twenty-one rows of which four
+are real — so the true count was twenty-two routes, five real and seventeen planned, and the number
+19 was already copied into seven documents. A twenty-line script that reads §8.1 out of the design
+and compares it with the router found it in one run, and now says `21 screens in design §8.1, 22
+routes declared (1 outside §8.1)`. Count with a command, against the document that decides, and the
+count stops being a claim two people can read differently.
+
+**A test suite is a caller, and the product's defences apply to it.** Twenty-three screen tests each
+signed in, which is twenty-three attempts in two minutes against a limit of ten in fifteen — so the
+suite went red on `RATE_LIMITED`, the FR-65 defence firing on the tests written to exercise it. The
+fix was one signed-in context per spec file, letting the refresh token rotate inside it, which is
+also how a person uses the product. A suite that has to disable a defence to run is testing a system
+nobody ships.
+
 **To isolate one contributor, make the others prefer the wrong answer.** Killing the dense branch with a zero vector still ranked every chunk, because ordering by distance to zero orders everything. What isolates the lexical branch is a decoy sitting exactly on the question's own vector: it wins the dense branch outright, so only the lexical branch can put the right passage first. A control that cannot change the answer is not a control.
 
 **A handler for failures that can itself fail stops everything.** `worker.on('failed', (job, error) => void this.onFailed(job, error))` — and `void` on a rejected promise is an unhandled rejection, which ends the Node process. One job whose audit row could not be written took the ingest worker down and stopped every later job from running at all. The path that runs when something has already gone wrong is the path least likely to have been exercised; give it its own catch.
@@ -146,3 +161,11 @@ carries a CHECK over the five role names and nothing more; the ranking that make
 something lives in TypeScript. A row inserted with a role the ranking does not know passes the CHECK
 and is invisible to every caller, silently. That is acceptable while the only writer is the seed, and
 it stops being acceptable the moment a screen can write one.
+
+**A screen that shows a state which changes on its own has to ask again.** A document reached
+`indexed` in the database at 08:12:05 and the workspace table still read `embedding` three minutes
+later, because the query had no polling and nothing invalidated it. Every unit and integration test
+in the repository was green throughout — they test the API, and the API was right. Ingestion is a
+queue and a worker, so the reader changes nothing and the answer changes anyway; the table now polls
+while any row is unsettled and stops when they all are. A status that only updates on reload is a
+timestamp with a misleading name.
