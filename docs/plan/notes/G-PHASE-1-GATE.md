@@ -55,3 +55,40 @@ gate is.
 - 2026-09-23 — **does the "no generated text" grep get narrowed, or the comment reworded?** The
   invariant is about code, the check reads comments, and the comment is correct. · **blocks G2's
   last line**
+
+## Decided 2026-09-23 — run nothing, fix one thing, defer the rest by name
+
+The gate run is **not** being performed. Each line below names what will run it.
+
+**Fixed, because it is not a gate formality.** `infinity` sits on the internal network and had no
+proxy environment, so it could not resolve `huggingface.co` and a clean install brings up an embedder
+that can never serve a request — no embeddings, no ingestion, no search. The 8.7 GB in the `models`
+volume on this machine arrived by a route nobody wrote down, and §2.2's three manual steps do not
+mention it. `infinity` now takes `env_file: ../../.env` like `api`, and `allowlist.conf` declares
+`.huggingface.co`, `.hf.co` and `.xethub.hf.co`.
+
+Verified by effect rather than by reading the files, per `## Proving`:
+
+- `HTTPS_PROXY=http://squid:3128` inside the container, where it was unset
+- `https://huggingface.co/BAAI/bge-m3/resolve/main/config.json` → **200, 687 bytes**
+- a ranged fetch of `pytorch_model.bin` → **206, 4 096 bytes, served by `us.aws.cdn.hf.co`**, so the
+  CDN the weights actually come from is covered and a full download would complete
+- `https://example.com` → **403 Forbidden** from the tunnel, and `TCP_DENIED/403` in Squid's log
+
+**Deviation.** `allowlist.conf` no longer ships empty; it ships with one declared destination. The
+default-deny invariant is unchanged and is what `verify-egress.sh` proves, against `example.com`
+rather than against emptiness.
+
+**Deferred, each with its owner:**
+
+| Gate line | Deferred to |
+| --- | --- |
+| G1 · clean machine, all services up, no manual step | A real clean machine. This one has every image, every volume and 8.7 GB of models; it would pass for reasons a stranger's machine does not have. Named: the **week-14 clean-machine install rehearsal** of Detail §9 |
+| G2 · after seeding one destination the request succeeds | `T-5.2-01` and `T-5.2-03` — the generator and the reload. Until then the allowlist is a hand-edited file and the line proves Squid, not `allowlist_entries` |
+| G2 · no generated text anywhere in the execution path | The check is red today on `hybrid-search.repository.ts:9`, a **comment asserting the invariant**, and its exemption names `adapters/model-provider/` while the grep only reads `apps/api/src/modules`. Enforcement already exists: **architecture rule 5**, with a near-miss control. The grep needs narrowing to non-comment source. Named: `T-5.4-03`, the stage that owns scanning |
+| G3 · all 19 screens open | The count is 22 — design §8.1's twenty-one plus `Search documents`, settled at the WP-3.6 gate. The gate text is stale. Named: **this file**, to be corrected when the gate is next opened |
+| G4 · the OCR number carries an R-01 recommendation | `T-4.1-03`, open by decision, and `Q-01`'s ~200 real customer documents in week 8 |
+
+**What the deferrals leave open.** Nobody has run the twenty-five lines together on one tree, so
+Phase 1 has no statement that it is done — only six closed packages and one gate line fixed because
+it turned out to be a defect rather than a formality.
