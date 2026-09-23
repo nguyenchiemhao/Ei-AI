@@ -112,6 +112,13 @@ export const envSchema = z.object({
     .optional()
     .transform((value) => (value && value.length > 0 ? value : undefined)),
 
+  // The same shape for the seeded Member. The end-to-end suite needs a principal whose role is
+  // refused by the admin routes, and proving a refusal needs an account that can actually log in.
+  SEED_MEMBER_PASSWORD: z
+    .string()
+    .optional()
+    .transform((value) => (value && value.length > 0 ? value : undefined)),
+
   TOOL_SEARCH_DOCUMENTS_ENABLED: booleanFlag(true),
   TOOL_READ_DOCUMENT_PAGE_ENABLED: booleanFlag(true),
   TOOL_LIST_WORKSPACE_DOCUMENTS_ENABLED: booleanFlag(true),

@@ -1,0 +1,28 @@
+@import 'tailwindcss';
+
+/* shadcn/ui's tokens, as CSS variables so a component names a role rather than a colour. Tailwind 4
+   reads the theme from CSS rather than a config file, which is why there is no tailwind.config. */
+@theme {
+  --color-background: oklch(1 0 0);
+  --color-foreground: oklch(0.21 0.01 260);
+  --color-muted: oklch(0.97 0.005 260);
+  --color-muted-foreground: oklch(0.55 0.015 260);
+  --color-border: oklch(0.92 0.005 260);
+  --color-primary: oklch(0.45 0.12 255);
+  --color-primary-foreground: oklch(0.99 0 0);
+  --color-destructive: oklch(0.55 0.19 27);
+  --color-destructive-foreground: oklch(0.99 0 0);
+  --color-accent: oklch(0.96 0.01 255);
+  --color-accent-foreground: oklch(0.25 0.03 255);
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
+
+/* The product's documents are Vietnamese, so the stack has to name a face that carries the full
+   set of tone marks before falling back to whatever the system happens to have. */
+:root {
+  font-family: 'Inter', 'Segoe UI', 'Noto Sans', 'Helvetica Neue', Arial, sans-serif;
+}

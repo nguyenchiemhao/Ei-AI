@@ -1,4 +1,7 @@
 import { Global, Module } from '@nestjs/common';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { IdentityModule } from '../identity/identity.module';
+import { AuditController } from './audit.controller';
 import { AuditRepository } from './audit.repository';
 import { AuditService } from './audit.service';
 
@@ -7,7 +10,9 @@ import { AuditService } from './audit.service';
 // another module, so architecture rule 3 is unaffected.
 @Global()
 @Module({
-  providers: [AuditService, AuditRepository],
+  imports: [IdentityModule],
+  controllers: [AuditController],
+  providers: [RolesGuard, AuditService, AuditRepository],
   exports: [AuditService],
 })
 export class AuditModule {}

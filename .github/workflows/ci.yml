@@ -69,6 +69,11 @@ jobs:
       - uses: ./.github/actions/pnpm
       - run: pnpm arch
       - run: pnpm --filter @ei-ai/api arch:chunks
+      # T-3.6-04 — every screen in design §8.1 has a route. Read out of the design document, so a
+      # screen added there and nowhere else turns this red.
+      - run: node apps/web/scripts/check-screen-inventory.mjs
+      # Every route in apps/api carries a role decision, or is named in the script's exemptions.
+      - run: node apps/api/scripts/check-route-decisions.mjs
 
   # Stage 5
   build:
@@ -89,6 +94,9 @@ jobs:
       # the only image build that would notice code which no longer compiles.
       - run: docker build -f apps/api/Dockerfile --target prod -t ei-ai/api:ci-prod .
       - run: docker build -f apps/web/Dockerfile --target dev -t ei-ai/web:ci .
+      # The E2E runner ships the browsers, because the internal network cannot fetch them. Built
+      # here so it cannot rot while nobody is looking at it.
+      - run: docker build -f apps/web/Dockerfile --target e2e -t ei-ai/e2e:ci .
       # The parser image is 2.88 GB because Docling pulls CPU torch, so it is built only when
       # something under apps/parser changed. A hosted runner starts with about 14 GB free.
       # On a branch's first push `github.event.before` is all zeroes and the diff fails, so an
@@ -172,6 +180,36 @@ jobs:
       - name: Squid log on failure
         if: failure()
         run: docker compose -f infra/compose/docker-compose.yml exec -T squid tail -50 /var/log/squid/access.log
+      - if: always()
+        run: docker compose -f infra/compose/docker-compose.yml down -v
+
+  # Stage 6d · WP-3.6 · the web proving command. It rides beside 6b and 6c for the same reason:
+  # stage 7 belongs to WP-5.4 in G5, the pre-agreed cut, and a G3 package must not close on work
+  # already agreed as the first thing to drop. The browser drives the running stack, so what it
+  # tests is the application, not a re-transpiled copy of it.
+  web-e2e:
+    name: 6d · Web end to end
+    needs: [lint, typecheck, unit, architecture]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.0.1
+      - name: Bring up the stack the browser needs
+        run: |
+          cp .env.example .env
+          sed -i "s|^JWT_SECRET=.*|JWT_SECRET=$(openssl rand -base64 48 | tr -d '\n')|" .env
+          sed -i "s|^SEED_ADMIN_PASSWORD=.*|SEED_ADMIN_PASSWORD=$(openssl rand -base64 24 | tr -d '\n')|" .env
+          sed -i "s|^SEED_MEMBER_PASSWORD=.*|SEED_MEMBER_PASSWORD=$(openssl rand -base64 24 | tr -d '\n')|" .env
+          docker compose -f infra/compose/docker-compose.yml up -d --build api web ingest-worker infinity
+      - name: Migrate and seed
+        run: |
+          docker compose -f infra/compose/docker-compose.yml exec -T api pnpm --filter @ei-ai/api build
+          docker compose -f infra/compose/docker-compose.yml exec -T api pnpm --filter @ei-ai/api migrate
+          docker compose -f infra/compose/docker-compose.yml exec -T api pnpm --filter @ei-ai/api seed
+      - run: docker compose -f infra/compose/docker-compose.yml --profile e2e run --rm e2e
+      - name: Application logs on failure
+        if: failure()
+        run: docker compose -f infra/compose/docker-compose.yml logs --tail 80 api web ingest-worker
       - if: always()
         run: docker compose -f infra/compose/docker-compose.yml down -v
 

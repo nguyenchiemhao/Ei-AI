@@ -136,10 +136,39 @@ services:
       target: dev
     volumes:
       - ../../apps/web:/workspace/apps/web
+      # Only shared-types, and with its node_modules shadowed. pnpm writes each workspace
+      # package's symlinks into packages/*/node_modules pointing at /workspace/node_modules/.pnpm,
+      # and api and web have different stores behind that same path — mounting all of packages/
+      # hands web the api container's broken links.
+      - ../../packages/shared-types/src:/workspace/packages/shared-types/src
+      - ../../packages/shared-types/dist:/workspace/packages/shared-types/dist
+      - ../../packages/shared-types/dist-esm:/workspace/packages/shared-types/dist-esm
       - web-node-modules:/workspace/node_modules
       - web-app-node-modules:/workspace/apps/web/node_modules
     expose:
       - '5173'
+    networks: [backend]
+
+  # Not started by default: `docker compose --profile e2e run --rm e2e`. It sits on the internal
+  # network because it drives the web app and the API through their own addresses, the way a
+  # person's browser reaches them.
+  e2e:
+    profiles: [e2e]
+    build:
+      context: ../..
+      dockerfile: apps/web/Dockerfile
+      target: e2e
+    env_file:
+      - ../../.env
+    environment:
+      WEB_BASE_URL: http://web:5173
+    volumes:
+      # The specs and what they import, so editing a test needs no image rebuild. node_modules and
+      # the browsers stay in the image, which is where the locked network put them.
+      - ../../apps/web/e2e:/workspace/apps/web/e2e
+      - ../../apps/web/src:/workspace/apps/web/src
+      - ../../apps/web/playwright.config.ts:/workspace/apps/web/playwright.config.ts
+    depends_on: [api, web]
     networks: [backend]
 
   squid:

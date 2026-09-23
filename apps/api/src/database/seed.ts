@@ -19,6 +19,7 @@ const USERS = [
 ];
 
 const ADMIN_EMAIL = 'admin@ei-ai.local';
+const MEMBER_EMAIL = 'member@ei-ai.local';
 
 // A recognisable placeholder, not a usable credential: the seed never invents a real password.
 const PLACEHOLDER_HASH = '$argon2id$v=19$m=65536,t=3,p=4$c2VlZC1wbGFjZWhvbGRlcg$c2VlZA';
@@ -27,14 +28,20 @@ const PLACEHOLDER_HASH = '$argon2id$v=19$m=65536,t=3,p=4$c2VlZC1wbGFjZWhvbGRlcg$
 // parameters and the policy the running system applies. Written as its own statement rather than
 // folded into the upsert, so a later run without the variable leaves a good hash alone instead of
 // resetting it to the placeholder. The password itself is never written to stdout.
-async function setAdminPasswordIfAsked(client: Client): Promise<boolean> {
+async function setPasswordsIfAsked(client: Client): Promise<number> {
   const config = loadConfig();
-  if (!config.SEED_ADMIN_PASSWORD) {
-    return false;
+  const wanted: [string, string | undefined][] = [
+    [ADMIN_EMAIL, config.SEED_ADMIN_PASSWORD],
+    [MEMBER_EMAIL, config.SEED_MEMBER_PASSWORD],
+  ];
+  let set = 0;
+  for (const [email, password] of wanted) {
+    if (!password) continue;
+    const hash = await new PasswordService(config).hash(password);
+    await client.query('UPDATE users SET password_hash = $1 WHERE email = $2', [hash, email]);
+    set += 1;
   }
-  const hash = await new PasswordService(config).hash(config.SEED_ADMIN_PASSWORD);
-  await client.query('UPDATE users SET password_hash = $1 WHERE email = $2', [hash, ADMIN_EMAIL]);
-  return true;
+  return set;
 }
 
 async function seedUsers(client: Client): Promise<Map<string, string>> {
@@ -180,7 +187,7 @@ export async function seed(): Promise<void> {
     await client.query('BEGIN');
     const users = await seedUsers(client);
     const adminId = users.get(ADMIN_EMAIL)!;
-    const credentialGiven = await setAdminPasswordIfAsked(client);
+    const credentialsSet = await setPasswordsIfAsked(client);
     const workspaceIds = await seedWorkspaces(client, adminId);
     await seedMemberships(client, workspaceIds, users);
     const documentCount = await seedDocuments(client, workspaceIds[0]!, adminId);
@@ -190,7 +197,7 @@ export async function seed(): Promise<void> {
     process.stdout.write(
       `seeded ${USERS.length} users, ${workspaceIds.length} workspaces, ` +
         `${documentCount} documents, ${INTERNAL_TOOLS.length} tools, 1 allowlist entry; ` +
-        `${ADMIN_EMAIL} password ${credentialGiven ? 'set' : 'left untouched'}\n`,
+        `${String(credentialsSet)} seeded password(s) set from the environment\n`,
     );
   } catch (error) {
     await client.query('ROLLBACK');

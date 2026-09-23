@@ -1,5 +1,8 @@
 import { Global, Module } from '@nestjs/common';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { IdentityModule } from '../identity/identity.module';
 import { McpServersRepository } from './mcp-servers.repository';
+import { ToolsController } from './tools.controller';
 import { ToolsRepository } from './tools.repository';
 import { ToolsService } from './tools.service';
 
@@ -9,7 +12,9 @@ import { ToolsService } from './tools.service';
 // fourth port is the growth §7.1 forbids.
 @Global()
 @Module({
-  providers: [ToolsService, ToolsRepository, McpServersRepository],
+  imports: [IdentityModule],
+  controllers: [ToolsController],
+  providers: [RolesGuard, ToolsService, ToolsRepository, McpServersRepository],
   exports: [ToolsService],
 })
 export class ToolsModule {}

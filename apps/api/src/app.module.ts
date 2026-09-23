@@ -9,9 +9,16 @@ import { DatabaseModule } from './database/database.module';
 import { CorrelationIdMiddleware } from './common/correlation-id.middleware';
 import { ProblemJsonFilter } from './common/problem-json.filter';
 import { AdminModule } from './modules/admin/admin.module';
+import { AgentModule } from './modules/agent/agent.module';
+import { AnsweringModule } from './modules/answering/answering.module';
 import { AuditModule } from './modules/audit/audit.module';
+import { ConnectorsModule } from './modules/connectors/connectors.module';
+import { EgressModule } from './modules/egress/egress.module';
+import { EvaluationModule } from './modules/evaluation/evaluation.module';
+import { GovernanceModule } from './modules/governance/governance.module';
 import { IdentityModule } from './modules/identity/identity.module';
 import { IngestionModule } from './modules/ingestion/ingestion.module';
+import { ModelProviderModule } from './modules/model-provider/model-provider.module';
 import { RetrievalModule } from './modules/retrieval/retrieval.module';
 import { ToolsModule } from './modules/tools/tools.module';
 import { WorkspacesModule } from './modules/workspaces/workspaces.module';
@@ -32,6 +39,15 @@ import { WorkspacesModule } from './modules/workspaces/workspaces.module';
     WorkspacesModule,
     IngestionModule,
     RetrievalModule,
+    // Detail §7.1's unbuilt modules. Each is a module file and a 501 controller, so the route
+    // exists, the guards decide before it runs, and T-5.5-01's contract tests have a subject.
+    AgentModule,
+    AnsweringModule,
+    ConnectorsModule,
+    EgressModule,
+    EvaluationModule,
+    GovernanceModule,
+    ModelProviderModule,
   ],
   providers: [{ provide: APP_FILTER, useClass: ProblemJsonFilter }],
 })

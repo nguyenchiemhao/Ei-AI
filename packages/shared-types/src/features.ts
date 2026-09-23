@@ -26,13 +26,22 @@ export const PLANNED_FEATURES = {
   approvals: { module: 'governance', plannedPhase: '3B', status: 'coming_soon' },
   'model-provider': { module: 'model-provider', plannedPhase: '3D', status: 'coming_soon' },
   administration: { module: 'admin', plannedPhase: '4A', status: 'coming_soon' },
+
+  // Three modules §7.1 calls "Full" are full only for what Phase 1 promised, and each has a screen
+  // that needs the rest: the document detail pane needs every format, the audit log screen needs
+  // the verification and export side, and the egress screen needs the admin surface. Added at
+  // WP-3.6, where the screens are; the shape — one entry per module, phase from §7.1 — is the one
+  // settled at the WP-3.5 gate.
+  'full-ingestion': { module: 'ingestion', plannedPhase: '2A', status: 'coming_soon' },
+  'audit-log': { module: 'audit', plannedPhase: '2D', status: 'coming_soon' },
+  'egress-administration': { module: 'egress', plannedPhase: '3C', status: 'coming_soon' },
 } as const satisfies Record<string, PlannedFeature>;
 
 export type FeatureKey = keyof typeof PLANNED_FEATURES;
 
 export type FeatureStatusMap = Record<FeatureKey, PlannedFeature>;
 
-// Only four of the eight have a variable. A feature absent from this map is not configurable,
+// Only four of the eleven have a variable. A feature absent from this map is not configurable,
 // which is the honest state: there is no switch for a module that does not exist yet.
 export const FEATURE_ENV_FLAG = {
   'agent-loop': 'FEATURE_AGENT_LOOP',

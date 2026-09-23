@@ -16,12 +16,30 @@ module.exports = {
       name: 'connectors-only-via-governance',
       comment:
         'Rule 2 — the approval gate cannot be bypassed while there is exactly one door into the ' +
-        'connectors. Connector files may import each other; nothing else may reach them.',
+        'connectors. Connector files may import each other; nothing else may reach them. The ' +
+        'composition root is exempt, by decision at WP-3.6: Nest has to be handed the module to ' +
+        'register its routes, and assembling a module is not a path that calls a connector. ' +
+        'The rule below is what keeps that exemption to the module file alone.',
       severity: 'error',
       from: {
-        pathNot: '^apps/api/src/modules/(governance/execution\\.gateway\\.ts$|connectors/)',
+        pathNot:
+          '^apps/api/src/(app\\.module\\.ts$|' +
+          'modules/(governance/execution\\.gateway\\.ts$|connectors/))',
       },
       to: { path: '^apps/api/src/modules/connectors/' },
+    },
+    {
+      name: 'composition-root-takes-only-the-connectors-module',
+      comment:
+        'Rule 2, the other half. app.module.ts is exempted above so Nest can be handed the module; ' +
+        'without this it could reach any file under connectors/ and the exemption would be a hole ' +
+        'rather than a door.',
+      severity: 'error',
+      from: { path: '^apps/api/src/app\\.module\\.ts$' },
+      to: {
+        path: '^apps/api/src/modules/connectors/',
+        pathNot: '^apps/api/src/modules/connectors/connectors\\.module\\.ts$',
+      },
     },
     {
       name: 'no-cross-module-service',
@@ -49,12 +67,22 @@ module.exports = {
     {
       name: 'web-not-to-api',
       comment:
-        'Rule 4 — backend detail does not leak into the client. The plan words this as an ' +
-        'allowlist onto packages/shared-types, which does not exist yet; the half that can be ' +
-        'enforced today is the refusal, and T-3.2-01 is the task that first fills the package.',
+        'Rule 4 — backend detail does not leak into the client. The refusal half; the allowlist ' +
+        'half is the rule below, written at WP-3.6 now that packages/shared-types exists and ' +
+        'apps/web imports it. T-3.2-01 was the task that filled the package.',
       severity: 'error',
       from: { path: '^apps/web/' },
       to: { path: '^apps/api/' },
+    },
+    {
+      name: 'web-shared-only-through-shared-types',
+      comment:
+        'Rule 4, the allowlist half. The client may reach exactly one workspace package. Another ' +
+        'one would be a second contract between the two ends, and the point of shared-types is ' +
+        'that there is one.',
+      severity: 'error',
+      from: { path: '^apps/web/' },
+      to: { path: '^packages/', pathNot: '^packages/shared-types/' },
     },
     {
       name: 'provider-sdk-only-in-adapter',
