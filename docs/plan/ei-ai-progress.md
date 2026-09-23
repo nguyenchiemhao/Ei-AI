@@ -7,8 +7,8 @@
 | Version | 1.0 |
 | Updated | 2026-09-21 |
 | Phase in flight | **Phase 1 · Foundation** — **G1 complete**, **G2 complete**, **G3 complete** — all six packages closed |
-| Blocking decisions | **none open** — D-1, D-2 closed; Q-07…Q-09 closed at the WP-1.1 gate; Q-10, Q-11 opened at the WP-1.2 gate; Q-13 at the WP-2.5 gate; Q-19…Q-21 at the WP-3.4 gate; Q-22 at the WP-2.3 gate; Q-23, Q-24 at the WP-2.4 gate; Q-25, Q-26 at the WP-3.2 gate; Q-27 at the WP-3.5 gate; Q-28…Q-30 at the WP-3.6 gate. **Q-13 closed 2026-09-21, Q-16 fixed 2026-09-22** |
-| Code written | WP-3.6 a person can sign in, upload a Vietnamese document, watch it reach `indexed` and find the passage again, in a browser, across 22 screens; WP-1.1 the stack boots; WP-1.2 the schema migrates and seeds; WP-2.5 the boundaries refuse in CI; WP-3.1 a person can log in, refresh, be locked out and be revoked; WP-3.3 a document is uploaded, keyed by its own content and downloaded; WP-3.4 that document is chunked, embedded and reaches `indexed`; WP-2.3 it is found again by a question, with the permission predicate inside the query; WP-2.4 every one of those steps leaves an append-only, hash-chained record; WP-3.5 the installation can say which of the three operating modes it is running in, computed from the registry rather than declared |
+| Blocking decisions | **none open** — D-1, D-2 closed; Q-07…Q-09 closed at the WP-1.1 gate; Q-10, Q-11 opened at the WP-1.2 gate; Q-13 at the WP-2.5 gate; Q-19…Q-21 at the WP-3.4 gate; Q-22 at the WP-2.3 gate; Q-23, Q-24 at the WP-2.4 gate; Q-25, Q-26 at the WP-3.2 gate; Q-27 at the WP-3.5 gate; Q-28…Q-30 at the WP-3.6 gate; Q-31…Q-35 at the WP-4.1 gate. **Q-13 closed 2026-09-21, Q-16 fixed 2026-09-22** |
+| Code written | WP-4.1 touches no product code and measures it: four of the five numbers, a 34-document scanned corpus, and an OCR upper bound of 0.94; WP-3.6 a person can sign in, upload a Vietnamese document, watch it reach `indexed` and find the passage again, in a browser, across 22 screens; WP-1.1 the stack boots; WP-1.2 the schema migrates and seeds; WP-2.5 the boundaries refuse in CI; WP-3.1 a person can log in, refresh, be locked out and be revoked; WP-3.3 a document is uploaded, keyed by its own content and downloaded; WP-3.4 that document is chunked, embedded and reaches `indexed`; WP-2.3 it is found again by a question, with the permission predicate inside the query; WP-2.4 every one of those steps leaves an append-only, hash-chained record; WP-3.5 the installation can say which of the three operating modes it is running in, computed from the registry rather than declared |
 | Phase 1 progress | **112 / 154 tasks · 453 / 700 h** — all closed at their gates; `T-2.2-05` deferred |
 
 **Authorities.** [Implementation plan](./ei-ai-implementation-plan.md) — phases, gates, dependencies · [Phase 1 · Overview](./ei-ai-phase-1-overview.md) — priority groups and the pre-agreed cut · [Phase 1 · Detail](./ei-ai-phase-1-detail.md) — 20 packages, one proving command each · [Phase 1 · Tasks](./ei-ai-phase-1-tasks.md) — the 149 tasks and their "Done when" · [Development environment](./ei-ai-dev-environment.md) — the machine and the stack.
@@ -113,6 +113,11 @@ Copied from [plan §10](./ei-ai-implementation-plan.md) and [overview §9](./ei-
 | **Q-28** | **A workspace card counts its documents with a request of its own.** `GET /workspaces` carries no `documentCount` or `indexedCount`, so the list screen issues one document listing per workspace to show "N documents · M indexed". Two workspaces today; it is the wrong shape at two hundred. Does the endpoint gain the counts, or does the card stop showing them? | before the Phase 1 gate | ⬜ Open |
 | **Q-29** | **`ToolsService.catalogueFor` has no caller.** WP-3.5 built the role-filtered catalogue with a compiled-SQL spec and an integration spec, and `GET /tools` is a `501` stub because tool administration is 3A. Nothing in the running system reaches the query the package was largely about. Does `GET /tools` become real for the caller's own catalogue now, or wait for 3A? | before the Phase 1 gate | ⬜ Open |
 | **Q-30** | **The end-to-end flow leaves a document behind on every run.** `dv_content_unique` refuses a second copy of the same bytes, so each run uploads different content, and Phase 1 has no delete endpoint — the seeded corpus grows by one per run. Harmless locally; it is the shape that makes a CI database drift. | before the Phase 1 gate | ⬜ Open |
+| **Q-31** | **The VRAM decision has no owner.** §4.5 says *"over ~3.6 GB → reranker to int8 or CPU"* and the card carries 3.63–3.70 GB with both models resident. No task in any package does it. Reranking is wired and not enabled until 2A, so nothing is broken today. | before milestone 2A | ⬜ Open |
+| **Q-32** | **HMR latency was measured as scope no task names.** §4.5 number 4 had no owner: WP-1.1 closed without recording it and no WP-4.1 task mentions it. Does it grow `T-4.1-11` or earn `T-4.1-12`? | before the Phase 1 gate | ⬜ Open |
+| **Q-33** | **`eval/golden-set/` and `eval/runner/` do not exist**, although Detail §7's tree and §54 both say Phase 1 creates them. WP-1.1 closed without them, and scope moves between packages only through the task document, so WP-4.1 did not create them. | before the Phase 1 gate | ⬜ Open |
+| **Q-34** | **OCR is 2.2× over NFR-04 for scans.** 3.26 s a page on 12 cores against a budget of 1.5 s a page for the whole pipeline; a 400-page scan is 22 minutes against a limit of 10. Parallelism across documents does not help and the parser holds no GPU by design. Does NFR-04 say what it means for scans, or does the engine change? | before milestone 2A | ⬜ Open |
+| **Q-35** | **Nothing measures what the product's own extraction keeps.** Docling reading a typeset PDF with OCR off recovered 0.61 of its text layer's words, where Tesseract on a render of the same page recovered 0.94. Some of the gap is deliberate — page furniture classified away — and how much is unknown. | before milestone 2A | ⬜ Open |
 
 ### 3.1 What the public-repository decision commits us to
 
@@ -165,7 +170,7 @@ The decision moves the risk rather than removing it: with a public tree, **the `
 | **G1** | Foundation that blocks everything | 3 | 33 | 124 h | 100 % closed | No — nothing else starts |
 | **G2** | Safety invariants | 5 | 38 | 136 h | **97 % — all five closed**; `T-2.2-05` deferred | No — scope may narrow, the invariant may not |
 | **G3** | The product path | 6 | 56 | 280 h | **100 % — all six closed** | Partly — cut from G5 first |
-| **G4** | Measurement | 1 | 11 | 80 h | 0 % | No, but it never blocks code |
+| **G4** | Measurement | 1 | 11 | 80 h | 82 % — everything but the ~20 transcribed pages and the accuracy they unlock | No, but it never blocks code |
 | **G5** | Pre-agreed slack | 5 | 16 | 80 h | 0 % | Yes, first |
 | | **Total** | **20** | **154** | **700 h** | **82 %** | |
 
@@ -405,21 +410,21 @@ Task text is abbreviated — [Tasks](./ei-ai-phase-1-tasks.md) is the authority 
 
 #### G4 · Measurement
 
-**WP-4.1 · Corpus, OCR spike, GPU benchmark — 0/11 tasks · 0/80 h**
+**WP-4.1 · Corpus, OCR spike, GPU benchmark — 9/11 tasks · 58/80 h · ✅ gate passed 2026-09-23 · `T-4.1-03` and `T-4.1-06` stay open**
 
 | ID | Task | Lane | h | W | Status | Note |
 | --- | --- | --- | --- | --- | --- | --- |
-| T-4.1-01 | Collect 30–50 scanned legal PDFs — Vietnamese diacritics, stamps… | ML | 10 | 1 | ⬜ | |
-| T-4.1-02 | Collect 10–20 report documents with real tabular layout, plus the .md… | ML | 6 | 1 | ⬜ | |
-| T-4.1-03 | Hand-transcribe ~20 reference pages spread across the document classes | ML | 12 | 1 | ⬜ | |
-| T-4.1-04 | Docling + Tesseract spike harness — a standalone script, deliberately… | ML | 8 | 1 | ⬜ | |
-| T-4.1-05 | OCR run 1 over the whole corpus, with failure triage | ML | 8 | 2 | ⬜ | |
-| T-4.1-06 | Scoring — character-level and field-level accuracy per document class | ML | 10 | 3 | ⬜ | |
-| T-4.1-07 | Table extraction check on the report documents | ML | 6 | 4 | ⬜ | |
-| T-4.1-08 | GPU — VRAM in use with BGE-M3 and the reranker both loaded | ML | 4 | 2 | ⬜ | |
-| T-4.1-09 | GPU — embedding throughput in chunks/second at batch 8 | ML | 6 | 2 | ⬜ | |
-| T-4.1-10 | GPU — rerank latency for 60 candidates | ML | 4 | 2 | ⬜ | |
-| T-4.1-11 | docs/ops/week-1-measurements.md — five numbers, each with its method… | ML | 6 | 4 | ⬜ | |
+| T-4.1-01 | Collect 30–50 scanned legal PDFs — Vietnamese diacritics, stamps… | ML | 10 | 1 | ✅ | **34 scans, 360 pages, 213 MB** from Công báo Chính phủ, outside git with the manifest in it. 324 documents examined, ~10 % were scans — the gazette now publishes typeset |
+| T-4.1-02 | Collect 10–20 report documents with real tabular layout, plus the .md… | ML | 6 | 1 | ✅ | **Report class dropped by decision 2026-09-23** — the gazette publishes those typeset. Corpus narrowed to ordinary legal documents; the `.md` set is the seeded corpus |
+| T-4.1-03 | Hand-transcribe ~20 reference pages spread across the document classes | ML | 12 | 1 | ⬜ | **The one task left.** ~20 pages a person reads and types; a reference produced by the same machinery as the OCR measures agreement, not accuracy |
+| T-4.1-04 | Docling + Tesseract spike harness — a standalone script, deliberately… | ML | 8 | 1 | ✅ | `spike/ocr_bench.py` in the parser image via `--profile spike`. Records a reason per file rather than stopping. Exercised on one smoke page, which is not a corpus |
+| T-4.1-05 | OCR run 1 over the whole corpus, with failure triage | ML | 8 | 2 | ✅ | **34 of 34 produced text, 0 failures**, 360 pages in 1 174 s. At **3.26 s/page** a 400-page scan is 22 min against NFR-04’s 10 |
+| T-4.1-06 | Scoring — character-level and field-level accuracy per document class | ML | 10 | 3 | ⬜ | Still blocked on T-4.1-03. An **upper bound** was measured instead: Tesseract alone on clean renders reaches **0.941 words / 0.936 with diacritics** — above 0.90, so it does not trigger R-01, and it leaves four points for everything a real scan adds |
+| T-4.1-07 | Table extraction check on the report documents | ML | 6 | 4 | ✅ | 5 of the 34 scans carry tables; **23 recovered, 11 ragged** — rows disagreeing on column count, so cells merged or lost. Which of the two needs the page beside the output |
+| T-4.1-08 | GPU — VRAM in use with BGE-M3 and the reranker both loaded | ML | 4 | 2 | ✅ | **3 715–3 790 MiB of 4 096** over three cycles. Trips §4.5’s ~3.6 GB threshold; Detail predicted ~2.4 GB |
+| T-4.1-09 | GPU — embedding throughput in chunks/second at batch 8 | ML | 6 | 2 | ✅ | **60.5 chunks/s** at batch 8 on 128 real chunks from the product’s own chunker, median 333 tokens |
+| T-4.1-10 | GPU — rerank latency for 60 candidates | ML | 4 | 2 | ✅ | **p50 867.5 ms · p95 888.7 ms** for 60 candidates over 120 runs — 59 % of NFR-03’s whole budget |
+| T-4.1-11 | docs/ops/week-1-measurements.md — five numbers, each with its method… | ML | 6 | 4 | ✅ | `docs/ops/week-1-measurements.md` — four numbers measured, the fifth stated as unmeasured with what will produce it. No R-01 recommendation |
 
 #### G5 · Pre-agreed slack
 
@@ -507,13 +512,15 @@ Quoted from [Detail §10](./ei-ai-phase-1-detail.md), where each line carries th
 
 ### 4.5 The five numbers that can change the plan
 
+Measured 2026-09-23 — methods, controls and caveats in [docs/ops/week-1-measurements.md](../ops/week-1-measurements.md).
+
 | # | Number | Value | Changes what |
 | --- | --- | --- | --- |
-| 1 | VRAM with both models loaded | — | Over ~3.6 GB → reranker to int8 or CPU |
-| 2 | Embedding throughput, chunks/second | — | Realistic ingest time, and whether NFR-04 is reachable |
-| 3 | **OCR accuracy on the proxy corpus** | — | **Below 90% → R-01 fallback, decided in week 3** |
-| 4 | HMR latency | — | Over 3 seconds → the source is on the wrong filesystem |
-| 5 | Empty-allowlist denial confirmed | — | If it does not deny, Phase 1 does not close |
+| 1 | VRAM with both models loaded | **3 715–3 790 MiB / 4 096** | Over ~3.6 GB → reranker to int8 or CPU |
+| 2 | Embedding throughput, chunks/second | **60.5 at batch 8** | Realistic ingest time, and whether NFR-04 is reachable |
+| 3 | **OCR accuracy on the proxy corpus** | **not measured** — upper bound 0.94, real scans untranscribed | **Below 90% → R-01 fallback, decided in week 3** |
+| 4 | HMR latency | **18 ms median, 33 ms p95** | Over 3 seconds → the source is on the wrong filesystem |
+| 5 | Empty-allowlist denial confirmed | **confirmed** | If it does not deny, Phase 1 does not close |
 
 ---
 
@@ -657,6 +664,7 @@ Quoted from [Detail §10](./ei-ai-phase-1-detail.md), where each line carries th
 
 | Date | Change |
 | --- | --- |
+| 2026-09-23 | **WP-4.1's gate passed — 9 of 11 rows to ✅.** Four of the five numbers of §4.5 are published with methods and controls: VRAM **3 715–3 790 MiB of 4 096**, which trips its own threshold and is 1.1 GB above what Detail called a low risk; embedding **60.5 chunks/s**; HMR **18 ms median**; the empty-allowlist denial re-run. A proxy corpus of **34 scanned legal PDFs, 360 pages** was collected from Công báo Chính phủ — 324 documents examined, only ~10 % were scans — and OCR ran over all of it, 34 of 34 producing text. Found by running it: `apps/parser` could not parse anything, because docling downloads its models on first use and the network is default-deny; OCR is **2.2× over NFR-04** for scans; uppercase Vietnamese loses half its diacritics. And the first OCR upper bound was **wrong and its own control said so** — 0.89 against a text layer, but 0.61 with OCR switched off entirely, so it was measuring Docling rather than Tesseract; isolated properly the ceiling is **0.94**, which does not trigger R-01 and leaves four points for everything a real scan adds. `T-4.1-03` and `T-4.1-06` stay open: the ~20 hand-transcribed pages, and the accuracy figure and R-01 recommendation they unlock. Diary promoted: three rules; `Q-31`…`Q-35` opened. |
 | 2026-09-22 | **WP-3.6 closed at its gate — G3 is complete.** 12 rows to ✅, and eight `501` controllers pulled forward from WP-5.5. 28 of 28 Playwright tests: every route renders with no console error, a Member typing an admin route gets `403 AUTHZ_ROLE_FORBIDDEN` from the server, and a Vietnamese document goes upload → `indexed` → found again. Found by running it: my own arithmetic was wrong — §8.1 has 21 screens and the router needs 22, not the 19 written in seven documents; the documents table never refetched, so it read `embedding` three minutes after the database said `indexed`, with every API test green; `shared-types` compiled to CommonJS and the browser could not load it, mounting an empty page while `tsc` stayed green; the suite signed in per test and the product's own rate limit locked it out; and rule 2 caught the composition root, where exempting `app.module.ts` opened a hole that a second rule now closes. Diary promoted: three rules; `Q-28`…`Q-30` opened. |
 | 2026-09-22 | **WP-3.5 closed at its gate.** 4 rows to ✅. `GET /me` reports `"operatingMode": "document-only"` with `mcp_servers` at 0 rows, `toolGroups` `{documents: on, web: off, erp: not_configured}`, and nothing in the response reads `unreachable`. Found by running it: the compiled-SQL control stayed **green** against a query with the role filter deleted entirely, because three assertions of absence all hold when the query sends no roles at all — rewritten as an equality it goes red with six others. The rule-3 exemption for `tools` was checked with its near miss: `WorkspacesService` from the same file is still refused. One `mcp_servers` row moves the ERP group and back with no restart, which is FR-80 shown rather than asserted. Two design contradictions recorded: §3 calls the mode configured where §5.4 and ADR-10 compute it, and ADR-10 says `search_documents` has no switch where `TOOL_SEARCH_DOCUMENTS_ENABLED` is one. Diary promoted: three rules; `Q-27` opened. |
 | 2026-09-22 | **WP-3.2 closed at its gate.** 8 rows to ✅. The matrix reports **77/77** from a table whose type refuses a row that names neither a route nor a phase, and **15 routes carry a decision, 0 without**. The loosening check was run three ways — widen the table, remove the decorator, remove the guard — and only a real request notices the third. Four service checks were removed and their assertions moved to the guards. `Q-16` fixed: a locked account can no longer refresh. Found on the way: a Member who is a workspace Editor can no longer upload, because §9.1's two dimensions are ANDed. Diary promoted: three rules; `Q-25`, `Q-26` opened. |

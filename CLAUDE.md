@@ -104,6 +104,23 @@ fix was one signed-in context per spec file, letting the refresh token rotate in
 also how a person uses the product. A suite that has to disable a defence to run is testing a system
 nobody ships.
 
+**A measurement whose no-op case scores worse than its subject has not measured its subject.** The
+first OCR upper bound compared Docling-with-OCR against a PDF's own text layer and scored 0.89 word
+recall, below the 90 % that triggers R-01 — a decision about the plan, from one number. Switching OCR
+off entirely, so Docling read the text layer directly, scored **0.61**. OCR cannot beat reading the
+text, so the harness was measuring Docling's layout classification and Markdown export, not
+Tesseract. Isolating the reader — pdfium's text against `tesseract` on a render of the same page,
+nothing else on either side — gave 0.94 and the opposite conclusion. Before believing a comparison,
+run it with the thing under test removed; whatever it still scores is what the harness contributes.
+
+**A reference is only a reference if its own text layer is sound.** One gazette PDF carried its text
+twice, the second copy broken into glyph runs — `ph`, `ển`, `c` as separate tokens — and a correct
+OCR reading scored 0.402 against it, dragging a page-weighted average from 0.94 to 0.84. The tell
+was arithmetic: common words appeared twice as often on the reference side as on the OCR side, and
+41.8 % of its tokens were one or two characters where every other document sat between 14.7 % and
+23.0 %. Measure the ground truth before scoring anything against it, and report the measurement per
+item rather than the verdict alone.
+
 **To isolate one contributor, make the others prefer the wrong answer.** Killing the dense branch with a zero vector still ranked every chunk, because ordering by distance to zero orders everything. What isolates the lexical branch is a decoy sitting exactly on the question's own vector: it wins the dense branch outright, so only the lexical branch can put the right passage first. A control that cannot change the answer is not a control.
 
 **A handler for failures that can itself fail stops everything.** `worker.on('failed', (job, error) => void this.onFailed(job, error))` — and `void` on a rejected promise is an unhandled rejection, which ends the Node process. One job whose audit row could not be written took the ingest worker down and stopped every later job from running at all. The path that runs when something has already gone wrong is the path least likely to have been exercised; give it its own catch.
@@ -129,6 +146,14 @@ nobody ships.
 **Scope the plan never named is provisional until the gate.** When the work needs something no task describes, build the smallest version that keeps the invariants, record it as an open question, and let the gate decide whether it grows an existing task or earns an id.
 
 **A library your build cannot load is not a candidate.** `file-type` is the obvious way to sniff a file signature and has been ESM-only since v17, while `apps/api` compiles to CommonJS — so the real offer was its last CommonJS release, from 2021, or nothing. Ten hand-written signatures, one per admitted format, are smaller than a library that recognises two hundred. Read the module format against the build's output format before weighing a dependency's features; this is the shape that bit at WP-3.1, where a package resolved a layout its peer no longer had and the application died at boot after `tsc` reported nothing.
+
+**An image that installs a dependency is not an image that can run it.** `apps/parser` pinned
+docling and installed the Tesseract Vietnamese data, and the first conversion ever attempted in it
+failed with `LocalEntryNotFoundError`: docling fetches its layout and table-structure models from
+the Hub on first use, and the container runs on the default-deny network. The image had been built
+in CI for weeks and never asked to parse anything. A dependency's runtime assets are part of the
+build on a network that will not fetch them later — and an image nothing has exercised is an image
+nobody has run.
 
 ## Code
 
