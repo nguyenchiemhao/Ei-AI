@@ -5,7 +5,7 @@ node_modules/
 # Build output
 dist/
 dist-esm/
-build/
+/build/
 .next/
 *.tsbuildinfo
 
@@ -21,11 +21,14 @@ __pycache__/
 venv/
 
 # Model weights and local data
-models/
+# Anchored, not bare: git matches a bare `models/` or `storage/` at any depth, and `storage/`
+# swallowed apps/api/src/adapters/storage/ — the only implementation of StoragePort — so the
+# repository could not be built from a clone. A leading slash keeps each pattern to the root.
+/models/
 *.gguf
 *.safetensors
-storage/
-uploads/
+/storage/
+/uploads/
 
 # Logs and caches
 *.log
