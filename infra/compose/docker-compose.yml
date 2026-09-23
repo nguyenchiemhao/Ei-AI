@@ -34,6 +34,13 @@ services:
 
   infinity:
     image: michaelf34/infinity:0.0.76@sha256:90bd83ecfb9922e9fdceec906cfb79863ad8aeaa45b15b950266679c3e2efd24
+    # Without the proxy this container cannot fetch its models: it sits on the internal network,
+    # huggingface.co does not resolve there, and a clean install brings up an embedder that can
+    # never serve a request. The 8.7 GB on the development machine arrived by a route nobody wrote
+    # down. Through squid the download is an audited egress against a declared destination, which
+    # is what the boundary is for.
+    env_file:
+      - ../../.env
     command:
       - v2
       - --model-id
